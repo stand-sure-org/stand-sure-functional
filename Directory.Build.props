@@ -7,6 +7,13 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Deterministic>true</Deterministic>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!--
+      When the solution is opened through a symlinked spelling of this directory (for example ~/repos/... -> /Volumes/Repos/...),
+      a project reached through a ProjectReference has a different path from the solution's entry for it, so MSBuild treats it as
+      "not in the solution" and unsets Configuration, building it as Debug beside the Release build. The two builds race over the
+      same obj folder and fail with CS0006. Keep the parent's Configuration for such references.
+    -->
+    <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
   </PropertyGroup>
 
   <ItemGroup>
