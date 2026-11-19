@@ -35,21 +35,9 @@ internal sealed class UsageWalker(SemanticModel model) : CSharpSyntaxWalker
 
     public bool ResultLikeType { get; private set; }
 
+    /// <summary>True when a type or method the code binds to lives in the library namespace (a semantic check). A bare
+    /// <c>using StandSure.Functional;</c> does not count: the with-library prompt asks for it, so it says nothing about use.</summary>
     public bool LibraryResult { get; private set; }
-
-    public override void VisitCompilationUnit(CompilationUnitSyntax node)
-    {
-        foreach (var directive in node.Usings)
-        {
-            var name = directive.NamespaceOrType.ToString();
-            if (name == LibraryNamespace || name.StartsWith(LibraryNamespace + ".", StringComparison.Ordinal))
-            {
-                LibraryResult = true;
-            }
-        }
-
-        base.VisitCompilationUnit(node);
-    }
 
     public override void DefaultVisit(SyntaxNode node)
     {

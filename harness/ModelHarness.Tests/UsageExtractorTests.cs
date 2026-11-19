@@ -118,6 +118,35 @@ public sealed class UsageExtractorTests
     }
 
     [Fact]
+    public void LibraryUsingAlone_WithTupleReturn_IsNotLibraryResult()
+    {
+        var facts = Extract("""
+            using StandSure.Functional;
+            public sealed class Solution(IUserStore users)
+            {
+                public (User? User, string? Error) CreateUser(string email, string name) => (users.Add(email, name), null);
+            }
+            """, withLibrary: true);
+
+        facts.Idioms.Should().NotContain("library-result");
+        facts.Idioms.Should().Contain("tuple-return");
+    }
+
+    [Fact]
+    public void LibraryUsing_WithLibraryResultReturn_IsLibraryResult()
+    {
+        var facts = Extract("""
+            using StandSure.Functional;
+            public sealed class Solution(IUserStore users)
+            {
+                public Result<User> CreateUser(string email, string name) => users.Add(email, name);
+            }
+            """, withLibrary: true);
+
+        facts.Idioms.Should().Contain("library-result");
+    }
+
+    [Fact]
     public void DetectsLibraryResult_AndPrefixesOutcomeMethods()
     {
         var facts = Extract("""

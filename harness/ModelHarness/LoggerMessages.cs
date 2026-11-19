@@ -66,4 +66,11 @@ internal static partial class LoggerMessages
         EventName = nameof(ReportWritten),
         Message = "Report written from {Records} records ({Malformed} malformed lines skipped) -> {Path}")]
     public static partial void ReportWritten(this ILogger logger, int records, int malformed, string path);
+
+    [LoggerMessage(LogLevel.Information,
+        EventId = 11,
+        EventName = nameof(ReextractWritten),
+        Message = "Re-extracted {Total} lines: {Rewritten} rewritten, {PassedThrough} copied unchanged ({Malformed} malformed); {CompileDrift} records now compile differently (stored values kept) -> {Path}")]
+    public static partial void ReextractWritten(
+        this ILogger logger, int total, int rewritten, int passedThrough, int malformed, int compileDrift, string path);
 }

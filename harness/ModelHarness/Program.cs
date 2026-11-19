@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 using ModelHarness.Models;
+using ModelHarness.Reextract;
 using ModelHarness.Report;
 using ModelHarness.Run;
 using ModelHarness.Tasks;
@@ -37,6 +38,25 @@ internal static class Program
             }
 
             return ReportCommand.Run(reportOptions, logger);
+        }
+
+        if (args.Length > 0 && string.Equals(args[0], ReextractOptions.Command, StringComparison.Ordinal))
+        {
+            var reextract = ReextractOptions.Parse(args);
+            if (reextract.Options is not { } reextractOptions)
+            {
+                logger.CliError(reextract.Error ?? ReextractOptions.Usage);
+                return ExitUsage;
+            }
+
+            var root = FindRoot();
+            if (root is null)
+            {
+                logger.CliError($"Could not find {RepoLocator.SolutionFileName} above the current or base directory.");
+                return ExitUsage;
+            }
+
+            return ReextractCommand.Run(reextractOptions, Path.Combine(root, "harness", "tasks"), logger);
         }
 
         var parsed = CliOptions.Parse(args);

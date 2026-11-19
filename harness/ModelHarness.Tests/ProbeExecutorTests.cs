@@ -36,9 +36,9 @@ public sealed class ProbeExecutorTests
         }
         """;
 
-    private static readonly HarnessTask Synthetic = new("00-synthetic", "prompt", Fixture, Probe, "Solution", "Run");
+    internal static readonly HarnessTask Synthetic = new("00-synthetic", "prompt", Fixture, Probe, "Solution", "Run");
 
-    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);
+    internal static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);
 
     [Fact]
     public async Task ReturningSolution_Returned()
@@ -162,51 +162,6 @@ public sealed class ProbeExecutorTests
 
         result.Outcome.Should().Be(ProbeOutcome.Threw);
         result.ExceptionType.Should().Be("System.TimeoutException");
-    }
-
-    [Fact]
-    public async Task ProbeEnvironment_ContainsNoApiKeys()
-    {
-        RequireSandbox();
-        var assembly = Build("""
-            using System;
-            using System.Collections;
-            using System.Linq;
-
-            public sealed class Solution(IGreeter greeter)
-            {
-                private static readonly string[] Allowed = ["PATH", "HOME", "TMPDIR", "DOTNET_ROOT", "DOTNET_EnableDiagnostics", "DOTNET_GCHeapHardLimit"];
-
-                public string? Run(int id)
-                {
-                    var key = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY");
-                    if (key is not null)
-                    {
-                        throw new UnauthorizedAccessException("ANTHROPIC_API_KEY leaked");
-                    }
-
-                    var extra = Environment.GetEnvironmentVariables().Keys.Cast<string>().Where(k => !Allowed.Contains(k)).ToList();
-                    if (extra.Count > 0)
-                    {
-                        throw new InvalidOperationException(string.Join(",", extra));
-                    }
-
-                    return key ?? greeter.Greet(id);
-                }
-            }
-            """);
-        var previous = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY");
-        Environment.SetEnvironmentVariable("ANTHROPIC_API_KEY", previous ?? "sk-ant-probe-test-not-a-real-key");
-        try
-        {
-            var result = await ProbeExecutor.RunAsync(assembly, Synthetic, Timeout, TestContext.Current.CancellationToken);
-
-            result.Should().BeEquivalentTo(new { Outcome = ProbeOutcome.Returned, ExceptionType = (string?)null });
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("ANTHROPIC_API_KEY", previous);
-        }
     }
 
     [Fact]
@@ -855,10 +810,10 @@ public sealed class ProbeExecutorTests
         result.Should().BeEquivalentTo(new { Outcome = ProbeOutcome.Crashed, Reason = "no-sandbox", DurationMs = 0L });
     }
 
-    private static void RequireSandbox() =>
+    internal static void RequireSandbox() =>
         Assert.SkipUnless(OperatingSystem.IsMacOS(), "The probe runs only under macOS sandbox-exec.");
 
-    private static byte[] Build(string solution, bool withLibrary = false)
+    internal static byte[] Build(string solution, bool withLibrary = false)
     {
         var compiled = SolutionCompiler.Compile(Synthetic, solution, withLibrary);
         compiled.Diagnostics.Should().BeEmpty();

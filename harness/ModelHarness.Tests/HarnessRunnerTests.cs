@@ -235,35 +235,45 @@ public sealed class HarnessRunnerTests
     [Fact]
     public async Task ModelCalls_CappedAtFourPerFamily_AndFamiliesOverlap()
     {
-        var gate = new ConcurrentDictionary<string, int>();
+        // Deterministic: the first calls park on a gate that opens only once 8 are in flight (4 per family, both
+        // families at once). If the cap were missing, more than 4 of one family would park; if families did not overlap,
+        // the gate would never open and the test would fail at the timeout instead of hanging.
+        var inFlight = new ConcurrentDictionary<string, int>();
         var peak = new ConcurrentDictionary<string, int>();
+        var open = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var total = 0;
         var peakTotal = 0;
 
-        ModelResponse Slow(string family)
+        async Task<ModelResponse> Gated(string family)
         {
-            var now = gate.AddOrUpdate(family, 1, (_, v) => v + 1);
+            var now = inFlight.AddOrUpdate(family, 1, (_, v) => v + 1);
             peak.AddOrUpdate(family, now, (_, v) => Math.Max(v, now));
             var all = Interlocked.Increment(ref total);
             InterlockedMax(ref peakTotal, all);
-            Thread.Sleep(80);
+            if (all >= 8)
+            {
+                open.TrySetResult();
+            }
+
+            await open.Task.WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
             Interlocked.Decrement(ref total);
-            gate.AddOrUpdate(family, 0, (_, v) => v - 1);
+            inFlight.AddOrUpdate(family, 0, (_, v) => v - 1);
             return Ok(GoodCode);
         }
 
         var plan = Plan(runs: 12, models: [Model("anthropic", "a"), Model("gemini", "g")]);
         var clients = Clients(
-            new FakeClient("anthropic", _ => Slow("anthropic")) { Async = true },
-            new FakeClient("gemini", _ => Slow("gemini")) { Async = true });
+            new FakeClient("anthropic", _ => throw new InvalidOperationException("sync path unused")) { RespondAsync = _ => Gated("anthropic") },
+            new FakeClient("gemini", _ => throw new InvalidOperationException("sync path unused")) { RespondAsync = _ => Gated("gemini") });
 
-        var (summary, _) = await RunAsync(plan, clients);
+        var (summary, lines) = await RunAsync(plan, clients);
 
         summary.Written.Should().Be(24);
-        peak["anthropic"].Should().BeLessThanOrEqualTo(4);
-        peak["gemini"].Should().BeLessThanOrEqualTo(4);
-        peak["anthropic"].Should().BeGreaterThan(1);
-        peakTotal.Should().BeGreaterThan(4);
+        lines.Should().AllSatisfy(l => l.TryGetProperty("transportError", out _).Should().BeFalse());
+        open.Task.IsCompletedSuccessfully.Should().BeTrue();
+        peak["anthropic"].Should().Be(4);
+        peak["gemini"].Should().Be(4);
+        peakTotal.Should().Be(8);
     }
 
     [Fact]
@@ -321,9 +331,16 @@ public sealed class HarnessRunnerTests
 
         public bool Async { get; init; }
 
+        public Func<ModelRequest, Task<ModelResponse>>? RespondAsync { get; init; }
+
         public async Task<ModelResponse> CompleteAsync(ModelRequest request, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
+            if (RespondAsync is not null)
+            {
+                return await RespondAsync(request);
+            }
+
             if (Async)
             {
                 await Task.Yield();
