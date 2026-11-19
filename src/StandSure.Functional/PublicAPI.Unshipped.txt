@@ -1,11 +1,46 @@
 #nullable enable
-override StandSure.Functional.Unit.Equals(object? obj) -> bool
-override StandSure.Functional.Unit.GetHashCode() -> int
-override StandSure.Functional.Unit.ToString() -> string!
+StandSure.Functional.Error
+StandSure.Functional.Error.<Clone>$() -> StandSure.Functional.Error!
+StandSure.Functional.Error.Code.get -> string!
+StandSure.Functional.Error.Equals(StandSure.Functional.Error? other) -> bool
+StandSure.Functional.Error.Errors.get -> System.Collections.Generic.IReadOnlyList<StandSure.Functional.Error!>!
+StandSure.Functional.Error.Exception.get -> System.Exception?
+StandSure.Functional.Error.Inner.get -> StandSure.Functional.Error?
+StandSure.Functional.Error.Is(string! code) -> bool
+StandSure.Functional.Error.Kind.get -> StandSure.Functional.ErrorKind
+StandSure.Functional.Error.Message.get -> string!
+StandSure.Functional.Error.Metadata.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+StandSure.Functional.Error.Wrap(string! code, string! message) -> StandSure.Functional.Error!
+StandSure.Functional.ErrorKind
+StandSure.Functional.ErrorKind.Conflict = 2 -> StandSure.Functional.ErrorKind
+StandSure.Functional.ErrorKind.Forbidden = 4 -> StandSure.Functional.ErrorKind
+StandSure.Functional.ErrorKind.NotFound = 1 -> StandSure.Functional.ErrorKind
+StandSure.Functional.ErrorKind.Unauthorized = 3 -> StandSure.Functional.ErrorKind
+StandSure.Functional.ErrorKind.Unavailable = 5 -> StandSure.Functional.ErrorKind
+StandSure.Functional.ErrorKind.Unexpected = 6 -> StandSure.Functional.ErrorKind
+StandSure.Functional.ErrorKind.Validation = 0 -> StandSure.Functional.ErrorKind
 StandSure.Functional.Unit
 StandSure.Functional.Unit.CompareTo(StandSure.Functional.Unit other) -> int
 StandSure.Functional.Unit.Equals(StandSure.Functional.Unit other) -> bool
 StandSure.Functional.Unit.Unit() -> void
-static readonly StandSure.Functional.Unit.Value -> StandSure.Functional.Unit
+override StandSure.Functional.Error.Equals(object? obj) -> bool
+override StandSure.Functional.Error.GetHashCode() -> int
+override StandSure.Functional.Error.ToString() -> string!
+override StandSure.Functional.Unit.Equals(object? obj) -> bool
+override StandSure.Functional.Unit.GetHashCode() -> int
+override StandSure.Functional.Unit.ToString() -> string!
+static StandSure.Functional.Error.Conflict(string! code, string! message, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? metadata = null) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.Forbidden(string! code, string! message, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? metadata = null) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.FromException(System.Exception! exception) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.NotFound(string! code, string! message, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? metadata = null) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.Unauthorized(string! code, string! message, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? metadata = null) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.Unavailable(string! code, string! message, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? metadata = null) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.Unexpected(string! code, string! message, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? metadata = null) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.Uninitialized.get -> StandSure.Functional.Error!
+static StandSure.Functional.Error.Validation(string! code, string! message, System.Collections.Generic.IEnumerable<StandSure.Functional.Error!>! errors) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.Validation(string! code, string! message, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? metadata = null) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.operator !=(StandSure.Functional.Error? left, StandSure.Functional.Error? right) -> bool
+static StandSure.Functional.Error.operator ==(StandSure.Functional.Error? left, StandSure.Functional.Error? right) -> bool
 static StandSure.Functional.Unit.operator !=(StandSure.Functional.Unit left, StandSure.Functional.Unit right) -> bool
 static StandSure.Functional.Unit.operator ==(StandSure.Functional.Unit left, StandSure.Functional.Unit right) -> bool
+static readonly StandSure.Functional.Unit.Value -> StandSure.Functional.Unit
