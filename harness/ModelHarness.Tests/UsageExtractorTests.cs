@@ -221,4 +221,59 @@ public sealed class UsageExtractorTests
 
         act.Should().NotThrow();
     }
+
+    [Fact]
+    public void DeclaresUnionTypes()
+    {
+        var facts = Extract("""
+            public record Failure(string Message);
+            public union Result<T>(T, Failure);
+            public sealed class Solution(IUserStore users)
+            {
+                public int CreateUser(string email, string name) => 1;
+            }
+            """);
+
+        facts.DeclaredTypes.Should().Contain("Result");
+        facts.Idioms.Should().Contain("result-like-type");
+    }
+
+    [Fact]
+    public void ConfigureAwait_IsNotPrefixedWithOutcomeType()
+    {
+        var facts = Extract("""
+            using System.Threading.Tasks;
+            public sealed class Solution(IUserStore users)
+            {
+                private Task<(bool Ok, string Error)> CheckAsync(string e) => Task.FromResult((true, ""));
+                public async Task<User?> CreateUser(string email, string name)
+                {
+                    var r = await CheckAsync(email).ConfigureAwait(false);
+                    return null;
+                }
+            }
+            """);
+
+        facts.InvokedMethods.Should().Contain("ConfigureAwait");
+        facts.InvokedMethods.Should().NotContain(m => m.EndsWith(".ConfigureAwait", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void CountsIgnoredConfiguredAwait()
+    {
+        var facts = Extract("""
+            using System.Threading.Tasks;
+            public sealed class Solution(IUserStore users)
+            {
+                private Task<(bool Ok, string Error)> CheckAsync(string e) => Task.FromResult((true, ""));
+                public async Task<User?> CreateUser(string email, string name)
+                {
+                    await CheckAsync(email).ConfigureAwait(false);
+                    return null;
+                }
+            }
+            """);
+
+        facts.IgnoredOutcomeCount.Should().Be(1);
+    }
 }

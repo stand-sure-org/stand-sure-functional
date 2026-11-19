@@ -28,9 +28,13 @@ internal static class OutcomeTypes
     /// <summary>Strips one layer of Task/ValueTask.</summary>
     public static ITypeSymbol Unwrap(ITypeSymbol type) =>
         type is INamedTypeSymbol { IsGenericType: true, TypeArguments.Length: 1 } named
-        && named.Name is "Task" or "ValueTask"
+        && named.Name is "Task" or "ValueTask" or "ConfiguredTaskAwaitable" or "ConfiguredValueTaskAwaitable"
             ? named.TypeArguments[0]
             : type;
+
+    /// <summary>True when the type itself (no Task unwrapping) is an outcome type.</summary>
+    public static bool IsOutcomeItself(ITypeSymbol? type) =>
+        type is not null && type.TypeKind != TypeKind.Error && (IsOutcomeName(type.Name) || IsOutcomeTuple(type));
 
     public static bool IsOutcome(ITypeSymbol? type)
     {

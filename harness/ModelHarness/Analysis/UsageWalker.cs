@@ -85,6 +85,12 @@ internal sealed class UsageWalker(SemanticModel model) : CSharpSyntaxWalker
         base.VisitInterfaceDeclaration(node);
     }
 
+    public override void VisitUnionDeclaration(UnionDeclarationSyntax node)
+    {
+        Declare(node.Identifier);
+        base.VisitUnionDeclaration(node);
+    }
+
     public override void VisitEnumDeclaration(EnumDeclarationSyntax node)
     {
         Declare(node.Identifier);
@@ -234,9 +240,9 @@ internal sealed class UsageWalker(SemanticModel model) : CSharpSyntaxWalker
         if (node.Expression is MemberAccessExpressionSyntax access)
         {
             var receiver = Safe(() => model.GetTypeInfo(access.Expression).Type);
-            if (receiver is { TypeKind: not TypeKind.Error } && OutcomeTypes.IsOutcome(receiver))
+            if (OutcomeTypes.IsOutcomeItself(receiver))
             {
-                return OutcomeTypes.Unwrap(receiver).Name;
+                return receiver!.Name;
             }
         }
 
@@ -271,7 +277,7 @@ internal sealed class UsageWalker(SemanticModel model) : CSharpSyntaxWalker
         {
             return func();
         }
-        catch (Exception ex) when (ex is not OutOfMemoryException)
+        catch (Exception ex) when (ex is not OutOfMemoryException and not OperationCanceledException)
         {
             return null;
         }
