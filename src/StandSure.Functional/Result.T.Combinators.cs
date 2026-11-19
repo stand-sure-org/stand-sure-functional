@@ -16,7 +16,8 @@ namespace StandSure.Functional;
 /// A delegate that throws is not caught here; only <see cref="Try"/> catches. A <see langword="null"/> delegate
 /// never throws either. <c>Map</c>, <c>Bind</c>, <c>MapError</c>, <c>Ensure</c> and <c>Tap</c> return a failure with
 /// code <c>result.null_delegate</c> when they would have had to call it. <c>Match</c> returns
-/// <c>default(TOut)</c> when the delegate for the active branch is <see langword="null"/>. A delegate the active
+/// <c>default(TOut)</c> when the delegate for the active branch is <see langword="null"/>, and records a
+/// <c>result.null_delegate</c> failure in telemetry. A delegate the active
 /// branch does not use may be <see langword="null"/> without effect.
 /// </para>
 /// </remarks>
@@ -46,10 +47,17 @@ public readonly partial struct Result<T>
     {
         if (_tag == TagOk)
         {
-            return onSuccess is null ? default! : onSuccess(_value);
+            return onSuccess is null ? NullBranch<TOut>(nameof(onSuccess)) : onSuccess(_value);
         }
 
-        return onFailure is null ? default! : onFailure(FailureError);
+        return onFailure is null ? NullBranch<TOut>(nameof(onFailure)) : onFailure(FailureError);
+    }
+
+    // A null active branch still counts as a failure in telemetry (building the error records it), then yields default.
+    private static TOut NullBranch<TOut>(string parameterName)
+    {
+        _ = ResultErrors.NullDelegate(parameterName);
+        return default!;
     }
 
     /// <summary>Transforms the success value; a failure passes through unchanged.</summary>

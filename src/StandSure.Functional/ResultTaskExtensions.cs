@@ -16,11 +16,16 @@ namespace StandSure.Functional;
 /// overload.
 /// </para>
 /// <para>
+/// <c>MatchAsync</c> takes either two ordinary lambdas or two task-returning lambdas. Mixing one of each does not
+/// compile (the compiler reports a misleading conversion error on the ordinary lambda); make both lambdas the same kind,
+/// for example by wrapping the plain result in <c>Task.FromResult</c>.
+/// </para>
+/// <para>
 /// All awaits use <c>ConfigureAwait(false)</c>. An exception thrown by the source task or by a lambda is not caught;
 /// it faults the returned task. A <see langword="null"/> source task counts as a failure with code
 /// <c>result.null_task</c>, and so does a <see langword="null"/> task returned by a lambda. A <see langword="null"/>
 /// delegate behaves as it does on <see cref="Result{T}"/>: <c>result.null_delegate</c> failure, or
-/// <c>default(TOut)</c> from <c>MatchAsync</c>. <c>default(Result&lt;T&gt;)</c> flows as the
+/// <c>default(TOut)</c> from <c>MatchAsync</c>, which also records a <c>result.null_delegate</c> failure in telemetry. <c>default(Result&lt;T&gt;)</c> flows as the
 /// <see cref="Error.Uninitialized"/> failure.
 /// </para>
 /// </remarks>
@@ -142,15 +147,28 @@ public static class ResultTaskExtensions
         Task<TOut>? task;
         if (result.IsSuccess)
         {
-            task = onSuccess?.Invoke(result.ValueUnchecked);
+            if (onSuccess is null)
+            {
+                _ = ResultErrors.NullDelegate(nameof(onSuccess));
+                return default!;
+            }
+
+            task = onSuccess(result.ValueUnchecked);
         }
         else
         {
-            task = onFailure?.Invoke(result.ErrorUnchecked);
+            if (onFailure is null)
+            {
+                _ = ResultErrors.NullDelegate(nameof(onFailure));
+                return default!;
+            }
+
+            task = onFailure(result.ErrorUnchecked);
         }
 
         if (task is null)
         {
+            _ = ResultErrors.NullTask("match");
             return default!;
         }
 
