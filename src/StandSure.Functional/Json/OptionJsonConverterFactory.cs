@@ -18,50 +18,9 @@ public sealed class OptionJsonConverterFactory : JsonConverterFactory
         typeToConvert.IsGenericType && typeToConvert.GetGenericTypeDefinition() == typeof(Option<>);
 
     /// <inheritdoc />
-    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Option<T> is only reached with T statically known to the caller.")]
-    [UnconditionalSuppressMessage("AOT", "IL2055", Justification = "Option<T> is only reached with T statically known to the caller.")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "JIT convenience only. Native AOT callers register OptionJsonConverter<T> explicitly; see its remarks.")]
+    [UnconditionalSuppressMessage("AOT", "IL2055", Justification = "JIT convenience only. Native AOT callers register OptionJsonConverter<T> explicitly; see its remarks.")]
     public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options) =>
         (JsonConverter?)Activator.CreateInstance(
             typeof(OptionJsonConverter<>).MakeGenericType(typeToConvert.GetGenericArguments()[0]));
-
-    private sealed class OptionJsonConverter<T> : JsonConverter<Option<T>>
-    {
-        public override Option<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            if (reader.TokenType != JsonTokenType.StartObject)
-            {
-                throw new JsonException("An Option must be a JSON object.");
-            }
-
-            var result = default(Option<T>);
-            while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
-            {
-                var isValue = reader.ValueTextEquals("value"u8);
-                reader.Read();
-                if (isValue && reader.TokenType != JsonTokenType.Null)
-                {
-                    var value = JsonSerializer.Deserialize(ref reader, (JsonTypeInfo<T>)options.GetTypeInfo(typeof(T)));
-                    result = Option.Some(value!);
-                }
-                else
-                {
-                    reader.Skip();
-                }
-            }
-
-            return result;
-        }
-
-        public override void Write(Utf8JsonWriter writer, Option<T> option, JsonSerializerOptions options)
-        {
-            writer.WriteStartObject();
-            if (option.TryGetValue(out T? value))
-            {
-                writer.WritePropertyName("value"u8);
-                JsonSerializer.Serialize(writer, value, (JsonTypeInfo<T?>)options.GetTypeInfo(typeof(T)));
-            }
-
-            writer.WriteEndObject();
-        }
-    }
 }

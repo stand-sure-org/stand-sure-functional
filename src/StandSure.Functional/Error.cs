@@ -26,7 +26,6 @@ public sealed record Error
         null,
         null);
 
-    [JsonConstructor]
     private Error(
         ErrorKind kind,
         string code,
@@ -43,6 +42,20 @@ public sealed record Error
         Inner = inner;
         Errors = errors ?? EmptyErrors;
         Exception = exception;
+    }
+
+    // The wire-format constructor: no exception parameter, so the source generator never needs Exception metadata,
+    // and it bypasses Create, so deserializing records no failure telemetry.
+    [JsonConstructor]
+    private Error(
+        ErrorKind kind,
+        string code,
+        string message,
+        IReadOnlyDictionary<string, string>? metadata = null,
+        IReadOnlyList<Error>? errors = null,
+        Error? inner = null)
+        : this(kind, code, message, metadata, inner, errors, null)
+    {
     }
 
     /// <summary>Gets the error that is the shared placeholder for a default (uninitialized) result.</summary>

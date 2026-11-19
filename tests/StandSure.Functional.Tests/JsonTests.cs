@@ -8,6 +8,7 @@ using Xunit;
 
 namespace StandSure.Functional.Tests;
 
+[Collection(TelemetryCollection.Name)]
 public sealed class JsonTests
 {
     private static readonly JsonSerializerOptions Options = new JsonSerializerOptions { TypeInfoResolver = new DefaultJsonTypeInfoResolver() }.AddFunctional();
@@ -184,24 +185,50 @@ public sealed class JsonTests
         e!.Code.Should().Be("a");
     }
 
+    [Theory]
+    [InlineData("""{"error":{}}""")]
+    [InlineData("""{"error":{"code":"x"}}""")]
+    [InlineData("""{"error":{"code":"x","message":"m"}}""")]
+    [InlineData("""{"error":{"kind":"NotFound","code":null,"message":"m"}}""")]
+    [InlineData("""{"error":{"kind":"NotFound","code":"x","message":"m","errors":[null]}}""")]
+    [InlineData("""{"error":{"kind":"NotFound","code":"x","message":"m","metadata":{"a":null}}}""")]
+    public void InvalidError_ThrowsJsonException(string json)
+    {
+        var act = () => De<Result<int>>(json);
+
+        act.Should().Throw<JsonException>();
+    }
+
     [Fact]
     public void Deserializing_DoesNotRecordNewFailures()
     {
-        const string json = """{"error":{"kind":"NotFound","code":"x","message":"m"}}""";
-        using var listener = new System.Diagnostics.Metrics.MeterListener();
+        const string Code = "json.no.record.unique";
         var count = 0;
+        using var listener = new System.Diagnostics.Metrics.MeterListener();
         listener.InstrumentPublished = (i, l) =>
         {
-            if (i.Meter.Name == "StandSure.Functional")
+            if (i.Meter.Name == "StandSure.Functional" && i.Name == "functional.failures")
             {
                 l.EnableMeasurementEvents(i);
             }
         };
-        listener.SetMeasurementEventCallback<long>((_, _, _, _) => count++);
+        listener.SetMeasurementEventCallback<long>((_, _, tags, _) =>
+        {
+            foreach (var tag in tags)
+            {
+                if (tag.Key == "error.code" && Equals(tag.Value, Code))
+                {
+                    System.Threading.Interlocked.Increment(ref count);
+                }
+            }
+        });
         listener.Start();
 
-        _ = De<Result<int>>(json);
+        _ = Error.NotFound(Code, "control");
+        System.Threading.Volatile.Read(ref count).Should().Be(1, "the positive control must be observed");
 
-        count.Should().Be(0);
+        _ = De<Result<int>>("""{"error":{"kind":"NotFound","code":"json.no.record.unique","message":"m"}}""");
+
+        System.Threading.Volatile.Read(ref count).Should().Be(1);
     }
 }
