@@ -68,6 +68,12 @@ namespace StandSure.Functional
         public bool IsSome { get; }
         public object? Value { get; }
         public static StandSure.Functional.Option<T> None { get; }
+        public StandSure.Functional.Option<TOut> Bind<TOut>(System.Func<T, StandSure.Functional.Option<TOut>> bind) { }
+        public StandSure.Functional.Option<T> Filter(System.Func<T, bool> predicate) { }
+        public T GetValueOrDefault(T fallback) { }
+        public StandSure.Functional.Option<TOut> Map<TOut>(System.Func<T, TOut> map) { }
+        public TOut Match<TOut>(System.Func<TOut> onNone, System.Func<T, TOut> onSome) { }
+        public StandSure.Functional.Result<T> ToResult(StandSure.Functional.Error ifNone) { }
         public bool TryGetValue([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out StandSure.Functional.None? none) { }
         public bool TryGetValue([System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out T value) { }
     }

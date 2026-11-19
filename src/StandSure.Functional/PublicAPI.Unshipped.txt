@@ -119,3 +119,9 @@ static StandSure.Functional.ResultTaskExtensions.MapAsync<T, TOut>(this System.T
 static StandSure.Functional.ResultTaskExtensions.MapAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<T, TOut>! map) -> System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>>!
 static StandSure.Functional.ResultTaskExtensions.MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<StandSure.Functional.Error!, System.Threading.Tasks.Task<TOut>!>! onFailure, System.Func<T, System.Threading.Tasks.Task<TOut>!>! onSuccess) -> System.Threading.Tasks.Task<TOut>!
 static StandSure.Functional.ResultTaskExtensions.MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<StandSure.Functional.Error!, TOut>! onFailure, System.Func<T, TOut>! onSuccess) -> System.Threading.Tasks.Task<TOut>!
+StandSure.Functional.Option<T>.Bind<TOut>(System.Func<T, StandSure.Functional.Option<TOut>>! bind) -> StandSure.Functional.Option<TOut>
+StandSure.Functional.Option<T>.Filter(System.Func<T, bool>! predicate) -> StandSure.Functional.Option<T>
+StandSure.Functional.Option<T>.GetValueOrDefault(T fallback) -> T
+StandSure.Functional.Option<T>.Map<TOut>(System.Func<T, TOut>! map) -> StandSure.Functional.Option<TOut>
+StandSure.Functional.Option<T>.Match<TOut>(System.Func<TOut>! onNone, System.Func<T, TOut>! onSome) -> TOut
+StandSure.Functional.Option<T>.ToResult(StandSure.Functional.Error! ifNone) -> StandSure.Functional.Result<T>
