@@ -19,6 +19,18 @@ StandSure.Functional.ErrorKind.Unauthorized = 3 -> StandSure.Functional.ErrorKin
 StandSure.Functional.ErrorKind.Unavailable = 5 -> StandSure.Functional.ErrorKind
 StandSure.Functional.ErrorKind.Unexpected = 6 -> StandSure.Functional.ErrorKind
 StandSure.Functional.ErrorKind.Validation = 0 -> StandSure.Functional.ErrorKind
+StandSure.Functional.Result
+StandSure.Functional.Result<T>
+StandSure.Functional.Result<T>.Deconstruct(out T? value, out StandSure.Functional.Error? error) -> void
+StandSure.Functional.Result<T>.HasValue.get -> bool
+StandSure.Functional.Result<T>.IsFailure.get -> bool
+StandSure.Functional.Result<T>.IsSuccess.get -> bool
+StandSure.Functional.Result<T>.Result() -> void
+StandSure.Functional.Result<T>.Result(StandSure.Functional.Error! error) -> void
+StandSure.Functional.Result<T>.Result(T value) -> void
+StandSure.Functional.Result<T>.TryGetValue(out StandSure.Functional.Error? error) -> bool
+StandSure.Functional.Result<T>.TryGetValue(out T value) -> bool
+StandSure.Functional.Result<T>.Value.get -> object?
 StandSure.Functional.Unit
 StandSure.Functional.Unit.CompareTo(StandSure.Functional.Unit other) -> int
 StandSure.Functional.Unit.Equals(StandSure.Functional.Unit other) -> bool
@@ -41,6 +53,9 @@ static StandSure.Functional.Error.Validation(string! code, string! message, Syst
 static StandSure.Functional.Error.Validation(string! code, string! message, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? metadata = null) -> StandSure.Functional.Error!
 static StandSure.Functional.Error.operator !=(StandSure.Functional.Error? left, StandSure.Functional.Error? right) -> bool
 static StandSure.Functional.Error.operator ==(StandSure.Functional.Error? left, StandSure.Functional.Error? right) -> bool
+static StandSure.Functional.Result.Fail<T>(StandSure.Functional.Error! error) -> StandSure.Functional.Result<T>
+static StandSure.Functional.Result.Ok() -> StandSure.Functional.Result<StandSure.Functional.Unit>
+static StandSure.Functional.Result.Ok<T>(T value) -> StandSure.Functional.Result<T>
 static StandSure.Functional.Unit.operator !=(StandSure.Functional.Unit left, StandSure.Functional.Unit right) -> bool
 static StandSure.Functional.Unit.operator ==(StandSure.Functional.Unit left, StandSure.Functional.Unit right) -> bool
 static readonly StandSure.Functional.Unit.Value -> StandSure.Functional.Unit
