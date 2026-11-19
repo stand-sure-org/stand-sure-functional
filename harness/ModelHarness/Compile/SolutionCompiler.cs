@@ -22,6 +22,9 @@ using ModelHarness.Tasks;
 /// </remarks>
 public static class SolutionCompiler
 {
+    /// <summary>The syntax-tree path of the model's code; the fixture and probe trees use other paths (<c>fixture.cs</c>, <c>probe.cs</c>).</summary>
+    public const string ModelFileName = "model.cs";
+
     private const string EntryType = "Solution";
 
     private static readonly Lazy<IReadOnlyList<MetadataReference>> Framework =
@@ -49,7 +52,7 @@ public static class SolutionCompiler
 
         reserved.Remove(EntryType);
 
-        var modelRoot = CSharpSyntaxTree.ParseText(code ?? string.Empty, parseOptions, "model.cs").GetRoot();
+        var modelRoot = CSharpSyntaxTree.ParseText(code ?? string.Empty, parseOptions, ModelFileName).GetRoot();
         var doomed = TopLevelTypes(modelRoot).Where(t => reserved.Contains(NameOf(t))).ToList();
         var stripped = doomed.Select(NameOf).Distinct(StringComparer.Ordinal).ToList();
         if (doomed.Count > 0)
@@ -57,7 +60,7 @@ public static class SolutionCompiler
             modelRoot = modelRoot.RemoveNodes(doomed, SyntaxRemoveOptions.KeepNoTrivia) ?? modelRoot;
         }
 
-        var modelTree = CSharpSyntaxTree.Create((CSharpSyntaxNode)modelRoot, parseOptions, "model.cs");
+        var modelTree = CSharpSyntaxTree.Create((CSharpSyntaxNode)modelRoot, parseOptions, ModelFileName);
         var references = withLibrary ? [.. Framework.Value, Library.Value] : Framework.Value;
         var compilation = CSharpCompilation.Create(
             "ModelSolution_" + Guid.NewGuid().ToString("N"),
