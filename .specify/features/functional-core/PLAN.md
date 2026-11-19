@@ -1,8 +1,8 @@
 # Functional Core + Model-Usage Harness Implementation Plan
 
-**Version:** 1.0 (Initial)
+**Version:** 1.1 (Post-review)
 **Date:** 2026-11-19
-**Changes:** First plan, from DESIGN.md v1.2 (owner-approved 2026-11-19).
+**Changes:** Union probe results folded in (exhaustiveness verified; `Result<Error>` ambiguity; `None` name clash); Review Focus task refs fixed; harness fixture/isolation gaps closed; `Try` AggregateException handling; CLAUDE.md added to Task 1.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -34,11 +34,11 @@
 
 ## Review Focus
 
-1. **`default` values everywhere.** A `default(Result<T>)` or `default(Option<T>)` (from array allocation, an unset field or `new T[n]`) behaves as failure `Error.Uninitialized` / None in `IsSuccess`, `TryGetValue`, `Deconstruct`, `switch`, `Match` and JSON, and never throws. → Tests in Tasks 4, 5, 8.
-2. **`T` that overlaps `Error` or `object`.** For `Result<object>` and `Result<Error>`, success or failure is decided by the stored tag, never by the value's runtime type. `Result.Ok<object>(someError).IsSuccess` is true. → Task 4.
-3. **Cancellation and sync throws in `RunAsync`.** `TaskCanceledException`, an OCE thrown synchronously before the task is returned, and an OCE wrapped in `AggregateException` from `.Wait()`-style code all propagate as OCE. A non-OCE thrown synchronously by the delegate becomes a failure, not an escaped exception. → Task 6.
-4. **Malformed or partial JSON.** For `Result<T>`, both `{}` and `{"value":null,"error":null}` deserialize to failure `Error.Uninitialized`. When both `value` and `error` are present, `error` wins. Unknown properties are ignored. → Task 8.
-5. **Messy model output in the harness.** Output with no code fence, with several fences, or with code that never terminates is recorded as `extract_failed`, `concatenated` or `timeout` respectively. It never crashes the run or hangs it past the per-probe timeout. → Tasks 12, 14.
+1. **`default` values everywhere.** A `default(Result<T>)` or `default(Option<T>)` (from array allocation, an unset field or `new T[n]`) behaves as failure `Error.Uninitialized` / None in `IsSuccess`, `TryGetValue`, `Deconstruct`, `switch`, `Match` and JSON, and never throws. → Tests in Tasks 3, 4, 7.
+2. **`T` that overlaps `Error` or `object`.** For `Result<object>` and `Result<Error>`, success or failure is decided by the stored tag, never by the value's runtime type. `Result.Ok<object>(someError).IsSuccess` is true; implicit `Result<object> r = someError` is a failure (most specific conversion). Implicit `Error` → `Result<Error>` is a compile error (CS0457, verified) — acceptable; `Result.Ok(err)` is the way to make a success. → Task 3.
+3. **Cancellation and sync throws in `RunAsync`.** `TaskCanceledException`, an OCE thrown synchronously before the task is returned, and an OCE wrapped in `AggregateException` from `.Wait()`-style code all propagate as OCE. A non-OCE thrown synchronously by the delegate becomes a failure, not an escaped exception. → Task 5.
+4. **Malformed or partial JSON.** For `Result<T>`, both `{}` and `{"value":null,"error":null}` deserialize to failure `Error.Uninitialized`. When both `value` and `error` are present, `error` wins. Unknown properties are ignored. → Task 7.
+5. **Messy model output in the harness.** Output with no code fence, with several fences, or with code that never terminates is recorded as `extract_failed`, `concatenated` or `timeout` respectively. It never crashes the run or hangs it past the per-probe timeout. → Tasks 11, 13.
 
 ---
 
@@ -47,12 +47,12 @@
 ### Task 1: Solution scaffold + `Unit`
 
 **Files:**
-- Create: `global.json`, `Directory.Build.props`, `Directory.Packages.props`, `BannedSymbols.txt`, `.gitignore`, `.editorconfig`, `StandSure.Functional.slnx`
+- Create: `CLAUDE.md` (project guide for agents: commands, layout, Global Constraints of this plan, pointer to `.specify/features/functional-core/`), `global.json`, `Directory.Build.props`, `Directory.Packages.props`, `BannedSymbols.txt`, `.gitignore`, `.editorconfig`, `StandSure.Functional.slnx`
 - Create: `src/StandSure.Functional/StandSure.Functional.csproj`, `PublicAPI.Shipped.txt` (empty), `PublicAPI.Unshipped.txt`, `Unit.cs`
 - Create: `tests/StandSure.Functional.Tests/StandSure.Functional.Tests.csproj`, `UnitTests.cs`
 
 **Interfaces:**
-- Produces: `public readonly struct Unit : IEquatable<Unit>, IComparable<Unit>` with `public static readonly Unit Value`, `==`/`!=`, `CompareTo` always returns 0, `GetHashCode` returns 0, `ToString()` returns `"()"`.
+- Produces: `CLAUDE.md`; `public readonly struct Unit : IEquatable<Unit>, IComparable<Unit>` with `public static readonly Unit Value`, `==`/`!=`, `CompareTo` always returns 0, `GetHashCode` returns 0, `ToString()` returns `"()"`.
 
 - [ ] **Step 1:** Create the scaffold files to satisfy Global Constraints. The test project references xunit.v3 and AwesomeAssertions through central package management.
 - [ ] **Step 2: Write failing tests** in `UnitTests.cs`:
@@ -109,7 +109,7 @@
   - `[Union] public readonly struct Result<T> : IUnion`, built from `T value` and `Error error` constructors. Implicit conversions from `T` and from `Error`. Fields: one `T`, one `Error?`, and a `byte` tag (0 = default, 1 = ok, 2 = fail).
   - `bool IsSuccess`, `bool IsFailure`. Tag 0 counts as failure.
   - `object? Value`: returns the `Error.Uninitialized` instance when the tag is 0.
-  - `bool HasValue`: always true.
+  - `bool HasValue`: always true. (Verified: with `HasValue => true` and tag-0 routed to the `Error` case, `switch { Error e => …, int i => … }` is exhaustive under warnings-as-errors and `default` takes the `Error` arm.)
   - `bool TryGetValue([NotNullWhen(true)] out Error? error)` and `bool TryGetValue([MaybeNullWhen(false)] out T value)`.
   - `void Deconstruct(out T? value, out Error? error)`.
   - Static class `Result` with `Ok<T>(T value)`, `Fail<T>(Error error)`, `Ok()` → `Result<Unit>`.
@@ -121,8 +121,10 @@
   - `DefaultArrayElement_IsFailure`: `new Result<int>[3][1].IsFailure.Should().BeTrue()`
   - `Switch_IsExhaustiveWithoutDiscard`: a test-local `static string Describe(Result<int> r) => r switch { Error e => e.Code, int i => i.ToString() };`. It compiles under warnings-as-errors and returns the expected strings.
   - `Deconstruct_GoStyle_EarlyReturn`
-  - `ResultOfObject_TagWinsOverRuntimeType`: `Result.Ok<object>(Error.NotFound("x","y")).IsSuccess.Should().BeTrue()`
-  - `ResultOfError_OkIsSuccess`: `Result.Ok(Error.NotFound("x","y")).IsSuccess.Should().BeTrue()`
+  - `ResultOfObject_TagWinsOverRuntimeType`: `Result.Ok<object>(Error.NotFound("x","y")).IsSuccess.Should().BeTrue()`, and `switch { Error e => …, object o => … }` takes the `object` arm
+  - `ResultOfObject_ImplicitFromError_IsFailure`: `Result<object> r = Error.NotFound("x","y"); r.IsFailure.Should().BeTrue()`
+  - `ResultOfError_OkIsSuccess`: `Result.Ok(Error.NotFound("x","y")).IsSuccess.Should().BeTrue()` (inside generic `Ok<T>` the `T` constructor binds; verified). Implicit `Error` → `Result<Error>` is CS0457; document it in the XML doc, no test.
+  - `MissingCase_IsCs8509`: compile `r switch { int i => … }` with Roslyn in-test and assert diagnostic `CS8509` (verified on SDK 11.0.100)
   - `NullReferenceValue_IsSuccess`: `Result.Ok<string?>(null).IsSuccess.Should().BeTrue()`
   - `OkUnit_IsSuccess`
   - `ResultAllocationTests.CreateAndMatch_ValueType_AllocatesNothing`: warm up, then 1,000 create-and-`switch` iterations; `GC.GetAllocatedBytesForCurrentThread()` delta `.Should().Be(0)`
@@ -143,7 +145,7 @@
   - `[Union] public readonly struct Option<T> : IUnion` with cases `None | T`. Implicit from `T`; a null `T` becomes None. Implicit from `None`.
   - `bool IsSome`, `bool IsNone`, `object? Value` (`None.Instance` when absent), `bool HasValue` (always true).
   - `bool TryGetValue(out None? none)` and `bool TryGetValue([MaybeNullWhen(false)] out T value)`.
-  - `public static Option<T> None { get; }` on `Option<T>`.
+  - `public static Option<T> None { get; }` on `Option<T>`. Inside the struct this property shadows the case type, so the struct refers to the type as `global::StandSure.Functional.None` (verified: unqualified `None` binds to the property).
   - Static class `Option` with `Some<T>(T value)` and `None<T>()`.
 
 - [ ] **Step 1: Write failing tests:**
@@ -185,7 +187,7 @@ The public names here are provisional. Part C may rename them through the owner-
   - `RunAsync_AggregateWrappingOce_Propagates`: the delegate blocks on a cancelled task with `.Wait()`; the result is an OCE, not a failure
   - `RunAsync_PassesToken`
 - [ ] **Step 2:** Run the tests. Expected: FAIL.
-- [ ] **Step 3:** Implement. Use an exception filter `catch (Exception ex) when (!IsFatalOrCancel(ex))`. `IsFatalOrCancel` is true for `OperationCanceledException`, `OutOfMemoryException`, and an `AggregateException` whose flattened inner exceptions are all OCE; that case rethrows the first inner OCE through `ExceptionDispatchInfo`.
+- [ ] **Step 3:** Implement with two catch clauses in this order: (1) `catch (AggregateException ae) when (AllCancellation(ae))` rethrows the first flattened inner OCE via `ExceptionDispatchInfo.Throw`; (2) `catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException)` returns `Error.FromException(ex)`. Everything else propagates untouched.
 - [ ] **Step 4:** Run the tests. Expected: PASS.
 - [ ] **Step 5:** Commit: `feat: Try bridge for throwing code`.
 
@@ -304,7 +306,8 @@ The public names here are provisional. Part C may rename them through the owner-
   - `Load_FindsTwelveTasks`
   - `EveryTask_HasFixtureAndProbe`
   - `EveryFixture_CompilesStandalone`: compiled with Roslyn against the net11 reference assemblies
-  - `NoTaskPrompt_MentionsResultOrOption`: the baseline must not leak our vocabulary
+  - `NoTaskPrompt_MentionsResultOrOption`: the baseline must not leak our vocabulary. Match whole words, case-sensitive, regex `\b(Result|Option|Either|Match|Bind)\b`, so "optional" in task 3 does not trip it
+  - `EveryPrompt_SaysFixturesAreProvided`: each `task.md` states the fixture types already exist and must not be redeclared
 - [ ] **Step 2:** Run the tests. Expected: FAIL.
 - [ ] **Step 3:** Write the 12 tasks and `TaskCatalog`.
 - [ ] **Step 4:** Run the tests. Expected: PASS.
@@ -319,7 +322,7 @@ The public names here are provisional. Part C may rename them through the owner-
 **Interfaces:**
 - Produces:
   - `CodeExtractor.Extract(string modelText) : ExtractResult`, where `ExtractResult(string? Code, ExtractStatus Status)` and `ExtractStatus { Single, Concatenated, ExtractFailed }`. It takes ```` ```csharp ````/```` ```cs ````/unlabelled fences; several fences are concatenated in order; with no fence at all it tries the raw text only if it parses as C# with no syntax errors, and otherwise returns `ExtractFailed`.
-  - `SolutionCompiler.Compile(HarnessTask task, string code, bool withLibrary) : CompileResult`, where `CompileResult(bool Success, IReadOnlyList<string> Diagnostics, byte[]? Assembly, CSharpCompilation Compilation)`. It references the net11 reference pack, plus `StandSure.Functional.dll` when `withLibrary` is true.
+  - `SolutionCompiler.Compile(HarnessTask task, string code, bool withLibrary) : CompileResult`, where `CompileResult(bool Success, IReadOnlyList<string> Diagnostics, byte[]? Assembly, CSharpCompilation Compilation, IReadOnlyList<string> StrippedTypes)`. The compilation is model code **plus `FixtureSource` and `ProbeSource`**. Before compiling, any top-level type the model declares whose name matches a fixture type is removed from the model's syntax tree and its name recorded in `StrippedTypes` (redeclaration is common and would otherwise measure nothing about API shape). It references the net11 reference pack, plus `StandSure.Functional.dll` when `withLibrary` is true.
 
 - [ ] **Step 1: Write failing tests:**
   - `NoFence_InvalidCSharp_ExtractFailed`
@@ -328,6 +331,8 @@ The public names here are provisional. Part C may rename them through the owner-
   - `CompilesValidSolution`
   - `ReportsDiagnosticsForInvalid`
   - `WithLibrary_ResolvesResultType`
+  - `FixtureTypesAreCompiledIn`: model code using `IUserStore` without declaring it compiles
+  - `RedeclaredFixtureType_IsStripped_AndRecorded`
 - [ ] **Step 2:** Run the tests. Expected: FAIL.
 - [ ] **Step 3:** Implement.
 - [ ] **Step 4:** Run the tests. Expected: PASS.
@@ -366,7 +371,7 @@ The public names here are provisional. Part C may rename them through the owner-
 **Interfaces:**
 - Produces:
   - `ProbeRunner <assemblyPath> <entryType> <entryMethod>`. It loads the assembly in a collectible `AssemblyLoadContext`, builds the probe's stub arguments from the `Probe` class in the compiled assembly, invokes the entry method, and awaits it if it is Task-like. It writes one JSON line to stdout: `{"outcome":"returned|threw|timeout|crashed","exceptionType":...}`.
-  - `ProbeExecutor.RunAsync(byte[] assembly, HarnessTask task, TimeSpan timeout, CancellationToken ct) : Task<ProbeResult>` writes the assembly to a fresh temp directory and starts ProbeRunner with that directory as the working directory and the `DOTNET_` environment only. It kills the process tree on timeout. The default timeout is 10 s.
+  - `ProbeExecutor.RunAsync(byte[] assembly, HarnessTask task, TimeSpan timeout, CancellationToken ct) : Task<ProbeResult>` writes the assembly to a fresh temp directory and starts ProbeRunner with that directory as the working directory and the `DOTNET_` environment only. It starts the child with `ProcessStartInfo.Environment.Clear()` and then adds only `PATH`, `HOME` (set to the temp dir) and `DOTNET_ROOT`, so `fnox`-injected keys never reach model code. Network is denied by launching under macOS `sandbox-exec` with a profile that has `(deny network*)` and allows file writes only inside the temp dir; on non-macOS the probe refuses to run and records `crashed` with reason `no-sandbox`. It kills the process tree on timeout. The default timeout is 10 s.
 
 - [ ] **Step 1: Write failing tests:**
   - `ReturningSolution_Returned`
@@ -374,6 +379,8 @@ The public names here are provisional. Part C may rename them through the owner-
   - `InfiniteLoop_Timeout_ProcessKilled`
   - `EnvironmentExit_Crashed`
   - `AsyncSolution_Awaited`
+  - `ProbeEnvironment_ContainsNoApiKeys`: parent sets `ANTHROPIC_API_KEY`; a solution that returns `Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY")` reports null
+  - `NetworkAccess_IsDenied`: a solution that opens a TCP connection to `1.1.1.1:443` gets an exception (recorded as `threw`)
 - [ ] **Step 2:** Run the tests. Expected: FAIL.
 - [ ] **Step 3:** Implement.
 - [ ] **Step 4:** Run the tests. Expected: PASS.
