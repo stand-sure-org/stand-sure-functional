@@ -64,7 +64,7 @@ namespace StandSure.Functional
     public static class Option
     {
         public static StandSure.Functional.Option<T> None<T>() { }
-        public static StandSure.Functional.Option<T> Some<T>(T value) { }
+        public static StandSure.Functional.Option<T> Some<T>([System.Diagnostics.CodeAnalysis.AllowNull] T value) { }
     }
     public static class OptionEnumerableExtensions
     {
@@ -77,7 +77,7 @@ namespace StandSure.Functional
     public readonly struct Option<T> : System.Runtime.CompilerServices.IUnion
     {
         public Option(StandSure.Functional.None none) { }
-        public Option(T value) { }
+        public Option([System.Diagnostics.CodeAnalysis.AllowNull] T value) { }
         public bool HasValue { get; }
         public bool IsNone { get; }
         public bool IsSome { get; }

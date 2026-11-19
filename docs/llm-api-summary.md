@@ -42,11 +42,11 @@ return errors.Count > 0 ? Error.Validation("movie.invalid", "The movie has error
 ## Optional values: fallback; memory, then disk, then default
 
 ```csharp
-Option<string> raw = env.Read("RETRIES") is { } text ? text : Option<string>.None;
+Option<string> raw = env.Read("RETRIES"); // string? converts; null becomes None
 int retries = raw.Bind(ParseInt).GetValueOrDefault(3);
 static Option<int> ParseInt(string s) => int.TryParse(s, out var n) ? n : Option<int>.None;
 
-Option<Theme> remembered = memory.Find(key) is { } hit ? hit : Option<Theme>.None;
+Option<Theme> remembered = memory.Find(key); // Theme? converts; null becomes None
 Theme theme = remembered.Match(
     onNone: () => disk.Find(key) ?? Theme.Default,
     onSome: t => t);

@@ -39,7 +39,7 @@ public readonly partial struct Option<T> : IUnion
     /// <summary>Initializes a new instance of the <see cref="Option{T}"/> struct holding a value.</summary>
     /// <param name="value">The value; <see langword="null"/> produces none.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Option(T value)
+    public Option([AllowNull] T value)
     {
         if (default(T) is null && value is null)
         {
@@ -48,7 +48,7 @@ public readonly partial struct Option<T> : IUnion
             return;
         }
 
-        _value = value;
+        _value = value!;
         _isSome = true;
     }
 
