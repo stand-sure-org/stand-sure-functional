@@ -81,3 +81,13 @@ static StandSure.Functional.Try.Run(System.Action! action) -> StandSure.Function
 static StandSure.Functional.Try.Run<T>(System.Func<T>! fn) -> StandSure.Functional.Result<T>
 static StandSure.Functional.Try.RunAsync(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task!>! fn, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<StandSure.Functional.Result<StandSure.Functional.Unit>>!
 static StandSure.Functional.Try.RunAsync<T>(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<T>!>! fn, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<StandSure.Functional.Result<T>>!
+StandSure.Functional.Json.FunctionalJsonOptionsExtensions
+static StandSure.Functional.Json.FunctionalJsonOptionsExtensions.AddFunctional(this System.Text.Json.JsonSerializerOptions! options) -> System.Text.Json.JsonSerializerOptions!
+StandSure.Functional.Json.ResultJsonConverterFactory
+StandSure.Functional.Json.ResultJsonConverterFactory.ResultJsonConverterFactory() -> void
+override StandSure.Functional.Json.ResultJsonConverterFactory.CanConvert(System.Type! typeToConvert) -> bool
+override StandSure.Functional.Json.ResultJsonConverterFactory.CreateConverter(System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> System.Text.Json.Serialization.JsonConverter?
+StandSure.Functional.Json.OptionJsonConverterFactory
+StandSure.Functional.Json.OptionJsonConverterFactory.OptionJsonConverterFactory() -> void
+override StandSure.Functional.Json.OptionJsonConverterFactory.CanConvert(System.Type! typeToConvert) -> bool
+override StandSure.Functional.Json.OptionJsonConverterFactory.CreateConverter(System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> System.Text.Json.Serialization.JsonConverter?

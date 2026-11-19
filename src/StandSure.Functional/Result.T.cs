@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
+using StandSure.Functional.Json;
 
 namespace StandSure.Functional;
 
@@ -37,6 +39,7 @@ namespace StandSure.Functional;
 /// </para>
 /// </remarks>
 [Union]
+[JsonConverter(typeof(ResultJsonConverterFactory))]
 [StackTraceHidden]
 [DebuggerDisplay("{DebugView,nq}")]
 public readonly partial struct Result<T> : IUnion

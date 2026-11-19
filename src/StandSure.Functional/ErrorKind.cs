@@ -1,6 +1,9 @@
+using System.Text.Json.Serialization;
+
 namespace StandSure.Functional;
 
 /// <summary>The category of a failure, independent of its specific code.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<ErrorKind>))]
 public enum ErrorKind
 {
     /// <summary>The input was invalid.</summary>

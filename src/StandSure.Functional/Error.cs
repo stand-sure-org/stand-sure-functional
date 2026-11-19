@@ -26,6 +26,7 @@ public sealed record Error
         null,
         null);
 
+    [JsonConstructor]
     private Error(
         ErrorKind kind,
         string code,
@@ -48,21 +49,29 @@ public sealed record Error
     public static Error Uninitialized => UninitializedInstance;
 
     /// <summary>Gets the category of the failure.</summary>
+    [JsonPropertyName("kind")]
     public ErrorKind Kind { get; }
 
     /// <summary>Gets the stable machine-readable code.</summary>
+    [JsonPropertyName("code")]
     public string Code { get; }
 
     /// <summary>Gets the human-readable message.</summary>
+    [JsonPropertyName("message")]
     public string Message { get; }
 
     /// <summary>Gets additional context; never <see langword="null"/>.</summary>
+    [JsonPropertyName("metadata")]
     public IReadOnlyDictionary<string, string> Metadata { get; }
 
     /// <summary>Gets the error this one wraps, if any.</summary>
+    [JsonPropertyOrder(2)]
+    [JsonPropertyName("inner")]
     public Error? Inner { get; }
 
     /// <summary>Gets child errors (for example several validation failures); never <see langword="null"/>.</summary>
+    [JsonPropertyOrder(1)]
+    [JsonPropertyName("errors")]
     public IReadOnlyList<Error> Errors { get; }
 
     /// <summary>Gets the originating exception; kept in-process only and never serialized.</summary>
