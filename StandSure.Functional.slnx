@@ -4,5 +4,9 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/StandSure.Functional.Tests/StandSure.Functional.Tests.csproj" />
+    <Project Path="tests/StandSure.Functional.ApprovalTests/StandSure.Functional.ApprovalTests.csproj" />
+  </Folder>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/StandSure.Functional.Benchmarks/StandSure.Functional.Benchmarks.csproj" />
   </Folder>
 </Solution>
