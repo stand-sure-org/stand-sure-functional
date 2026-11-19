@@ -3,6 +3,7 @@ namespace ModelHarness.Tests;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text.RegularExpressions;
 
 using AwesomeAssertions;
 
@@ -172,7 +173,7 @@ public sealed class ProbeExecutorTests
 
             public sealed class Solution(IGreeter greeter)
             {
-                private static readonly string[] Allowed = ["PATH", "HOME", "DOTNET_ROOT", "DOTNET_EnableDiagnostics", "DOTNET_GCHeapHardLimit"];
+                private static readonly string[] Allowed = ["PATH", "HOME", "TMPDIR", "DOTNET_ROOT", "DOTNET_EnableDiagnostics", "DOTNET_GCHeapHardLimit"];
 
                 public string? Run(int id)
                 {
@@ -428,6 +429,88 @@ public sealed class ProbeExecutorTests
         var result = await ProbeExecutor.RunAsync(compiled.Assembly!, task, Timeout, TestContext.Current.CancellationToken);
 
         result.Should().BeEquivalentTo(new { Outcome = ProbeOutcome.Returned, Reason = (string?)null });
+    }
+
+    [Theory]
+    [MemberData(nameof(TaskCatalogTests.TaskIds), MemberType = typeof(TaskCatalogTests))]
+    public async Task EveryRealTask_StubSolution_ReturnsUnderTheSandbox(string id)
+    {
+        // Benign code must not be turned into "threw" by the sandbox: every real HarnessProbe stub, invoked against a
+        // Solution written to the task's signature, completes.
+        RequireSandbox();
+        var root = RepoLocator.FindRoot(AppContext.BaseDirectory);
+        var task = TaskCatalog.Load(Path.Combine(root, "harness", "tasks")).Single(t => t.Id == id);
+        var ctorParameters = Regex.Match(task.Prompt, @"public constructor `Solution\((?<p>[^)]*)\)`").Groups["p"].Value;
+        var methodParameters = Regex.Match(task.Prompt, "`" + task.EntryMethod + @"\((?<p>[^)]*)\)`").Groups["p"].Value;
+        var stub = $$"""
+            using System;
+            using System.Collections.Generic;
+            using System.Threading;
+
+            namespace Anywhere;
+
+            public sealed class Solution
+            {
+                public Solution({{ctorParameters}})
+                {
+                }
+
+                public object? {{task.EntryMethod}}({{methodParameters}}) => null;
+            }
+            """;
+        var compiled = SolutionCompiler.Compile(task, stub, withLibrary: false);
+        compiled.Diagnostics.Should().BeEmpty(id);
+
+        var result = await ProbeExecutor.RunAsync(compiled.Assembly!, task, Timeout, TestContext.Current.CancellationToken);
+
+        result.Should().BeEquivalentTo(new { Outcome = ProbeOutcome.Returned, ExceptionType = (string?)null, Reason = (string?)null }, id);
+    }
+
+    [Fact]
+    public async Task CommonBclCalls_ReturnUnderTheSandbox()
+    {
+        RequireSandbox();
+        var assembly = Build("""
+            using System;
+            using System.Diagnostics;
+            using System.Globalization;
+            using System.IO;
+            using System.Net.Http;
+            using System.Text.Json;
+            using System.Threading.Tasks;
+
+            public sealed class Solution(IGreeter greeter)
+            {
+                public async Task<string> Run(int id)
+                {
+                    var stopwatch = Stopwatch.StartNew();
+                    using var http = new HttpClient();
+                    var parts = new object[]
+                    {
+                        DateTime.Now,
+                        DateTimeOffset.UtcNow,
+                        TimeZoneInfo.Local.Id,
+                        TimeZoneInfo.FindSystemTimeZoneById("Europe/London").BaseUtcOffset,
+                        Guid.NewGuid(),
+                        Random.Shared.Next(),
+                        CultureInfo.CurrentCulture.Name,
+                        123.45m.ToString("C", CultureInfo.GetCultureInfo("de-DE")),
+                        "straße".ToUpper(CultureInfo.GetCultureInfo("de-DE")),
+                        JsonSerializer.Serialize(new { id }),
+                        Path.GetTempFileName(),
+                        Environment.ProcessorCount,
+                        http.Timeout,
+                    };
+                    await Task.Delay(10);
+                    await Task.Run(() => stopwatch.Stop());
+                    return string.Join("|", parts) + greeter.Greet(id);
+                }
+            }
+            """);
+
+        var result = await ProbeExecutor.RunAsync(assembly, Synthetic, Timeout, TestContext.Current.CancellationToken);
+
+        result.Should().BeEquivalentTo(new { Outcome = ProbeOutcome.Returned, ExceptionType = (string?)null });
     }
 
     [Fact]

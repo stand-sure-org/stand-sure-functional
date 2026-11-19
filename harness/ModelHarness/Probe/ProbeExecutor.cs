@@ -20,7 +20,7 @@ using ModelHarness.Tasks;
 /// <para>Process: the assembly is written to <c>solution.dll</c> in a fresh temp directory, which is also the working directory
 /// and <c>HOME</c>. ProbeRunner (<c>dotnet ProbeRunner.dll &lt;assembly&gt; &lt;entryType&gt; &lt;entryMethod&gt;</c>) is started under
 /// <c>/usr/bin/sandbox-exec</c> with <see cref="SandboxProfile"/>. Its environment is cleared and holds only <c>PATH</c>,
-/// <c>HOME</c>, <c>DOTNET_ROOT</c>, <c>DOTNET_EnableDiagnostics=0</c> and <c>DOTNET_GCHeapHardLimit</c> (1 GiB), so API keys in the harness's environment never reach
+/// <c>HOME</c>, <c>TMPDIR</c> (both the probe dir), <c>DOTNET_ROOT</c>, <c>DOTNET_EnableDiagnostics=0</c> and <c>DOTNET_GCHeapHardLimit</c> (1 GiB), so API keys in the harness's environment never reach
 /// model code. Stdin is closed immediately.</para>
 /// <para>Location: ProbeRunner runs from its own build output. ModelHarness references the project for build order only and
 /// bakes ProbeRunner's <c>TargetPath</c> into <c>[AssemblyMetadata("ProbeRunnerPath")]</c> at build time.</para>
@@ -171,6 +171,10 @@ public static class ProbeExecutor
         startInfo.Environment.Clear();
         startInfo.Environment["PATH"] = dotnetRoot + ":" + FallbackPath;
         startInfo.Environment["HOME"] = directory;
+
+        // Path.GetTempPath() falls back to /tmp, which the profile makes unwritable; keep temp files inside the probe dir
+        // so ordinary code that uses temp files is not turned into "threw" by the sandbox.
+        startInfo.Environment["TMPDIR"] = directory + "/";
         startInfo.Environment["DOTNET_ROOT"] = dotnetRoot;
 
         // No diagnostic IPC socket, debugger or profiler attach surface in the child.
