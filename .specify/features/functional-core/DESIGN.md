@@ -1,9 +1,11 @@
 # Design: Functional Core + Model-Usage Harness
 
-**Version:** 1.1 (Post builder check)
+**Version:** 1.2 (Owner answers to builder check)
 **Date:** 2026-11-19
-**Changes:** Settled harness execution, baseline authority, wire format, telemetry firing
-points, harness run mode. See `DECISION.md` for the why and the scope table.
+**Changes:** v1.1 settled harness execution, baseline authority, wire format, telemetry
+firing points, run mode. v1.2: no budget cap (5 runs per cell), Gemini via
+`GEMINI_API_KEY`, local models pulled fresh, baseline authority confirmed by owner.
+See `DECISION.md` for the why and the scope table.
 
 Items marked **[builder's call]** were proposed by Claude during design and not
 explicitly confirmed by the owner; change them freely if evidence says otherwise.
@@ -96,17 +98,24 @@ them, then measure how well models use the API we ship.
 
 - Location: `harness/ModelHarness/` (console app, net11.0). Not packaged.
 - Calls models over **direct HTTP** (owner prefers direct API usage over SDKs):
-  Anthropic Messages API, Gemini API, Ollama's local HTTP API. Keys via `fnox`.
+  Anthropic Messages API, Gemini API, Ollama's local HTTP API. Keys via `fnox`
+  (initialized in this repo); Gemini may use the existing global `GEMINI_API_KEY`.
   **[builder's call]** if an official SDK is clearly simpler and current.
+- Raw API, not agent CLIs, for v1: reproducible and isolates the model from harness
+  tooling. `claude -p` / `agy` (works in this repo) as an "in-harness" condition is a
+  later addition **[builder's call]**.
 - Models: Claude Opus 5.5, Sonnet 5.5, Haiku 5.5 (`claude-opus-5-5`, `claude-sonnet-5-5`,
   `claude-haiku-5-5`); current Gemini Pro and Flash (builder looks up current IDs);
-  whatever is installed locally per `ollama list` / omlx. Model list is config, not code.
+  local: pull two current coding-focused models that fit this machine's memory
+  (owner: "we can pull any model"); skip the installed non-coder models. Model list is
+  config, not code.
+- **No budget cap** (owner).
 - Two conditions:
   - **Baseline**: task + "Expected failures must not throw; return a value describing
     the failure. Write idiomatic modern C# 15 / .NET 11." No library mentioned.
   - **With-library**: same task + the one-page API summary (`docs/llm-api-summary.md`,
     produced in Part 2).
-- 3 runs per (model, task, condition), default temperature.
+- 5 runs per (model, task, condition), default temperature.
 - Each output is compiled against a small fixture project (task interfaces + stubs;
   in the with-library condition, also the core library).
 
@@ -124,7 +133,7 @@ them, then measure how well models use the API we ship.
 ### Run mode
 
 Local tool, run by hand; produces reports for review. **Not a CI gate** in v1.
-Comparisons use aggregate rates per model family across the 3 runs; a family/task
+Comparisons use aggregate rates per model family across the 5 runs; a family/task
 cell that regresses gets a note in the report, not a failure.
 
 ### Task set (12)
@@ -169,7 +178,7 @@ The API below is the **starting proposal**.
 
 **What the baseline can change:** member *names*, member *set*, and the `Try` entry
 point name. It does **not** reopen the type shapes (`Result<T>`, `Option<T>`, `Error`,
-`Unit`, non-boxing unions, failure-first): the owner fixed those. If models mostly use
+`Unit`, non-boxing unions, failure-first): the owner fixed those (confirmed 2026-11-19). If models mostly use
 exceptions or `bool TryX(out)`, that informs the API summary and later analyzers,
 not the core shape. Renames: Claude proposes them in the report with frequencies per
 family; the owner approves. Members not listed are out unless the report justifies them.
