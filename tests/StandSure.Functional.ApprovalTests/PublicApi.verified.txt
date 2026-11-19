@@ -3,6 +3,17 @@
 [assembly: System.Runtime.Versioning.TargetFramework(".NETCoreApp,Version=v11.0", FrameworkDisplayName=".NET 11.0")]
 namespace StandSure.Functional
 {
+    public static class EnumerablePairwiseExtensions
+    {
+        [return: System.Runtime.CompilerServices.TupleElementNames(new string[] {
+                "Previous",
+                "Current"})]
+        public static System.Collections.Generic.IEnumerable<System.ValueTuple<T, T>> Pairwise<T>(this System.Collections.Generic.IEnumerable<T> source) { }
+    }
+    public static class EnumerableScanExtensions
+    {
+        public static System.Collections.Generic.IEnumerable<TAcc> Scan<T, TAcc>(this System.Collections.Generic.IEnumerable<T> source, TAcc seed, System.Func<TAcc, T, TAcc> accumulator) { }
+    }
     public sealed class Error : System.IEquatable<StandSure.Functional.Error>
     {
         [System.Text.Json.Serialization.JsonPropertyName("code")]
@@ -55,6 +66,10 @@ namespace StandSure.Functional
         public static StandSure.Functional.Option<T> None<T>() { }
         public static StandSure.Functional.Option<T> Some<T>(T value) { }
     }
+    public static class OptionEnumerableExtensions
+    {
+        public static System.Collections.Generic.IEnumerable<T> Choose<T>(this System.Collections.Generic.IEnumerable<StandSure.Functional.Option<T>> source) { }
+    }
     [System.Diagnostics.DebuggerDisplay("{DebugView,nq}")]
     [System.Diagnostics.StackTraceHidden]
     [System.Runtime.CompilerServices.Union]
@@ -85,6 +100,15 @@ namespace StandSure.Functional
         public static StandSure.Functional.Result<T> Ok<T>(T value) { }
         public static StandSure.Functional.Result<StandSure.Functional.Unit> Success() { }
         public static StandSure.Functional.Result<T> Success<T>(T value) { }
+    }
+    public static class ResultEnumerableExtensions
+    {
+        public static StandSure.Functional.Result<System.Collections.Generic.IReadOnlyList<T>> Combine<T>(this System.Collections.Generic.IEnumerable<StandSure.Functional.Result<T>> source) { }
+        [return: System.Runtime.CompilerServices.TupleElementNames(new string?[]?[] {
+                "Successes",
+                "Failures"})]
+        public static System.ValueTuple<System.Collections.Generic.IReadOnlyList<T>, System.Collections.Generic.IReadOnlyList<StandSure.Functional.Error>> Partition<T>(this System.Collections.Generic.IEnumerable<StandSure.Functional.Result<T>> source) { }
+        public static StandSure.Functional.Result<System.Collections.Generic.IReadOnlyList<TOut>> Traverse<T, TOut>(this System.Collections.Generic.IEnumerable<T> source, System.Func<T, StandSure.Functional.Result<TOut>> map) { }
     }
     [System.Diagnostics.StackTraceHidden]
     public static class ResultTaskExtensions

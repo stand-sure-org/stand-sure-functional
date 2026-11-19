@@ -125,3 +125,13 @@ StandSure.Functional.Option<T>.GetValueOrDefault(T fallback) -> T
 StandSure.Functional.Option<T>.Map<TOut>(System.Func<T, TOut>! map) -> StandSure.Functional.Option<TOut>
 StandSure.Functional.Option<T>.Match<TOut>(System.Func<TOut>! onNone, System.Func<T, TOut>! onSome) -> TOut
 StandSure.Functional.Option<T>.ToResult(StandSure.Functional.Error! ifNone) -> StandSure.Functional.Result<T>
+StandSure.Functional.EnumerablePairwiseExtensions
+StandSure.Functional.EnumerableScanExtensions
+StandSure.Functional.OptionEnumerableExtensions
+StandSure.Functional.ResultEnumerableExtensions
+static StandSure.Functional.EnumerablePairwiseExtensions.Pairwise<T>(this System.Collections.Generic.IEnumerable<T>! source) -> System.Collections.Generic.IEnumerable<(T Previous, T Current)>!
+static StandSure.Functional.EnumerableScanExtensions.Scan<T, TAcc>(this System.Collections.Generic.IEnumerable<T>! source, TAcc seed, System.Func<TAcc, T, TAcc>! accumulator) -> System.Collections.Generic.IEnumerable<TAcc>!
+static StandSure.Functional.OptionEnumerableExtensions.Choose<T>(this System.Collections.Generic.IEnumerable<StandSure.Functional.Option<T>>! source) -> System.Collections.Generic.IEnumerable<T>!
+static StandSure.Functional.ResultEnumerableExtensions.Combine<T>(this System.Collections.Generic.IEnumerable<StandSure.Functional.Result<T>>! source) -> StandSure.Functional.Result<System.Collections.Generic.IReadOnlyList<T>!>
+static StandSure.Functional.ResultEnumerableExtensions.Partition<T>(this System.Collections.Generic.IEnumerable<StandSure.Functional.Result<T>>! source) -> (System.Collections.Generic.IReadOnlyList<T>! Successes, System.Collections.Generic.IReadOnlyList<StandSure.Functional.Error!>! Failures)
+static StandSure.Functional.ResultEnumerableExtensions.Traverse<T, TOut>(this System.Collections.Generic.IEnumerable<T>! source, System.Func<T, StandSure.Functional.Result<TOut>>! map) -> StandSure.Functional.Result<System.Collections.Generic.IReadOnlyList<TOut>!>
