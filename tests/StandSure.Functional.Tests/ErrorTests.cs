@@ -149,7 +149,22 @@ public sealed class ErrorTests
         var fromFactory = Error.NotFound("c", "m", new Dictionary<string, string> { ["k"] = "v" }).Metadata;
         var fromException = Error.FromException(new InvalidOperationException("boom")).Metadata;
 
+        var noMetadata = Error.NotFound("c", "m").Metadata;
+        var fromNullException = Error.FromException(null!).Metadata;
+
         fromFactory.Should().NotBeAssignableTo<Dictionary<string, string>>();
+        noMetadata.Should().NotBeAssignableTo<Dictionary<string, string>>();
+        fromNullException.Should().NotBeAssignableTo<Dictionary<string, string>>();
+        Error.Uninitialized.Metadata.Should().NotBeAssignableTo<Dictionary<string, string>>();
         fromException.Should().NotBeAssignableTo<Dictionary<string, string>>();
+    }
+
+    [Fact]
+    public void Errors_Empty_IsNotCastableToMutableCollection()
+    {
+        var errors = Error.NotFound("c", "m").Errors;
+
+        errors.Should().NotBeAssignableTo<List<Error>>();
+        errors.Should().BeEmpty();
     }
 }

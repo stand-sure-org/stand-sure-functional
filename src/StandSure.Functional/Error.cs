@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -12,7 +13,7 @@ public sealed record Error
     // EmptyMetadata and EmptyErrors must be declared before UninitializedInstance: static field initializers run in
     // textual order, and the private constructor reads both.
     private static readonly IReadOnlyDictionary<string, string> EmptyMetadata =
-        new Dictionary<string, string>();
+        FrozenDictionary<string, string>.Empty;
 
     private static readonly IReadOnlyList<Error> EmptyErrors = [];
 
