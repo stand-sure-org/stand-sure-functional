@@ -18,7 +18,7 @@ src/StandSure.Functional/                  the library (PublicAPI.Shipped/Unship
 tests/StandSure.Functional.Tests/          xUnit v3 + AwesomeAssertions
 tests/StandSure.Functional.ApprovalTests/  public API snapshot
 benchmarks/StandSure.Functional.Benchmarks/
-harness/ModelHarness/  harness/fixtures/  harness/results/
+harness/ModelHarness/  harness/tasks/ (NN-slug: task.md, Fixture.cs, Probe.cs)  harness/prompts/  harness/results/
 docs/llm-api-summary.md                    one page, the with-library prompt
 .specify/features/functional-core/
 ```
