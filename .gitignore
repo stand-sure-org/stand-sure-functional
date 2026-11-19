@@ -8,3 +8,6 @@ BenchmarkDotNet.Artifacts/
 
 # Harness raw run output
 harness/results/raw/
+
+# Local package feed (built by src/StandSure.Functional on every build)
+artifacts/

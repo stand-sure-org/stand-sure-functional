@@ -14,6 +14,8 @@
       same obj folder and fail with CS0006. Keep the parent's Configuration for such references.
     -->
     <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
+    <!-- Local feed the library packs into on every build; consumed by tests/StandSure.Functional.PackageTests. -->
+    <FunctionalPackageOutputPath>$(MSBuildThisFileDirectory)artifacts/packages/</FunctionalPackageOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

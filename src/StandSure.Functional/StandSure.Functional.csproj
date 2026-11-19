@@ -6,5 +6,13 @@
     <PackageId>$(FunctionalRootName)</PackageId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Description>Allocation-conscious Result, Option and Error types for C#.</Description>
+    <!-- Pack on every build so tests/StandSure.Functional.PackageTests always consumes the current package. -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageOutputPath>$(FunctionalPackageOutputPath)</PackageOutputPath>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Global using for consumers; tests/StandSure.Functional.PackageTests checks it against the packed .nupkg. -->
+    <None Include="buildTransitive/StandSure.Functional.props" Pack="true" PackagePath="buildTransitive/" />
+  </ItemGroup>
 </Project>
