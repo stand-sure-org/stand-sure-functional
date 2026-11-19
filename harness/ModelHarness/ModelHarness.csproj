@@ -12,7 +12,30 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\StandSure.Functional\StandSure.Functional.csproj" />
+    <!-- Build order only: ProbeRunner runs out of process from its own output directory (see EmbedProbeRunnerPath). -->
+    <ProjectReference Include="..\ProbeRunner\ProbeRunner.csproj" ReferenceOutputAssembly="false" Private="false" />
   </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ModelHarness.Tests" />
+  </ItemGroup>
+
+  <!--
+    ProbeExecutor launches ProbeRunner.dll from ProbeRunner's own build output, so its runtimeconfig (which names the
+    ASP.NET Core shared framework) and deps sit beside it. The absolute path is baked in as AssemblyMetadata
+    "ProbeRunnerPath"; ask ProbeRunner for its TargetPath so OutputPath conventions are not duplicated here.
+  -->
+  <Target Name="EmbedProbeRunnerPath" BeforeTargets="GetAssemblyAttributes">
+    <MSBuild Projects="..\ProbeRunner\ProbeRunner.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" PropertyName="_ProbeRunnerTargetPath" />
+    </MSBuild>
+    <ItemGroup>
+      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+        <_Parameter1>ProbeRunnerPath</_Parameter1>
+        <_Parameter2>$(_ProbeRunnerTargetPath)</_Parameter2>
+      </AssemblyAttribute>
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <None Include="..\models.json" Link="models.json" CopyToOutputDirectory="PreserveNewest" />
