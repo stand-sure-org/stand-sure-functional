@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "chains": {
+    "17822fde-7d09-4ced-83f9-8fa949549498": {
+      "branch": "chore/commit-integrity",
+      "worktree": "/Volumes/Repos/stand-sure-functional",
+      "started_at": "2026-11-19T13:05:30.925950+00:00",
+      "agent": "claude-code",
+      "chain_hash": "sha256:c7d773e9eae3401b54c1d8acc62bd78e2ab00e7f8483b7456f1a249aa9e7fd55",
+      "sealed": true,
+      "sealed_at": "2026-11-19T13:17:47.597419+00:00",
+      "sealed_by_identity": "chris@standsure.io",
+      "sealed_by_commit": "ff4bd2424de49059b0c9b0250a0803d7028eb8b5"
+    }
+  }
+}
