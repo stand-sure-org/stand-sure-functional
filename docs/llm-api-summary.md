@@ -1,14 +1,14 @@
 # StandSure.Functional: API summary
 
-Namespace `StandSure.Functional`: write `using StandSure.Functional;` (implicit usings may be off). No library method throws.
+Namespace `StandSure.Functional`: write `using StandSure.Functional;` (implicit usings may be off). No library method throws for an expected failure (malformed JSON still throws `JsonException`).
 Expected failures are values: `Result<T>` holds an `Error` or a `T`; `Option<T>` holds `None` or a `T`.
 
-- `Result<T>`: `IsSuccess`, `IsFailure`, `Match`, `Map`, `Bind`, `MapError`, `Ensure`, `Tap`, `GetValueOrDefault(fallback)`, `Deconstruct`, `TryGetValue`.
+- `Result<T>`: `IsSuccess`, `IsFailure`, `Match`, `Map`, `Bind`, `MapError`, `Ensure(predicate, v => error)`, `Tap`, `GetValueOrDefault(fallback)`, `Deconstruct`, `TryGetValue`.
   Create with `Result.Success(value)` or `Result.Failure<T>(error)`, or just return a `T` or an `Error` (also from an `async` method returning `Task<Result<T>>`). `Result.Success()` gives `Result<Unit>`, the "void" result.
 - `Error`: `Kind` (`ErrorKind.Validation`, `NotFound`, `Conflict`, `Unauthorized`, `Forbidden`, `Unavailable`, `Unexpected`), `Code` (dotted: `book.title.required`), `Message`, `Metadata`, `Inner`, `Errors`, `Exception` (set by `Try`/`FromException`).
-  One factory per kind: `Error.Validation(code, message)`, `Error.NotFound(code, message)`, ...; `Error.Validation(code, message, errors)` groups several; `Error.FromException(ex)`.
-  `error.Wrap(code, message)` adds context (same `Kind`, old error becomes `Inner`); `error.Is(code)` searches the `Inner` chain.
-- `Option<T>`: `Option.Some(x)`, `Option<T>.None`, or a `T` directly. `IsSome`, `IsNone`, `Match`, `Map`, `Bind`, `Filter`, `GetValueOrDefault(fallback)`, `ToResult(errorIfNone)`.
+  One factory per kind: `Error.Validation(code, message)`, `Error.NotFound(code, message)`, ...; `Error.Validation(code, message, errors)` groups several; `Error.FromException(ex)`. `error.Wrap(code, message)` adds context (same `Kind`, old error becomes `Inner`); `error.Is(code)` searches the `Inner` chain.
+  Building an `Error` records a failure: give `Ensure`, `EnsureAsync` and `ToResult` a factory (`v => Error.X(...)`), which runs only on failure.
+- `Option<T>`: `Option.Some(x)`, `Option<T>.None`, or a `T` directly. `IsSome`, `IsNone`, `Match`, `Map`, `Bind`, `Filter`, `GetValueOrDefault(fallback)`, `ToResult(ifNone)` (`ifNone`: `() => Error.NotFound(...)`).
 - `Try.Run(() => ...)` and `Try.RunAsync(ct => ..., ct)` turn exceptions into failures of kind `Unexpected`.
 - On `Task<Result<T>>` only (from a `Result<T>`, use `Task.FromResult(result)`): `MapAsync`, `BindAsync`, `EnsureAsync`, `MatchAsync`.
 - Sequences: `results.Combine()`, `items.Traverse(f)`, `results.Partition()`, `options.Choose()`, `items.Pairwise()`, `items.Scan(seed, f)`.
@@ -68,7 +68,7 @@ public Task<Result<Forecast>> ForecastAsync(string city, CancellationToken ct) =
 
 ```csharp
 Result<Ticket> ticket = Parse(request)                   // Result<Request>; stops at the first failure
-    .Ensure(r => r.Seats > 0, Error.Validation("request.no_seats", "Ask for at least one seat."))
+    .Ensure(r => r.Seats > 0, r => Error.Validation("request.no_seats", $"Asked for {r.Seats} seats."))
     .Bind(HoldSeats)                                     // Request -> Result<Hold>
     .Bind(Issue);                                        // Hold -> Result<Ticket>
 
@@ -116,4 +116,5 @@ IEnumerable<int> totals = steps.Scan(0, (sum, x) => sum + x); // [1, 2, 3] -> 1,
 - `switch` needs type patterns, `Error e => ..., T x => ...`, and is exhaustive without `_`. A `Result<Error>` always matches `Error e` in a `switch`: use `IsSuccess` or `Deconstruct`.
 - `default(Result<T>)` is a failure holding `Error.Uninitialized`. `default(Option<T>)` is None.
 - `Try.Run` / `Try.RunAsync` never catch `OperationCanceledException`: cancellation still throws.
+- `Try.Run(async () => ...)` does not compile (it would succeed before the work ran): use `Try.RunAsync(ct => ..., ct)`.
 - `.Value` is the untyped union payload (`object?`): never use it. Read values with `Match`, `Deconstruct`, `TryGetValue` or `GetValueOrDefault`.

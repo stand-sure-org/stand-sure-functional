@@ -9,9 +9,18 @@ This library makes them values you return, chain and match, so the compiler show
 
 - `Result<T>` and `Option<T>` are non-boxing C# 15 unions (`readonly struct`), so `switch` on them is exhaustive without a discard.
 - Failure comes first in every two-branch call: `Match(onFailure, onSuccess)`, `Match(onNone, onSome)`.
-- No library method throws. There is no throwing `.Value` accessor. `default(Result<T>)` is a failure, not a crash.
+- No library method throws for an expected failure: bad arguments and null delegates become failures. There is no throwing
+  `.Value` accessor, and `default(Result<T>)` is a failure, not a crash. Two documented exceptions: JSON (de)serialization of
+  malformed input throws `JsonException` (the System.Text.Json contract), and `AddFunctional` validates its argument
+  (it throws for `null`, or for options that are already in use).
 - `Error` carries a kind, a dotted code, a message, metadata, an inner error chain and child errors. It serializes to plain JSON.
-- Failures are recorded once, at creation, through `ActivitySource` and `Meter` named `StandSure.Functional`.
+- Failures are recorded once, at creation, through `ActivitySource` and `Meter` named `StandSure.Functional`:
+  event `functional.failure` and counter `functional.failures` (tags `error.kind`, `error.code`) for a root failure;
+  event `functional.failure.wrapped` for `Wrap`, and `functional.failure.grouped` (tag `error.errors.count`) for a parent
+  that holds child errors (`Error.Validation(code, message, errors)`, `Combine`, `Traverse`). Wraps and groups are not
+  counted again, so `Combine` of N failures counts N. Prefer the factory overloads `Ensure(predicate, v => error)`,
+  `EnsureAsync(..., v => error)` and `ToResult(() => error)`: an `Error` passed directly is built, and recorded, even
+  when the check passes.
   Messages and metadata are emitted only when the `AppContext` switch `StandSure.Functional.EmitErrorDetails` is on.
 - The API names come from measuring what language models write unprompted (see `harness/results/baseline-report.md`).
 
