@@ -5,3 +5,6 @@ TestResults/
 .vs/
 BenchmarkDotNet.Artifacts/
 *.received.txt
+
+# Harness raw run output
+harness/results/raw/

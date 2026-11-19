@@ -6,4 +6,6 @@ using System.Text.Json.Serialization;
 internal sealed class GeminiCandidate
 {
     public GeminiContent? Content { get; init; }
+
+    public string? FinishReason { get; init; }
 }

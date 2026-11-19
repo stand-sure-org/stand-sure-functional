@@ -58,6 +58,9 @@ public sealed class GeminiClient(HttpClient http, string? apiKey, ILogger logger
             throw new JsonException("no text content");
         }
 
-        return new HttpCall.Parsed(text, dto.UsageMetadata?.PromptTokenCount ?? 0, dto.UsageMetadata?.CandidatesTokenCount ?? 0);
+        var finish = dto.Candidates?.FirstOrDefault()?.FinishReason;
+        var truncated = !string.IsNullOrEmpty(finish) && !string.Equals(finish, "STOP", StringComparison.Ordinal);
+        return new HttpCall.Parsed(
+            text, dto.UsageMetadata?.PromptTokenCount ?? 0, dto.UsageMetadata?.CandidatesTokenCount ?? 0, finish, truncated);
     }
 }

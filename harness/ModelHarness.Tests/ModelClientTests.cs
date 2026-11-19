@@ -155,6 +155,77 @@ public sealed class ModelClientTests
     }
 
     [Fact]
+    public async Task Anthropic_MaxTokens_IsTruncated()
+    {
+        var handler = new FakeHandler(HttpStatusCode.OK,
+            """{"content":[{"type":"text","text":"cut"}],"stop_reason":"max_tokens","usage":{"input_tokens":1,"output_tokens":2}}""");
+        var client = new AnthropicClient(new HttpClient(handler), "k", NullLogger.Instance);
+
+        var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
+
+        response.StopReason.Should().Be("max_tokens");
+        response.Truncated.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Anthropic_EndTurn_IsNotTruncated()
+    {
+        var handler = new FakeHandler(HttpStatusCode.OK,
+            """{"content":[{"type":"text","text":"ok"}],"stop_reason":"end_turn","usage":{"input_tokens":1,"output_tokens":2}}""");
+        var client = new AnthropicClient(new HttpClient(handler), "k", NullLogger.Instance);
+
+        var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
+
+        response.StopReason.Should().Be("end_turn");
+        response.Truncated.Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("STOP", false)]
+    [InlineData("MAX_TOKENS", true)]
+    [InlineData("SAFETY", true)]
+    [InlineData("OTHER", true)]
+    public async Task Gemini_FinishReason_DrivesTruncated(string finishReason, bool truncated)
+    {
+        var handler = new FakeHandler(HttpStatusCode.OK,
+            $$$"""{"candidates":[{"content":{"parts":[{"text":"t"}]},"finishReason":"{{{finishReason}}}"}],"usageMetadata":{"promptTokenCount":1,"candidatesTokenCount":1}}""");
+        var client = new GeminiClient(new HttpClient(handler), "k", NullLogger.Instance);
+
+        var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
+
+        response.StopReason.Should().Be(finishReason);
+        response.Truncated.Should().Be(truncated);
+    }
+
+    [Theory]
+    [InlineData("stop", false)]
+    [InlineData("length", true)]
+    public async Task Ollama_DoneReason_DrivesTruncated(string doneReason, bool truncated)
+    {
+        var handler = new FakeHandler(HttpStatusCode.OK,
+            $$$"""{"message":{"role":"assistant","content":"t"},"done":true,"done_reason":"{{{doneReason}}}","prompt_eval_count":1,"eval_count":1}""");
+        var client = new OllamaClient(new HttpClient(handler), NullLogger.Instance);
+
+        var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
+
+        response.StopReason.Should().Be(doneReason);
+        response.Truncated.Should().Be(truncated);
+    }
+
+    [Fact]
+    public async Task MissingStopReason_IsNullAndNotTruncated()
+    {
+        var handler = new FakeHandler(HttpStatusCode.OK,
+            """{"content":[{"type":"text","text":"ok"}],"usage":{"input_tokens":1,"output_tokens":2}}""");
+        var client = new AnthropicClient(new HttpClient(handler), "k", NullLogger.Instance);
+
+        var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
+
+        response.StopReason.Should().BeNull();
+        response.Truncated.Should().BeFalse();
+    }
+
+    [Fact]
     public void Config_LoadsEnabledModelsOnly()
     {
         const string json = """

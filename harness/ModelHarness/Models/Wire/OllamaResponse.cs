@@ -12,4 +12,7 @@ internal sealed class OllamaResponse
 
     [JsonPropertyName("eval_count")]
     public int EvalCount { get; init; }
+
+    [JsonPropertyName("done_reason")]
+    public string? DoneReason { get; init; }
 }

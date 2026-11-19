@@ -52,6 +52,7 @@ public sealed class OllamaClient(HttpClient http, ILogger logger, Uri? baseAddre
             throw new JsonException("no text content");
         }
 
-        return new HttpCall.Parsed(text, dto.PromptEvalCount, dto.EvalCount);
+        return new HttpCall.Parsed(
+            text, dto.PromptEvalCount, dto.EvalCount, dto.DoneReason, string.Equals(dto.DoneReason, "length", StringComparison.Ordinal));
     }
 }

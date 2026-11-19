@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 /// <summary>Shared never-throw HTTP plumbing for the model clients.</summary>
 internal static class HttpCall
 {
-    internal readonly record struct Parsed(string Text, int InputTokens, int OutputTokens);
+    internal readonly record struct Parsed(string Text, int InputTokens, int OutputTokens, string? StopReason = null, bool Truncated = false);
 
     public static ModelResponse Fail(string modelId, string error, TimeSpan latency = default)
     {
@@ -43,7 +43,7 @@ internal static class HttpCall
 
             var parsed = parse(body);
             logger.RequestCompleted(family, modelId, stopwatch.ElapsedMilliseconds);
-            return new ModelResponse(modelId, parsed.Text, parsed.InputTokens, parsed.OutputTokens, stopwatch.Elapsed, null);
+            return new ModelResponse(modelId, parsed.Text, parsed.InputTokens, parsed.OutputTokens, stopwatch.Elapsed, null, parsed.StopReason, parsed.Truncated);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {

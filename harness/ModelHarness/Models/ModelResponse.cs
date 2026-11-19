@@ -8,4 +8,6 @@ public sealed record ModelResponse(
     int InputTokens,
     int OutputTokens,
     TimeSpan Latency,
-    string? Error);
+    string? Error,
+    string? StopReason = null,
+    bool Truncated = false);
