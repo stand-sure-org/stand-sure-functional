@@ -3,6 +3,8 @@ namespace ModelHarness.Tests;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using System.Text.RegularExpressions;
 
 using AwesomeAssertions;
@@ -285,6 +287,278 @@ public sealed class ProbeExecutorTests
         result.ExceptionType.Should().Be("System.UnauthorizedAccessException");
     }
 
+    public static TheoryData<string> PlantableOutsideRoots() =>
+        [
+            DarwinUserCacheDirectory(),
+            "/Users/Shared",
+        ];
+
+    [Theory]
+    [MemberData(nameof(PlantableOutsideRoots))]
+    public async Task FileReadOutsideAllowlist_IsDenied(string root)
+    {
+        // A fixture planted outside every allowlisted root: the probe must not be able to read it back.
+        RequireSandbox();
+        Assert.SkipUnless(Directory.Exists(root), root + " does not exist on this machine.");
+        var planted = Path.Combine(root, "probe-fixture-" + Guid.NewGuid().ToString("N") + ".txt");
+        try
+        {
+            File.WriteAllText(planted, "planted-not-a-secret");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Assert.Skip(root + " is not writable on this machine.");
+        }
+
+        try
+        {
+            var assembly = Build($$"""
+                using System.IO;
+
+                public sealed class Solution(IGreeter greeter)
+                {
+                    public string? Run(int id) => File.ReadAllText(@"{{planted}}") + greeter.Greet(id);
+                }
+                """);
+
+            var result = await ProbeExecutor.RunAsync(assembly, Synthetic, Timeout, TestContext.Current.CancellationToken);
+
+            result.Outcome.Should().Be(ProbeOutcome.Threw);
+            result.ExceptionType.Should().Be("System.UnauthorizedAccessException");
+        }
+        finally
+        {
+            File.Delete(planted);
+        }
+    }
+
+    [Fact]
+    public async Task FileReadThroughDataVolumeFirmlink_IsDenied()
+    {
+        // /System is allowlisted; /System/Volumes/Data is the firmlinked data volume and must not become a way around the list.
+        RequireSandbox();
+        Assert.SkipUnless(Directory.Exists("/System/Volumes/Data/Users/Shared"), "No firmlinked data volume on this machine.");
+        var name = "probe-fixture-" + Guid.NewGuid().ToString("N") + ".txt";
+        var planted = Path.Combine("/Users/Shared", name);
+        try
+        {
+            File.WriteAllText(planted, "planted-not-a-secret");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Assert.Skip("/Users/Shared is not writable on this machine.");
+        }
+
+        try
+        {
+            var assembly = Build($$"""
+                using System.IO;
+
+                public sealed class Solution(IGreeter greeter)
+                {
+                    public string? Run(int id) => File.ReadAllText(@"/System/Volumes/Data/Users/Shared/{{name}}") + greeter.Greet(id);
+                }
+                """);
+
+            var result = await ProbeExecutor.RunAsync(assembly, Synthetic, Timeout, TestContext.Current.CancellationToken);
+
+            result.Outcome.Should().Be(ProbeOutcome.Threw);
+            result.ExceptionType.Should().Be("System.UnauthorizedAccessException");
+        }
+        finally
+        {
+            File.Delete(planted);
+        }
+    }
+
+    [Fact]
+    public async Task RunnerReachedThroughSymlink_StillReturns()
+    {
+        // The repo may be reached through a symlink (e.g. ~/repos -> /Volumes/Repos). Seatbelt matches real paths only, so
+        // every allowlisted root must be resolved before it becomes a -D parameter; the link lives under the denied temp dir.
+        RequireSandbox();
+        var runner = ProbeExecutor.ProbeRunnerPath();
+        runner.Should().NotBeNull();
+        var link = Path.Combine(Path.GetTempPath(), "probe-runner-link-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateSymbolicLink(link, Path.GetDirectoryName(runner)!);
+        try
+        {
+            var assembly = Build("public sealed class Solution(IGreeter greeter) { public string? Run(int id) => greeter.Greet(id); }");
+
+            var result = await ProbeExecutor.RunAsync(
+                assembly,
+                Synthetic,
+                Timeout,
+                null,
+                Path.Combine(link, Path.GetFileName(runner)!),
+                TestContext.Current.CancellationToken);
+
+            result.Should().BeEquivalentTo(new { Outcome = ProbeOutcome.Returned, ExceptionType = (string?)null, Reason = (string?)null });
+        }
+        finally
+        {
+            Directory.Delete(link);
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(PlantableOutsideRoots))]
+    public async Task DirectoryListingOutsideAllowlist_IsDenied(string root)
+    {
+        RequireSandbox();
+        Assert.SkipUnless(Directory.Exists(root), root + " does not exist on this machine.");
+        var planted = Path.Combine(root, "probe-fixture-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            Directory.CreateDirectory(planted);
+            File.WriteAllText(Path.Combine(planted, "entry.txt"), "planted");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Assert.Skip(root + " is not writable on this machine.");
+        }
+
+        try
+        {
+            var assembly = Build($$"""
+                using System.IO;
+
+                public sealed class Solution(IGreeter greeter)
+                {
+                    public string? Run(int id) => Directory.GetFileSystemEntries(@"{{planted}}").Length + greeter.Greet(id);
+                }
+                """);
+
+            var result = await ProbeExecutor.RunAsync(assembly, Synthetic, Timeout, TestContext.Current.CancellationToken);
+
+            result.Outcome.Should().Be(ProbeOutcome.Threw);
+            result.ExceptionType.Should().Be("System.UnauthorizedAccessException");
+        }
+        finally
+        {
+            Directory.Delete(planted, recursive: true);
+        }
+    }
+
+    public static TheoryData<string> HostConfigurationDirectories() =>
+        [
+            "/opt/homebrew/etc",
+            "/opt/homebrew/var",
+            "/usr/local/etc",
+            "/Library/Application Support",
+            "/Library/Keychains",
+            "/private/etc/ssh",
+        ];
+
+    [Theory]
+    [MemberData(nameof(HostConfigurationDirectories))]
+    public async Task HostConfigurationListing_IsDenied(string directory)
+    {
+        // Only the entry count would come back, and only on failure of this test; contents are never read.
+        RequireSandbox();
+        Assert.SkipUnless(Directory.Exists(directory), directory + " does not exist on this machine.");
+        var assembly = Build($$"""
+            using System.IO;
+
+            public sealed class Solution(IGreeter greeter)
+            {
+                public string? Run(int id) => Directory.GetFileSystemEntries(@"{{directory}}").Length + greeter.Greet(id);
+            }
+            """);
+
+        var result = await ProbeExecutor.RunAsync(assembly, Synthetic, Timeout, TestContext.Current.CancellationToken);
+
+        result.Outcome.Should().Be(ProbeOutcome.Threw);
+        result.ExceptionType.Should().Be("System.UnauthorizedAccessException");
+    }
+
+    [Fact]
+    public async Task LocalhostTcp_IsDenied()
+    {
+        RequireSandbox();
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var assembly = Build($$"""
+            using System.Net;
+            using System.Net.Sockets;
+
+            public sealed class Solution(IGreeter greeter)
+            {
+                public string? Run(int id)
+                {
+                    using var client = new TcpClient();
+                    client.Connect(IPAddress.Loopback, {{port}});
+                    return greeter.Greet(id);
+                }
+            }
+            """);
+
+        var result = await ProbeExecutor.RunAsync(assembly, Synthetic, Timeout, TestContext.Current.CancellationToken);
+
+        result.Outcome.Should().Be(ProbeOutcome.Threw);
+        result.ExceptionType.Should().Be("System.Net.Sockets.SocketException");
+    }
+
+    [Fact]
+    public async Task UnixDomainSocketConnect_IsDenied()
+    {
+        RequireSandbox();
+        var directory = Directory.CreateTempSubdirectory("uds-");
+        var path = Path.Combine(directory.FullName, "s.sock");
+        try
+        {
+            using var listener = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+            listener.Bind(new UnixDomainSocketEndPoint(path));
+            listener.Listen();
+            var assembly = Build($$"""
+                using System.Net.Sockets;
+
+                public sealed class Solution(IGreeter greeter)
+                {
+                    public string? Run(int id)
+                    {
+                        using var client = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+                        client.Connect(new UnixDomainSocketEndPoint(@"{{path}}"));
+                        return greeter.Greet(id);
+                    }
+                }
+                """);
+
+            var result = await ProbeExecutor.RunAsync(assembly, Synthetic, Timeout, TestContext.Current.CancellationToken);
+
+            result.Outcome.Should().Be(ProbeOutcome.Threw);
+            result.ExceptionType.Should().Be("System.Net.Sockets.SocketException");
+        }
+        finally
+        {
+            directory.Delete(recursive: true);
+        }
+    }
+
+    public static TheoryData<TimeSpan> InvalidTimeouts() =>
+        [
+            TimeSpan.Zero,
+            TimeSpan.FromMilliseconds(-5),
+            System.Threading.Timeout.InfiniteTimeSpan,
+            TimeSpan.MaxValue,
+            ProbeExecutor.MaxTimeout + TimeSpan.FromMilliseconds(1),
+        ];
+
+    [Theory]
+    [MemberData(nameof(InvalidTimeouts))]
+    public async Task InvalidTimeout_CrashedWithReason_NeverStarts(TimeSpan timeout)
+    {
+        var assembly = Build("public sealed class Solution(IGreeter greeter) { public string? Run(int id) => greeter.Greet(id); }");
+        var started = false;
+
+        var result = await ProbeExecutor.RunAsync(assembly, Synthetic, timeout, _ => started = true, TestContext.Current.CancellationToken);
+
+        result.Outcome.Should().Be(ProbeOutcome.Crashed);
+        result.Reason.Should().StartWith("invalid-timeout");
+        started.Should().BeFalse();
+    }
+
     [Fact]
     public async Task StdoutFlood_StillReportsTheResultLine()
     {
@@ -500,11 +774,39 @@ public sealed class ProbeExecutorTests
                         Path.GetTempFileName(),
                         Environment.ProcessorCount,
                         http.Timeout,
+                        Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(new byte[] { 1, 2, 3 })),
+                        System.Text.RegularExpressions.Regex.IsMatch("a1", @"^\p{L}\d$"),
+                        System.Text.Encoding.Latin1.GetByteCount("é"),
+                        "e\u0301".Normalize(System.Text.NormalizationForm.FormC),
+                        string.Compare("ä", "b", new CultureInfo("sv-SE"), CompareOptions.None),
+                        DateTime.Parse("19.11.2026", new CultureInfo("de-DE")),
+                        new DateTime(2026, 11, 19).ToString("D", new CultureInfo("ja-JP")),
                     };
                     await Task.Delay(10);
                     await Task.Run(() => stopwatch.Stop());
                     return string.Join("|", parts) + greeter.Greet(id);
                 }
+            }
+            """);
+
+        var result = await ProbeExecutor.RunAsync(assembly, Synthetic, Timeout, TestContext.Current.CancellationToken);
+
+        result.Should().BeEquivalentTo(new { Outcome = ProbeOutcome.Returned, ExceptionType = (string?)null });
+    }
+
+    [Fact]
+    public async Task LocalTimeZone_MatchesTheHost()
+    {
+        // The read allowlist must keep /etc/localtime and the zoneinfo database, or Local silently becomes UTC.
+        RequireSandbox();
+        var hostZone = TimeZoneInfo.Local.Id;
+        var assembly = Build($$"""
+            using System;
+
+            public sealed class Solution(IGreeter greeter)
+            {
+                public string? Run(int id) =>
+                    TimeZoneInfo.Local.Id == "{{hostZone}}" ? greeter.Greet(id) : throw new InvalidOperationException(TimeZoneInfo.Local.Id);
             }
             """);
 
@@ -561,6 +863,20 @@ public sealed class ProbeExecutorTests
         var compiled = SolutionCompiler.Compile(Synthetic, solution, withLibrary);
         compiled.Diagnostics.Should().BeEmpty();
         return compiled.Assembly!;
+    }
+
+    /// <summary>The per-user cache directory (<c>confstr(_CS_DARWIN_USER_CACHE_DIR)</c>), a sibling of the user temp dir.</summary>
+    private static string DarwinUserCacheDirectory()
+    {
+        if (!OperatingSystem.IsMacOS())
+        {
+            return "/nonexistent-cache";
+        }
+
+        using var getconf = Process.Start(new ProcessStartInfo("/usr/bin/getconf", "DARWIN_USER_CACHE_DIR") { RedirectStandardOutput = true })!;
+        var path = getconf.StandardOutput.ReadToEnd().Trim();
+        getconf.WaitForExit();
+        return path.TrimEnd('/');
     }
 
     private static bool ProcessIsGone(int pid)

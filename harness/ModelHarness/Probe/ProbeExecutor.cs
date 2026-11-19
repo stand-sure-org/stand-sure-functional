@@ -30,35 +30,64 @@ using ModelHarness.Tasks;
 /// drained and discarded. Model-controlled strings are truncated to <see cref="MaxFieldLength"/> characters.</para>
 /// <para>Termination: on timeout the whole process tree is killed and the result is <see cref="ProbeOutcome.Timeout"/>; on caller
 /// cancellation the tree is killed and <see cref="OperationCanceledException"/> propagates. Every wait after a kill is bounded by
-/// <see cref="KillGrace"/>. The temp directory is deleted afterwards (best effort).</para>
+/// <see cref="KillGrace"/>. The temp directory is deleted afterwards (best effort). A timeout that is not positive or exceeds
+/// <see cref="MaxTimeout"/> (including <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>) is refused before anything starts:
+/// the result is <see cref="ProbeOutcome.Crashed"/> with reason <c>invalid-timeout: ...</c>, never an exception.</para>
 /// </remarks>
 public static class ProbeExecutor
 {
     /// <summary>The default per-probe timeout.</summary>
     public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(10);
 
+    /// <summary>The largest accepted per-probe timeout; anything above it (or not positive) is refused as <c>invalid-timeout</c>.</summary>
+    public static readonly TimeSpan MaxTimeout = TimeSpan.FromMinutes(5);
+
     /// <summary>
-    /// The Seatbelt profile. Parameters (passed with <c>-D</c>, all real paths with symlinks resolved): <c>PROBE_DIR</c>,
-    /// <c>RUNNER_DIR</c>, <c>DOTNET_ROOT</c>, <c>DOTNET</c> (the muxer), <c>USER_HOME</c> and <c>USER_TEMP</c> (<c>Path.GetTempPath()</c>).
+    /// The Seatbelt profile. Parameters (passed with <c>-D</c>, never spliced into the text; all real paths with every symlink
+    /// resolved, because Seatbelt matches real paths only): <c>PROBE_DIR</c>, <c>RUNNER_DIR</c>, <c>DOTNET_ROOT</c> and
+    /// <c>DOTNET</c> (the muxer).
     /// </summary>
     /// <remarks>
-    /// Deny by default: no network, no process fork, no exec other than the dotnet muxer, no signals to other processes, no
-    /// Mach/XPC service lookups (so no LaunchServices, keychain or DNS daemon). Reads are allowed broadly (the runtime needs
-    /// <c>/usr/lib</c>, <c>/System</c>, ICU, zoneinfo) except the user's home, the user's temp directory, <c>/Volumes</c>
-    /// (where repositories live) and <c>/private/tmp</c>; the probe, runner and dotnet directories are re-allowed after that.
-    /// <c>file-read-metadata</c> (stat, not contents or listings) stays allowed everywhere: the host resolves real paths
-    /// component by component, so it must be able to stat <c>/Volumes/...</c> on the way to ProbeRunner.
-    /// Writes only inside the probe directory (and <c>/dev/null</c>). <c>sysctl-read</c> is the only extra the runtime needs.
+    /// <para>Deny by default: no network (TCP, loopback and Unix-domain sockets alike), no process fork, no exec other than the
+    /// dotnet muxer, no signals to other processes, no Mach/XPC service lookups (so no LaunchServices, keychain or DNS daemon).</para>
+    /// <para>Reads are an allowlist; everything else (home, repositories, the user temp and cache dirs, <c>/opt/homebrew</c>,
+    /// <c>/usr/local</c>, <c>/Library</c>, <c>/Users/Shared</c>, <c>/private/etc</c>, other users' files) is denied. Contents and
+    /// listings (<c>file-read*</c>) are allowed only under:</para>
+    /// <list type="bullet">
+    /// <item><c>PROBE_DIR</c>, <c>RUNNER_DIR</c>, <c>DOTNET_ROOT</c>: the solution, ProbeRunner with its deps, the shared frameworks.</item>
+    /// <item><c>/usr/share/icu</c>: ICU data (cultures, casing, collation, normalisation).</item>
+    /// <item><c>/usr/share/zoneinfo</c>, <c>/private/var/db/timezone</c> and the literal <c>/private/etc/localtime</c>: time zones,
+    /// so <c>TimeZoneInfo.Local</c> matches the host instead of silently becoming UTC.</item>
+    /// <item>The literal <c>/</c> (the root directory's own entry and listing, not its subtree): the host opens it while
+    /// resolving paths and aborts without it.</item>
+    /// </list>
+    /// <para>Metadata (<c>file-read-metadata</c>: stat and readlink, not contents or listings) is allowed only on the ancestors of
+    /// the three roots (the muxer and runtime stat every component on the way to them) and on the <c>/etc</c> and <c>/var</c>
+    /// symlinks (followed to reach <c>localtime</c> and zoneinfo). Each rule above was removed in turn and a regression test
+    /// failed; nothing else (not <c>/System</c>, <c>/usr/lib</c> or <c>/dev/urandom</c>: libraries come from the dyld shared
+    /// cache) is needed.</para>
+    /// <para>Writes only inside the probe directory (and <c>/dev/null</c>). <c>sysctl-read</c> is the only other allowance.</para>
     /// </remarks>
     internal const string SandboxProfile = """
         (version 1)
         (deny default)
         (deny network*)
         (allow process-exec (literal (param "DOTNET")))
-        (allow file-read*)
-        (deny file-read* (subpath (param "USER_HOME")) (subpath (param "USER_TEMP")) (subpath "/Volumes") (subpath "/private/tmp"))
-        (allow file-read-metadata)
-        (allow file-read* (subpath (param "PROBE_DIR")) (subpath (param "RUNNER_DIR")) (subpath (param "DOTNET_ROOT")))
+        (allow file-read-metadata
+            (literal "/etc")
+            (literal "/var")
+            (path-ancestors (param "DOTNET_ROOT"))
+            (path-ancestors (param "RUNNER_DIR"))
+            (path-ancestors (param "PROBE_DIR")))
+        (allow file-read*
+            (literal "/")
+            (subpath "/usr/share/icu")
+            (subpath "/usr/share/zoneinfo")
+            (subpath "/private/var/db/timezone")
+            (literal "/private/etc/localtime")
+            (subpath (param "DOTNET_ROOT"))
+            (subpath (param "RUNNER_DIR"))
+            (subpath (param "PROBE_DIR")))
         (allow file-write* (subpath (param "PROBE_DIR")))
         (allow file-write-data (literal "/dev/null"))
         (allow sysctl-read)
@@ -77,29 +106,44 @@ public static class ProbeExecutor
     /// <summary>Probes <paramref name="assembly"/> (a compiled solution with the task's fixture and probe) once.</summary>
     /// <param name="assembly">The image from <c>CompileResult.Assembly</c>.</param>
     /// <param name="task">Supplies <see cref="HarnessTask.EntryType"/> and <see cref="HarnessTask.EntryMethod"/>.</param>
-    /// <param name="timeout">Wall-clock limit for the child process (see <see cref="DefaultTimeout"/>).</param>
+    /// <param name="timeout">Wall-clock limit for the child process (see <see cref="DefaultTimeout"/>); must be in (0, <see cref="MaxTimeout"/>].</param>
     /// <param name="ct">Cancelling kills the child and throws <see cref="OperationCanceledException"/>.</param>
     public static Task<ProbeResult> RunAsync(byte[] assembly, HarnessTask task, TimeSpan timeout, CancellationToken ct) =>
         RunAsync(assembly, task, timeout, null, ct);
 
     /// <summary>As the public overload; <paramref name="processStarted"/> receives the child's process id (for tests).</summary>
+    internal static Task<ProbeResult> RunAsync(
+        byte[] assembly,
+        HarnessTask task,
+        TimeSpan timeout,
+        Action<int>? processStarted,
+        CancellationToken ct) =>
+        RunAsync(assembly, task, timeout, processStarted, ProbeRunnerPath(), ct);
+
+    /// <summary>As above, with the ProbeRunner path supplied (for tests that reach it through a symlink).</summary>
     internal static async Task<ProbeResult> RunAsync(
         byte[] assembly,
         HarnessTask task,
         TimeSpan timeout,
         Action<int>? processStarted,
+        string? runner,
         CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(assembly);
         ArgumentNullException.ThrowIfNull(task);
         ct.ThrowIfCancellationRequested();
 
+        // TimeSpan has no NaN or +infinity; InfiniteTimeSpan is -1 ms. So "positive and at most MaxTimeout" is the whole bound.
+        if (timeout <= TimeSpan.Zero || timeout > MaxTimeout)
+        {
+            return Crashed($"invalid-timeout: {timeout} (must be > 0 and <= {MaxTimeout})");
+        }
+
         if (!OperatingSystem.IsMacOS() || !File.Exists(SandboxExec))
         {
             return Crashed("no-sandbox");
         }
 
-        var runner = ProbeRunnerPath();
         if (runner is null || !File.Exists(runner))
         {
             return Crashed("probe-runner-missing");
@@ -134,7 +178,6 @@ public static class ProbeExecutor
         string assemblyPath,
         HarnessTask task)
     {
-        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var startInfo = new ProcessStartInfo(SandboxExec)
         {
             WorkingDirectory = directory,
@@ -151,8 +194,6 @@ public static class ProbeExecutor
             ("RUNNER_DIR", Path.GetDirectoryName(runner)!),
             ("DOTNET_ROOT", dotnetRoot),
             ("DOTNET", dotnet),
-            ("USER_HOME", string.IsNullOrEmpty(home) ? "/nonexistent-home" : RealPath(home)),
-            ("USER_TEMP", RealPath(Path.GetTempPath())),
         })
         {
             startInfo.ArgumentList.Add("-D");
@@ -339,7 +380,7 @@ public static class ProbeExecutor
 
     private static ProbeResult Crashed(string reason) => new(ProbeOutcome.Crashed, null, reason, 0);
 
-    private static string? ProbeRunnerPath() =>
+    internal static string? ProbeRunnerPath() =>
         typeof(ProbeExecutor).Assembly
             .GetCustomAttributes<AssemblyMetadataAttribute>()
             .FirstOrDefault(a => a.Key == ProbeRunnerPathKey)?.Value;
