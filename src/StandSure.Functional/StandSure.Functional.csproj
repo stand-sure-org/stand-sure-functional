@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>$(FunctionalRootName)</RootNamespace>
+    <AssemblyName>$(FunctionalRootName)</AssemblyName>
+    <PackageId>$(FunctionalRootName)</PackageId>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Description>Allocation-conscious Result, Option and Error types for C#.</Description>
+  </PropertyGroup>
+</Project>

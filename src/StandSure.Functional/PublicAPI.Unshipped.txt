@@ -1,0 +1,11 @@
+#nullable enable
+override StandSure.Functional.Unit.Equals(object? obj) -> bool
+override StandSure.Functional.Unit.GetHashCode() -> int
+override StandSure.Functional.Unit.ToString() -> string!
+StandSure.Functional.Unit
+StandSure.Functional.Unit.CompareTo(StandSure.Functional.Unit other) -> int
+StandSure.Functional.Unit.Equals(StandSure.Functional.Unit other) -> bool
+StandSure.Functional.Unit.Unit() -> void
+static readonly StandSure.Functional.Unit.Value -> StandSure.Functional.Unit
+static StandSure.Functional.Unit.operator !=(StandSure.Functional.Unit left, StandSure.Functional.Unit right) -> bool
+static StandSure.Functional.Unit.operator ==(StandSure.Functional.Unit left, StandSure.Functional.Unit right) -> bool

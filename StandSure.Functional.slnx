@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/StandSure.Functional/StandSure.Functional.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/StandSure.Functional.Tests/StandSure.Functional.Tests.csproj" />
+  </Folder>
+</Solution>
