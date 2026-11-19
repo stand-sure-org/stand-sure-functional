@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace StandSure.Functional;
@@ -181,6 +182,8 @@ public static class ResultTaskExtensions
     /// <param name="predicate">The check on the value.</param>
     /// <param name="error">The error returned when the predicate is false.</param>
     /// <returns>The original result when it is a failure or the predicate holds; otherwise a failure with <paramref name="error"/>.</returns>
+    /// <remarks>The <see cref="Error"/> is built before the call and is recorded in telemetry when built, even if the
+    /// predicate holds; prefer the factory overload <see cref="EnsureAsync{T}(Task{Result{T}}, Func{T, bool}, Func{T, Error})"/>.</remarks>
     public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> source, Func<T, bool> predicate, Error error)
     {
         var result = await Resolve(source).ConfigureAwait(false);
@@ -193,6 +196,8 @@ public static class ResultTaskExtensions
     /// <param name="predicate">The asynchronous check on the value.</param>
     /// <param name="error">The error returned when the predicate is false.</param>
     /// <returns>The original result when it is a failure or the predicate holds; otherwise a failure with <paramref name="error"/>.</returns>
+    /// <remarks>The <see cref="Error"/> is built before the call and is recorded in telemetry when built, even if the
+    /// predicate holds; prefer the factory overload <see cref="EnsureAsync{T}(Task{Result{T}}, Func{T, Task{bool}}, Func{T, Error})"/>.</remarks>
     public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> source, Func<T, Task<bool>> predicate, Error error)
     {
         var result = await Resolve(source).ConfigureAwait(false);
@@ -213,6 +218,63 @@ public static class ResultTaskExtensions
         }
 
         return await task.ConfigureAwait(false) ? result : Result.Failure<T>(error);
+    }
+
+    /// <summary>Turns an awaited success into a failure built by <paramref name="error"/> when the predicate is false.</summary>
+    /// <typeparam name="T">The value type.</typeparam>
+    /// <param name="source">The pending result.</param>
+    /// <param name="predicate">The check on the value.</param>
+    /// <param name="error">Builds the error from the value; called only when the predicate is false, so nothing is
+    /// built or recorded on the success path. A <see langword="null"/> value gives a <c>result.null_delegate</c>
+    /// failure when it would be called.</param>
+    /// <returns>The original result when it is a failure or the predicate holds; otherwise a failure with the built error.</returns>
+    // Priority -1 keeps a null literal binding to the Error overloads; lambdas and method groups still reach this one.
+    [OverloadResolutionPriority(-1)]
+    public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> source, Func<T, bool> predicate, Func<T, Error> error)
+    {
+        var result = await Resolve(source).ConfigureAwait(false);
+        return result.Ensure(predicate, error);
+    }
+
+    /// <summary>Turns an awaited success into a failure built by <paramref name="error"/> when the asynchronous predicate is false.</summary>
+    /// <typeparam name="T">The value type.</typeparam>
+    /// <param name="source">The pending result.</param>
+    /// <param name="predicate">The asynchronous check on the value.</param>
+    /// <param name="error">Builds the error from the value; called only when the predicate is false, so nothing is
+    /// built or recorded on the success path. A <see langword="null"/> value gives a <c>result.null_delegate</c>
+    /// failure when it would be called.</param>
+    /// <returns>The original result when it is a failure or the predicate holds; otherwise a failure with the built error.</returns>
+    [OverloadResolutionPriority(-1)]
+    public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> source, Func<T, Task<bool>> predicate, Func<T, Error> error)
+    {
+        var result = await Resolve(source).ConfigureAwait(false);
+        if (result.IsFailure)
+        {
+            return result;
+        }
+
+        if (predicate is null)
+        {
+            return Result.Failure<T>(ResultErrors.NullDelegate(nameof(predicate)));
+        }
+
+        var task = predicate(result.ValueUnchecked);
+        if (task is null)
+        {
+            return Result.Failure<T>(ResultErrors.NullTask(nameof(predicate)));
+        }
+
+        if (await task.ConfigureAwait(false))
+        {
+            return result;
+        }
+
+        if (error is null)
+        {
+            return Result.Failure<T>(ResultErrors.NullDelegate(nameof(error)));
+        }
+
+        return Result.Failure<T>(error(result.ValueUnchecked));
     }
 
     // A null source task is a failure rather than a NullReferenceException.

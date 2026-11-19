@@ -315,6 +315,56 @@ public sealed class ResultAsyncTests
     }
 
     [Fact]
+    public async Task EnsureAsync_Factory_SyncAndAsyncPredicates_TrueAndFalse()
+    {
+        var calls = 0;
+        Error Make(int v) { calls++; return Error.Validation("v.bad", $"{v}"); }
+
+        var syncPass = await Ok(5).EnsureAsync(v => v > 0, Make);
+        var syncFail = await Ok(-5).EnsureAsync(v => v > 0, Make);
+        var asyncPass = await Ok(5).EnsureAsync(async v => { await Task.Yield(); return v > 0; }, Make);
+        var asyncFail = await Ok(-6).EnsureAsync(async v => { await Task.Yield(); return v > 0; }, Make);
+
+        syncPass.IsSuccess.Should().BeTrue();
+        asyncPass.IsSuccess.Should().BeTrue();
+        syncFail.TryGetValue(out Error? e1).Should().BeTrue();
+        e1!.Message.Should().Be("-5");
+        asyncFail.TryGetValue(out Error? e2).Should().BeTrue();
+        e2!.Message.Should().Be("-6");
+        calls.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task EnsureAsync_Factory_Failure_SkipsPredicateAndFactory()
+    {
+        var called = false;
+
+        var r = await Bad().EnsureAsync(v => { called = true; return true; }, v => { called = true; return Boom; });
+        var r2 = await Bad().EnsureAsync(v => { called = true; return Task.FromResult(true); }, v => { called = true; return Boom; });
+
+        called.Should().BeFalse();
+        r.TryGetValue(out Error? e).Should().BeTrue();
+        e.Should().BeSameAs(Boom);
+        r2.IsFailure.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task EnsureAsync_Factory_NullDelegates_ReturnNullDelegateFailure()
+    {
+        var nullFactorySync = await Ok(-1).EnsureAsync(v => v > 0, (Func<int, Error>)null!);
+        var nullFactoryAsync = await Ok(-1).EnsureAsync(v => Task.FromResult(v > 0), (Func<int, Error>)null!);
+        var nullFactoryPass = await Ok(1).EnsureAsync(v => Task.FromResult(v > 0), (Func<int, Error>)null!);
+        var nullPredicate = await Ok(1).EnsureAsync((Func<int, Task<bool>>)null!, v => Boom);
+        var nullTask = await Ok(1).EnsureAsync(v => (Task<bool>)null!, v => Boom);
+
+        nullFactorySync.Match(onFailure: e => e.Code, onSuccess: _ => "").Should().Be("result.null_delegate");
+        nullFactoryAsync.Match(onFailure: e => e.Code, onSuccess: _ => "").Should().Be("result.null_delegate");
+        nullFactoryPass.IsSuccess.Should().BeTrue();
+        nullPredicate.Match(onFailure: e => e.Code, onSuccess: _ => "").Should().Be("result.null_delegate");
+        nullTask.Match(onFailure: e => e.Code, onSuccess: _ => "").Should().Be("result.null_task");
+    }
+
+    [Fact]
     public async Task EnsureAsync_NullPredicates_ReturnNullDelegateFailure()
     {
         var r = await Ok(1).EnsureAsync((Func<int, bool>)null!, Boom);

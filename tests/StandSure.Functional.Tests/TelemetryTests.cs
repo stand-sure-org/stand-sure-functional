@@ -100,6 +100,57 @@ public sealed class TelemetryTests : IDisposable
     }
 
     [Fact]
+    public void ValidationGroup_AddsGroupedEvent_DoesNotIncrementCounter()
+    {
+        var a = Error.Validation("tel.group.child.a", "a");
+        var b = Error.Validation("tel.group.child.b", "b");
+        using var activity = _testSource.StartActivity("op")!;
+
+        _ = Error.Validation("tel.group.parent", "two problems", [a, b]);
+
+        var evt = activity.Events.Single(e => e.Name == "functional.failure.grouped");
+        Tag(evt, "error.kind").Should().Be("Validation");
+        Tag(evt, "error.code").Should().Be("tel.group.parent");
+        Tag(evt, "error.errors.count").Should().Be(2);
+        activity.Events.Should().NotContain(e => e.Name == "functional.failure");
+        For("tel.group.parent").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ValidationGroup_WithNoChildren_IsARootFailure()
+    {
+        using var activity = _testSource.StartActivity("op")!;
+
+        _ = Error.Validation("tel.group.empty", "nothing inside", []);
+
+        activity.Events.Should().ContainSingle(e => e.Name == "functional.failure");
+        For("tel.group.empty").Should().ContainSingle();
+    }
+
+    [Fact]
+    public void Combine_OfNFailures_IncrementsCounterByExactlyN()
+    {
+        string[] codes = ["tel.combine.1", "tel.combine.2", "tel.combine.3"];
+        using var activity = _testSource.StartActivity("op")!;
+
+        var combined = codes
+            .Select(c => Result.Failure<int>(Error.NotFound(c, c)))
+            .Append(Result.Success(1))
+            .Combine();
+        var traversed = codes.Traverse(c => c == "tel.combine.1" ? Result.Success(1) : Result.Failure<int>(Error.Conflict(c + ".t", c)));
+
+        combined.IsFailure.Should().BeTrue();
+        traversed.IsFailure.Should().BeTrue();
+        codes.Sum(c => For(c).Count).Should().Be(3);
+        (For("tel.combine.2.t").Count + For("tel.combine.3.t").Count).Should().Be(2);
+        For("result.combine_failed").Should().BeEmpty();
+        activity.Events.Count(e => e.Name == "functional.failure").Should().Be(5);
+        activity.Events.Where(e => e.Name == "functional.failure.grouped")
+            .Select(e => Tag(e, "error.errors.count"))
+            .Should().Equal(3, 2);
+    }
+
+    [Fact]
     public void ConvertingErrorToResult_ThreeTimes_CountsOnce()
     {
         var error = Error.Unavailable("tel.convert.1", "down");

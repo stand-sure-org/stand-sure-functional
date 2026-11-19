@@ -68,6 +68,20 @@ public sealed class JsonTests
     }
 
     [Fact]
+    public void Deserialized_Error_CollectionsAreReadOnlySnapshots()
+    {
+        const string json = """{"error":{"kind":"Validation","code":"p","message":"m","metadata":{"k":"v"},"errors":[{"kind":"Validation","code":"c","message":"c","metadata":{"ck":"cv"}}]}}""";
+
+        var back = De<Result<int>>(json);
+
+        back.TryGetValue(out Error? e).Should().BeTrue();
+        e!.Metadata.Should().NotBeAssignableTo<Dictionary<string, string>>();
+        ((e.Metadata as IDictionary<string, string>)?.IsReadOnly ?? true).Should().BeTrue();
+        e.Errors.Should().NotBeAssignableTo<List<Error>>();
+        e.Errors.Should().ContainSingle().Which.Metadata.Should().NotBeAssignableTo<Dictionary<string, string>>();
+    }
+
+    [Fact]
     public void Deserialized_Error_HasNonNullCollections()
     {
         var back = De<Result<int>>("""{"error":{"kind":"Unexpected","code":"x","message":"m","metadata":null,"errors":null}}""");

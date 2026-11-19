@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 using System.Threading.Tasks;
 using AwesomeAssertions;
 using Xunit;
@@ -12,44 +10,11 @@ public sealed class ResultMatchTelemetryTests : IDisposable
 {
     private const string NullDelegateCode = "result.null_delegate";
 
-    private readonly MeterListener _listener = new();
-    private readonly List<string> _codes = [];
-    private readonly object _gate = new();
+    private readonly FailureEventScope _scope = new();
 
-    public ResultMatchTelemetryTests()
-    {
-        _listener.InstrumentPublished = (instrument, l) =>
-        {
-            if (instrument.Meter.Name == "StandSure.Functional" && instrument.Name == "functional.failures")
-            {
-                l.EnableMeasurementEvents(instrument);
-            }
-        };
-        _listener.SetMeasurementEventCallback<long>((_, _, tags, _) =>
-        {
-            foreach (var tag in tags)
-            {
-                if (tag.Key == "error.code" && tag.Value is string code)
-                {
-                    lock (_gate)
-                    {
-                        _codes.Add(code);
-                    }
-                }
-            }
-        });
-        _listener.Start();
-    }
+    public void Dispose() => _scope.Dispose();
 
-    public void Dispose() => _listener.Dispose();
-
-    private int NullDelegateCount()
-    {
-        lock (_gate)
-        {
-            return _codes.FindAll(c => c == NullDelegateCode).Count;
-        }
-    }
+    private int NullDelegateCount() => _scope.Count(NullDelegateCode);
 
     [Fact]
     public void Match_NullOnSuccess_RecordsNullDelegateFailure()

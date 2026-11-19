@@ -126,6 +126,8 @@ public readonly partial struct Result<T>
     /// <param name="error">The error returned when the predicate is false. A <see langword="null"/> value becomes
     /// <see cref="Error.Uninitialized"/>.</param>
     /// <returns>This result if it is a failure or the predicate holds; otherwise a failure with <paramref name="error"/>.</returns>
+    /// <remarks>The <see cref="Error"/> is built before the call and is recorded in telemetry when built, even if the
+    /// predicate holds; prefer the factory overload <see cref="Ensure(Func{T, bool}, Func{T, Error})"/>.</remarks>
     public Result<T> Ensure(Func<T, bool> predicate, Error error)
     {
         if (_tag != TagOk)
@@ -140,6 +142,43 @@ public readonly partial struct Result<T>
 
         return predicate(_value) ? this : new Result<T>(error);
     }
+
+    /// <summary>Turns a success into a failure built by <paramref name="error"/> when the predicate is false.</summary>
+    /// <param name="predicate">The check on the value. A <see langword="null"/> value turns a success into a
+    /// <c>result.null_delegate</c> failure.</param>
+    /// <param name="error">Builds the error from the value; called only when the predicate is false, so nothing is
+    /// built or recorded on the success path. A <see langword="null"/> value gives a <c>result.null_delegate</c>
+    /// failure when it would be called; a <see langword="null"/> return becomes <see cref="Error.Uninitialized"/>.</param>
+    /// <returns>This result if it is a failure or the predicate holds; otherwise a failure with the built error.</returns>
+    // RS0027: the (predicate, Func<T, Error>) overload is a distinct type-based overload. Priority -1 keeps a null
+    // literal binding to the Error overload; lambdas and method groups still reach this one.
+#pragma warning disable RS0027
+    [OverloadResolutionPriority(-1)]
+    public Result<T> Ensure(Func<T, bool> predicate, Func<T, Error> error)
+    {
+        if (_tag != TagOk)
+        {
+            return this;
+        }
+
+        if (predicate is null)
+        {
+            return new Result<T>(ResultErrors.NullDelegate(nameof(predicate)));
+        }
+
+        if (predicate(_value))
+        {
+            return this;
+        }
+
+        if (error is null)
+        {
+            return new Result<T>(ResultErrors.NullDelegate(nameof(error)));
+        }
+
+        return new Result<T>(error(_value));
+    }
+#pragma warning restore RS0027
 
     /// <summary>Turns a success into a validation failure when the predicate is false, describing it with the
     /// source text of the predicate.</summary>

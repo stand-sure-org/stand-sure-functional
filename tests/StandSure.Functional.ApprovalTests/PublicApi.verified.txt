@@ -89,6 +89,8 @@ namespace StandSure.Functional
         public StandSure.Functional.Option<TOut> Map<TOut>(System.Func<T, TOut> map) { }
         public TOut Match<TOut>(System.Func<TOut> onNone, System.Func<T, TOut> onSome) { }
         public StandSure.Functional.Result<T> ToResult(StandSure.Functional.Error ifNone) { }
+        [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
+        public StandSure.Functional.Result<T> ToResult(System.Func<StandSure.Functional.Error> ifNone) { }
         public bool TryGetValue([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out StandSure.Functional.None? none) { }
         public bool TryGetValue([System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out T value) { }
     }
@@ -116,7 +118,11 @@ namespace StandSure.Functional
         public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> BindAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, StandSure.Functional.Result<TOut>> bind) { }
         public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> BindAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>>> bind) { }
         public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<bool>> predicate, StandSure.Functional.Error error) { }
+        [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<bool>> predicate, System.Func<T, StandSure.Functional.Error> error) { }
         public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, bool> predicate, StandSure.Functional.Error error) { }
+        [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, bool> predicate, System.Func<T, StandSure.Functional.Error> error) { }
         public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> MapAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<TOut>> map) { }
         public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> MapAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, TOut> map) { }
         public static System.Threading.Tasks.Task<TOut> MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<StandSure.Functional.Error, System.Threading.Tasks.Task<TOut>> onFailure, System.Func<T, System.Threading.Tasks.Task<TOut>> onSuccess) { }
@@ -138,6 +144,8 @@ namespace StandSure.Functional
         public void Deconstruct(out T? value, out StandSure.Functional.Error? error) { }
         public StandSure.Functional.Result<T> Ensure(System.Func<T, bool> predicate, StandSure.Functional.Error error) { }
         [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
+        public StandSure.Functional.Result<T> Ensure(System.Func<T, bool> predicate, System.Func<T, StandSure.Functional.Error> error) { }
+        [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
         public StandSure.Functional.Result<T> Ensure(System.Func<T, bool> predicate, [System.Runtime.CompilerServices.CallerArgumentExpression("predicate")] string? expression = null) { }
         public T GetValueOrDefault(T fallback) { }
         public StandSure.Functional.Result<TOut> Map<TOut>(System.Func<T, TOut> map) { }
@@ -150,6 +158,10 @@ namespace StandSure.Functional
     public static class Try
     {
         public static StandSure.Functional.Result<StandSure.Functional.Unit> Run(System.Action action) { }
+        [System.Obsolete("Use Try.RunAsync(ct => ..., ct) for asynchronous work.", true)]
+        public static StandSure.Functional.Result<StandSure.Functional.Unit> Run(System.Func<System.Threading.Tasks.Task> fn) { }
+        [System.Obsolete("Use Try.RunAsync(ct => ..., ct) for asynchronous work.", true)]
+        public static StandSure.Functional.Result<T> Run<T>(System.Func<System.Threading.Tasks.Task<T>> fn) { }
         public static StandSure.Functional.Result<T> Run<T>(System.Func<T> fn) { }
         public static System.Threading.Tasks.Task<StandSure.Functional.Result<StandSure.Functional.Unit>> RunAsync(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task> fn, System.Threading.CancellationToken cancellationToken = default) { }
         public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> RunAsync<T>(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<T>> fn, System.Threading.CancellationToken cancellationToken = default) { }

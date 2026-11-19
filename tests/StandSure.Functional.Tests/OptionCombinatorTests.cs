@@ -119,6 +119,38 @@ public sealed class OptionCombinatorTests
     }
 
     [Fact]
+    public void ToResult_Factory_Some_DoesNotCallFactory()
+    {
+        var called = false;
+
+        var r = Some(5).ToResult(() => { called = true; return Boom; });
+
+        r.TryGetValue(out int v).Should().BeTrue();
+        v.Should().Be(5);
+        called.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ToResult_Factory_NoneAndDefault_UseFactoryError()
+    {
+        NoneInt.ToResult(() => Boom).Match(onFailure: e => e, onSuccess: _ => null!).Should().BeSameAs(Boom);
+        default(Option<int>).ToResult(() => Boom).IsFailure.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ToResult_Factory_NullFactory_OnlyMattersForNone()
+    {
+        Some(1).ToResult((Func<Error>)null!).IsSuccess.Should().BeTrue();
+        NoneInt.ToResult((Func<Error>)null!).Match(onFailure: e => e.Code, onSuccess: _ => "").Should().Be("result.null_delegate");
+    }
+
+    [Fact]
+    public void ToResult_Factory_ReturningNull_IsUninitialized()
+    {
+        NoneInt.ToResult(() => null!).Match(onFailure: e => e, onSuccess: _ => null!).Should().BeSameAs(Error.Uninitialized);
+    }
+
+    [Fact]
     public void ToResult_NoneWithNullError_IsUninitialized()
     {
         NoneInt.ToResult(null!).Match(e => e, _ => null!).Should().BeSameAs(Error.Uninitialized);

@@ -54,6 +54,7 @@ public sealed class OptionAllocationTests
                 .Filter(static v => v > 0);
             sum += o.Match(static () => 0, static v => v) + o.GetValueOrDefault(0);
             sum += o.ToResult(Error.Uninitialized).GetValueOrDefault(0);
+            sum += o.ToResult(static () => Error.Uninitialized).GetValueOrDefault(0);
         }
 
         return sum;

@@ -327,6 +327,71 @@ public sealed class ResultCombinatorTests
         e!.Code.Should().Be("result.null_delegate");
     }
 
+    [Fact]
+    public void Ensure_Factory_PredicateHolds_DoesNotCallFactory()
+    {
+        var called = false;
+
+        var r = Result.Success(5).Ensure(v => v > 0, v => { called = true; return Boom; });
+
+        r.IsSuccess.Should().BeTrue();
+        called.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Ensure_Factory_PredicateFails_ReturnsFactoryErrorBuiltFromValue()
+    {
+        var r = Result.Success(-5).Ensure(v => v > 0, v => Error.Validation("amount.negative", $"{v} is negative."));
+
+        r.TryGetValue(out Error? e).Should().BeTrue();
+        e!.Code.Should().Be("amount.negative");
+        e.Message.Should().Be("-5 is negative.");
+    }
+
+    [Fact]
+    public void Ensure_Factory_OnFailure_CallsNeither()
+    {
+        var called = false;
+
+        var r = Result.Failure<int>(Boom).Ensure(v => { called = true; return true; }, v => { called = true; return Boom; });
+        var d = default(Result<int>).Ensure(v => true, v => Boom);
+
+        called.Should().BeFalse();
+        r.TryGetValue(out Error? e).Should().BeTrue();
+        e.Should().BeSameAs(Boom);
+        d.TryGetValue(out Error? de).Should().BeTrue();
+        de.Should().BeSameAs(Error.Uninitialized);
+    }
+
+    [Fact]
+    public void Ensure_Factory_NullFactory_OnlyMattersWhenPredicateFails()
+    {
+        var pass = Result.Success(5).Ensure(v => v > 0, (Func<int, Error>)null!);
+        var fail = Result.Success(-5).Ensure(v => v > 0, (Func<int, Error>)null!);
+
+        pass.IsSuccess.Should().BeTrue();
+        fail.TryGetValue(out Error? e).Should().BeTrue();
+        e!.Code.Should().Be("result.null_delegate");
+    }
+
+    [Fact]
+    public void Ensure_Factory_NullPredicate_ReturnsNullDelegateFailure()
+    {
+        var r = Result.Success(1).Ensure(null!, v => Boom);
+
+        r.TryGetValue(out Error? e).Should().BeTrue();
+        e!.Code.Should().Be("result.null_delegate");
+    }
+
+    [Fact]
+    public void Ensure_Factory_ReturningNull_IsUninitialized()
+    {
+        var r = Result.Success(-1).Ensure(v => v > 0, v => null!);
+
+        r.TryGetValue(out Error? e).Should().BeTrue();
+        e.Should().BeSameAs(Error.Uninitialized);
+    }
+
     // ---- Tap ----
 
     [Fact]

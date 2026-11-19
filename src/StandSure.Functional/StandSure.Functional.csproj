@@ -4,6 +4,8 @@
     <RootNamespace>$(FunctionalRootName)</RootNamespace>
     <AssemblyName>$(FunctionalRootName)</AssemblyName>
     <PackageId>$(FunctionalRootName)</PackageId>
+    <!-- Pre-1.0: the hidden Ok/Fail aliases and other names may still change before a stable release. -->
+    <VersionPrefix>0.1.0</VersionPrefix>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Description>Allocation-conscious Result, Option and Error types for C#.</Description>
     <!-- Pack on every build so tests/StandSure.Functional.PackageTests always consumes the current package. -->

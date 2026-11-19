@@ -33,7 +33,7 @@ public sealed class TryTests
     {
         InvalidOperationException ex = new("boom");
 
-        Result<int> r = Try.Run<int>(() => throw ex);
+        Result<int> r = Try.Run((Func<int>)(() => throw ex));
 
         r.TryGetValue(out Error? e).Should().BeTrue();
         e!.Kind.Should().Be(ErrorKind.Unexpected);
@@ -43,7 +43,7 @@ public sealed class TryTests
     [Fact]
     public void Run_OperationCanceled_Propagates()
     {
-        Action act = () => Try.Run<int>(() => throw new OperationCanceledException());
+        Action act = () => Try.Run((Func<int>)(() => throw new OperationCanceledException()));
 
         act.Should().Throw<OperationCanceledException>();
     }
@@ -51,7 +51,7 @@ public sealed class TryTests
     [Fact]
     public void Run_OutOfMemory_Propagates()
     {
-        Action act = () => Try.Run<int>(() => throw new OutOfMemoryException());
+        Action act = () => Try.Run((Func<int>)(() => throw new OutOfMemoryException()));
 
         act.Should().Throw<OutOfMemoryException>();
     }
@@ -61,7 +61,7 @@ public sealed class TryTests
     {
         AggregateException ae = new(new InvalidOperationException("x"), new OperationCanceledException());
 
-        Result<int> r = Try.Run<int>(() => throw ae);
+        Result<int> r = Try.Run((Func<int>)(() => throw ae));
 
         r.IsFailure.Should().BeTrue();
     }
@@ -69,10 +69,10 @@ public sealed class TryTests
     [Fact]
     public void Run_NullFunc_ReturnsFailure()
     {
-        Result<int> r = Try.Run<int>(null!);
+        Result<int> r = Try.Run((Func<int>)null!);
 
         r.TryGetValue(out Error? e).Should().BeTrue();
-        e!.Code.Should().Be("try.null_delegate");
+        e!.Code.Should().Be("result.null_delegate");
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public sealed class TryTests
         Result<Unit> r = Try.Run((Action)null!);
 
         r.TryGetValue(out Error? e).Should().BeTrue();
-        e!.Code.Should().Be("try.null_delegate");
+        e!.Code.Should().Be("result.null_delegate");
     }
 
     [Fact]
@@ -174,7 +174,22 @@ public sealed class TryTests
         Result<int> r = await Try.RunAsync<int>(null!, TestContext.Current.CancellationToken);
         Result<Unit> u = await Try.RunAsync((Func<CancellationToken, Task>)null!, TestContext.Current.CancellationToken);
 
-        r.IsFailure.Should().BeTrue();
-        u.IsFailure.Should().BeTrue();
+        r.TryGetValue(out Error? re).Should().BeTrue();
+        re!.Code.Should().Be("result.null_delegate");
+        u.TryGetValue(out Error? ue).Should().BeTrue();
+        ue!.Code.Should().Be("result.null_delegate");
+    }
+
+    [Fact]
+    public async Task RunAsync_DelegateReturnsNullTask_ReturnsNullTaskFailure()
+    {
+        Result<int> r = await Try.RunAsync<int>(_ => null!, TestContext.Current.CancellationToken);
+        Result<Unit> u = await Try.RunAsync(_ => (Task)null!, TestContext.Current.CancellationToken);
+
+        r.TryGetValue(out Error? re).Should().BeTrue();
+        re!.Code.Should().Be("result.null_task");
+        re.Exception.Should().BeNull();
+        u.TryGetValue(out Error? ue).Should().BeTrue();
+        ue!.Code.Should().Be("result.null_task");
     }
 }

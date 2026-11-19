@@ -79,6 +79,8 @@ StandSure.Functional.Option<T>.Value.get -> object?
 StandSure.Functional.Try
 static StandSure.Functional.Try.Run(System.Action! action) -> StandSure.Functional.Result<StandSure.Functional.Unit>
 static StandSure.Functional.Try.Run<T>(System.Func<T>! fn) -> StandSure.Functional.Result<T>
+static StandSure.Functional.Try.Run(System.Func<System.Threading.Tasks.Task!>! fn) -> StandSure.Functional.Result<StandSure.Functional.Unit>
+static StandSure.Functional.Try.Run<T>(System.Func<System.Threading.Tasks.Task<T>!>! fn) -> StandSure.Functional.Result<T>
 static StandSure.Functional.Try.RunAsync(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task!>! fn, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<StandSure.Functional.Result<StandSure.Functional.Unit>>!
 static StandSure.Functional.Try.RunAsync<T>(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<T>!>! fn, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<StandSure.Functional.Result<T>>!
 StandSure.Functional.Json.FunctionalJsonOptionsExtensions
@@ -135,3 +137,7 @@ static StandSure.Functional.OptionEnumerableExtensions.Choose<T>(this System.Col
 static StandSure.Functional.ResultEnumerableExtensions.Combine<T>(this System.Collections.Generic.IEnumerable<StandSure.Functional.Result<T>>! source) -> StandSure.Functional.Result<System.Collections.Generic.IReadOnlyList<T>!>
 static StandSure.Functional.ResultEnumerableExtensions.Partition<T>(this System.Collections.Generic.IEnumerable<StandSure.Functional.Result<T>>! source) -> (System.Collections.Generic.IReadOnlyList<T>! Successes, System.Collections.Generic.IReadOnlyList<StandSure.Functional.Error!>! Failures)
 static StandSure.Functional.ResultEnumerableExtensions.Traverse<T, TOut>(this System.Collections.Generic.IEnumerable<T>! source, System.Func<T, StandSure.Functional.Result<TOut>>! map) -> StandSure.Functional.Result<System.Collections.Generic.IReadOnlyList<TOut>!>
+StandSure.Functional.Option<T>.ToResult(System.Func<StandSure.Functional.Error!>! ifNone) -> StandSure.Functional.Result<T>
+StandSure.Functional.Result<T>.Ensure(System.Func<T, bool>! predicate, System.Func<T, StandSure.Functional.Error!>! error) -> StandSure.Functional.Result<T>
+static StandSure.Functional.ResultTaskExtensions.EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<T, bool>! predicate, System.Func<T, StandSure.Functional.Error!>! error) -> System.Threading.Tasks.Task<StandSure.Functional.Result<T>>!
+static StandSure.Functional.ResultTaskExtensions.EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<T, System.Threading.Tasks.Task<bool>!>! predicate, System.Func<T, StandSure.Functional.Error!>! error) -> System.Threading.Tasks.Task<StandSure.Functional.Result<T>>!

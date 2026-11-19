@@ -45,7 +45,8 @@ public sealed record Error
     }
 
     // The wire-format constructor: no exception parameter, so the source generator never needs Exception metadata,
-    // and it bypasses Create, so deserializing records no failure telemetry.
+    // and it bypasses Create, so deserializing records no failure telemetry. The deserializer hands over a mutable
+    // Dictionary and List, so both are copied into the same read-only shapes the factories produce.
     [JsonConstructor]
     private Error(
         ErrorKind kind,
@@ -54,7 +55,7 @@ public sealed record Error
         IReadOnlyDictionary<string, string>? metadata = null,
         IReadOnlyList<Error>? errors = null,
         Error? inner = null)
-        : this(kind, code, message, metadata, inner, errors, null)
+        : this(kind, code, message, Snapshot(metadata), inner, errors is null or { Count: 0 } ? null : [.. errors], null)
     {
     }
 
@@ -103,6 +104,11 @@ public sealed record Error
 #pragma warning restore RS0027
 
     /// <summary>Creates a <see cref="ErrorKind.Validation"/> parent error that holds several child errors.</summary>
+    /// <remarks>
+    /// The children were already recorded when they were built, so a parent with at least one child is recorded as a
+    /// <c>functional.failure.grouped</c> event and is not counted in <c>functional.failures</c>. With no children it is
+    /// an ordinary root failure.
+    /// </remarks>
     /// <param name="code">The error code.</param>
     /// <param name="message">The message.</param>
     /// <param name="errors">The child errors.</param>
@@ -210,13 +216,18 @@ public sealed record Error
         Exception? exception = null)
     {
         var error = new Error(kind, code, message, Snapshot(metadata), inner, errors, exception);
-        if (inner is null)
+        if (inner is not null)
         {
-            FunctionalDiagnostics.RecordFailure(error);
+            FunctionalDiagnostics.RecordWrap(error);
+        }
+        else if (error.Errors.Count > 0)
+        {
+            // A parent that only groups children: the children were counted when they were built.
+            FunctionalDiagnostics.RecordGroup(error);
         }
         else
         {
-            FunctionalDiagnostics.RecordWrap(error);
+            FunctionalDiagnostics.RecordFailure(error);
         }
 
         return error;

@@ -74,6 +74,7 @@ public sealed class ResultAllocationTests
                 .Bind(static v => Result.Success(v * 2))
                 .Ensure(static v => v > 0, Failure)
                 .Ensure(static v => v > 0)
+                .Ensure(static v => v > 0, static v => Failure)
                 .MapError(static e => e)
                 .Tap(static _ => { })
                 .GetValueOrDefault(7);

@@ -116,6 +116,30 @@ public readonly partial struct Option<T>
     /// <param name="ifNone">The error for none. A <see langword="null"/> value becomes
     /// <see cref="Error.Uninitialized"/>.</param>
     /// <returns>A success holding the value, or a failure with <paramref name="ifNone"/>.</returns>
+    /// <remarks>The <see cref="Error"/> is built before the call and is recorded in telemetry when built, even if this
+    /// option has a value; prefer the factory overload <see cref="ToResult(Func{Error})"/>.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Result<T> ToResult(Error ifNone) => _isSome ? new Result<T>(_value) : new Result<T>(ifNone);
+
+    /// <summary>Converts to a <see cref="Result{T}"/>, building the error only for none.</summary>
+    /// <param name="ifNone">Builds the error for none; not called when there is a value, so nothing is built or
+    /// recorded then. A <see langword="null"/> value gives a <c>result.null_delegate</c> failure for none; a
+    /// <see langword="null"/> return becomes <see cref="Error.Uninitialized"/>.</param>
+    /// <returns>A success holding the value, or a failure with the built error.</returns>
+    // Priority -1 keeps a null literal binding to the Error overload; lambdas and method groups still reach this one.
+    [OverloadResolutionPriority(-1)]
+    public Result<T> ToResult(Func<Error> ifNone)
+    {
+        if (_isSome)
+        {
+            return new Result<T>(_value);
+        }
+
+        if (ifNone is null)
+        {
+            return new Result<T>(ResultErrors.NullDelegate(nameof(ifNone)));
+        }
+
+        return new Result<T>(ifNone());
+    }
 }
