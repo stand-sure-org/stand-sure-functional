@@ -3,7 +3,7 @@ entry-method: GetProduct
 ---
 # Get a product by id
 
-A product page loads one product by its id through `IProductRepository`. Ids come from links that may be stale, so there being no product with the requested id is a normal, expected outcome that every caller has to handle, not an exceptional one.
+A product page loads one product by its id through `IProductRepository`. Ids come from links that may be stale, so there being no product with the requested id is a normal, expected case that every caller has to handle, not an exceptional one.
 
 ## What to write
 

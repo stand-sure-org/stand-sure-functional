@@ -3,7 +3,7 @@ entry-method: ChargeCard
 ---
 # Charge a card through a third-party gateway
 
-A checkout charges the customer's card through `IPaymentGateway`, a vendor SDK you cannot change. The SDK reports problems by throwing exceptions. The rest of the checkout must not deal with those exceptions; it needs a non-throwing outcome instead.
+A checkout charges the customer's card through `IPaymentGateway`, a vendor SDK you cannot change. The SDK reports problems by throwing exceptions. The rest of the checkout must not deal with those exceptions; it needs a value back instead.
 
 ## What to write
 
@@ -14,7 +14,7 @@ A public class named `Solution` with:
 
 ## Behaviour
 
-- Call `IPaymentGateway.Charge` with the arguments as given. On success, give the caller a `PaymentReceipt` with the gateway's transaction id, the amount and the currency.
+- Call `IPaymentGateway.Charge` with the arguments as given. If the charge goes through, give the caller a `PaymentReceipt` with the gateway's transaction id, the amount and the currency.
 - The gateway's documented exceptions are expected failures, and the caller treats them differently:
   - `PaymentDeclinedException`: the card was declined. The checkout shows the decline reason to the customer.
   - `GatewayUnavailableException` or `TimeoutException`: the gateway could not be reached. The checkout offers to try again later.

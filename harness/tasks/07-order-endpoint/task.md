@@ -1,9 +1,9 @@
 ---
 entry-method: GetOrder
 ---
-# Map a lookup outcome to an HTTP response in a minimal API endpoint
+# Turn an order lookup into an HTTP response in a minimal API endpoint
 
-An ASP.NET Core minimal API exposes `GET /orders/{id}`. The lookup logic and the HTTP mapping are kept apart: one method decides the outcome without knowing about HTTP, and the endpoint handler turns that outcome into an HTTP response.
+An ASP.NET Core minimal API exposes `GET /orders/{id}`. The lookup logic and the HTTP mapping are kept apart: one method decides what happened without knowing about HTTP, and the endpoint handler turns that into an HTTP response.
 
 ## What to write
 
@@ -11,7 +11,7 @@ A public class named `Solution` with:
 
 - a public constructor `Solution(IOrderQueries orders)`;
 - a public instance method `FindOrder(int id)` holding the lookup logic. It must not use any HTTP or ASP.NET Core types. Choose its return type yourself.
-- a public instance method `GetOrder(int id)`, the endpoint handler. It calls `FindOrder` and maps its outcome to the HTTP response. Choose its return type yourself.
+- a public instance method `GetOrder(int id)`, the endpoint handler. It calls `FindOrder` and turns what it returns into the HTTP response. Choose its return type yourself.
 
 `GetOrder` is mapped directly by the application, e.g. `app.MapGet("/orders/{id:int}", solution.GetOrder);`. Do not write the application setup or the route registration. ASP.NET Core (the `Microsoft.AspNetCore.App` framework) is referenced.
 

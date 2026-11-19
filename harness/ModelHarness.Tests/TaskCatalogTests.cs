@@ -66,7 +66,7 @@ public sealed class TaskCatalogTests
     {
         var task = TaskCatalog.Load(TasksRoot).Single(t => t.Id == id);
 
-        var diagnostics = Compile(id, task.FixtureSource, task.ProbeSource);
+        var diagnostics = Compile(id, task.FixtureSource);
 
         diagnostics.Where(d => d.Severity >= DiagnosticSeverity.Warning).Should().BeEmpty();
     }
@@ -153,6 +153,23 @@ public sealed class TaskCatalogTests
         foreach (var task in TaskCatalog.Load(TasksRoot))
         {
             vocabulary.Matches(task.Prompt).Select(m => m.Value).Should().BeEmpty(task.Id);
+        }
+    }
+
+    [Fact]
+    public void NoTaskPrompt_UsesTypeNamePrimingWords()
+    {
+        // Plain-English words that are also common names for a Result look-alike (Outcome<T>,
+        // OperationResult, Maybe<T>, Success/Failure...). Case-insensitive, over the full prompt
+        // including fixture text. "failure"/"fail" stay allowed: the baseline system prompt uses them.
+        // "optional" is allowed (task 03 says "optional config value", DESIGN wording).
+        var priming = new Regex(
+            @"\b(outcomes?|results?|either|maybe|options?|success\w*|succeed\w*|response objects?)\b",
+            RegexOptions.IgnoreCase);
+
+        foreach (var task in TaskCatalog.Load(TasksRoot))
+        {
+            priming.Matches(task.Prompt).Select(m => m.Value).Should().BeEmpty(task.Id);
         }
     }
 

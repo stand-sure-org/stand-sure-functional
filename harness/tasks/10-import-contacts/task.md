@@ -1,7 +1,7 @@
 ---
 entry-method: Import
 ---
-# Import a list of contacts, keeping successes and failures apart
+# Import a list of contacts, keeping what was imported apart from what was not
 
 A CSV upload has already been parsed into rows. Each row is imported on its own: a bad row must not stop the rest of the import.
 

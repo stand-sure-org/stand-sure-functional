@@ -18,7 +18,7 @@ A public class named `Solution` with:
 2. On a cache miss, load from the store (`ISettingsStore.Load`). If the store has settings, put them in the cache (`ISettingsCache.Set`) and use them.
 3. If neither has settings for the user, use `UserSettings.Default`. Do not cache the default.
 
-A user with no saved settings is an expected, ordinary outcome.
+A user with no saved settings is an expected, ordinary case.
 
 ## Provided types
 
