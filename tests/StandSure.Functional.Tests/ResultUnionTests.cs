@@ -128,7 +128,49 @@ public sealed class ResultUnionTests
     [Fact]
     public void ResultOfError_OkIsSuccess()
     {
-        Result.Ok(Error.NotFound("x", "y")).IsSuccess.Should().BeTrue();
+        var payload = Error.NotFound("x", "y");
+        var r = Result.Ok(payload);
+
+        r.IsSuccess.Should().BeTrue();
+        r.IsFailure.Should().BeFalse();
+        r.Value.Should().BeSameAs(payload);
+
+        var (value, error) = r;
+        value.Should().BeSameAs(payload);
+        error.Should().BeNull();
+    }
+
+    [Fact]
+    public void ResultOfError_TryGetValue_BindsTheFailureOverload()
+    {
+        // When T is Error both TryGetValue overloads have the signature TryGetValue(out Error?).
+        // Overload resolution picks the failure overload (its parameter type is not generic in the
+        // declaration), so on a success it returns false; the T overload is not callable.
+        var payload = Error.NotFound("x", "y");
+
+        Result.Ok(payload).TryGetValue(out Error? onSuccess).Should().BeFalse();
+        onSuccess.Should().BeNull();
+
+        var failure = Error.Conflict("c", "Conflict.");
+        Result.Fail<Error>(failure).TryGetValue(out Error? onFailure).Should().BeTrue();
+        onFailure.Should().BeSameAs(failure);
+
+        default(Result<Error>).TryGetValue(out Error? onDefault).Should().BeTrue();
+        onDefault.Should().BeSameAs(Error.Uninitialized);
+    }
+
+    [Fact]
+    public void ResultOfError_FailAndDefault_DeconstructToError()
+    {
+        var failure = Error.Conflict("c", "Conflict.");
+
+        var (failValue, failError) = Result.Fail<Error>(failure);
+        failValue.Should().BeNull();
+        failError.Should().BeSameAs(failure);
+
+        var (defaultValue, defaultError) = default(Result<Error>);
+        defaultValue.Should().BeNull();
+        defaultError.Should().BeSameAs(Error.Uninitialized);
     }
 
     [Fact]

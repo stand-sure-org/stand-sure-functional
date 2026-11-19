@@ -12,8 +12,17 @@ namespace StandSure.Functional;
 /// <remarks>
 /// <para>
 /// A non-boxing C# union: <c>switch</c> on it directly, for example
-/// <c>r switch { Error e =&gt; …, T value =&gt; … }</c>. That switch is exhaustive without a discard,
-/// and leaving out a case is error CS8509.
+/// <c>r switch { Error e =&gt; …, T value =&gt; … }</c>. For a non-nullable <typeparamref name="T"/> other than
+/// <see cref="Error"/>, that switch is exhaustive without a discard, and leaving out a case is error CS8509.
+/// A nullable reference <typeparamref name="T"/> (for example <c>string?</c>) may also need a <c>null</c> arm.
+/// </para>
+/// <para>
+/// When <typeparamref name="T"/> is <see cref="Error"/>, a <c>switch</c> cannot observe success: the
+/// <c>Error e</c> pattern binds only to the failure case, so a success never matches it, yet the compiler
+/// still treats the switch as exhaustive. Consume a <c>Result&lt;Error&gt;</c> through <see cref="IsSuccess"/>,
+/// <see cref="Deconstruct"/> or <see cref="Value"/> instead. Its two <c>TryGetValue</c> overloads collapse to
+/// one signature, <c>TryGetValue(out Error?)</c>, and the failure overload wins: it returns
+/// <see langword="false"/> on a success.
 /// </para>
 /// <para>
 /// <c>default(Result&lt;T&gt;)</c>, such as an element of a new array or an unset field, is a failure
