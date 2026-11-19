@@ -331,6 +331,7 @@ public sealed class ModelClientTests
         var models = ModelConfig.LoadEnabledFromFile(Path.Combine(AppContext.BaseDirectory, "models.json"));
 
         models.Select(m => m.Id).Should().Contain(["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"]);
-        models.Should().NotContain(m => m.Family == "ollama");
+        models.Where(m => m.Family == "ollama").Select(m => m.Id).Should().BeEquivalentTo(["qwen3-coder:30b", "devstral-small-2:24b"]);
+        models.Should().NotContain(m => m.Id.StartsWith("TBD", StringComparison.Ordinal));
     }
 }

@@ -2,6 +2,7 @@ namespace ModelHarness.Report;
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 
 using ModelHarness.Run;
@@ -37,12 +38,34 @@ public sealed record RunLog(IReadOnlyList<RunRecord> Records, int MalformedLines
         return new RunLog(records, malformed);
     }
 
+    /// <summary>Drops null elements (and a null list) from the usage arrays; JSON such as <c>"invokedMethods":[null]</c> would otherwise crash grouping.</summary>
+    private static RunRecord Sanitize(RunRecord record)
+    {
+        if (record.Usage is not { } u)
+        {
+            return record;
+        }
+
+        static IReadOnlyList<string> Clean(IReadOnlyList<string>? list) => list is null ? [] : [.. list.Where(x => x is not null)];
+
+        return record with
+        {
+            Usage = u with
+            {
+                DeclaredTypes = Clean(u.DeclaredTypes),
+                UsedTypes = Clean(u.UsedTypes),
+                InvokedMethods = Clean(u.InvokedMethods),
+                Idioms = Clean(u.Idioms),
+            },
+        };
+    }
+
     private static RunRecord? TryParse(string line)
     {
         try
         {
             var record = JsonSerializer.Deserialize(line, RunJson.Default.RunRecord);
-            return record is { Family: { Length: > 0 }, Task: { Length: > 0 } } ? record : null;
+            return record is { Family: { Length: > 0 }, Task: { Length: > 0 } } ? Sanitize(record) : null;
         }
         catch (JsonException)
         {

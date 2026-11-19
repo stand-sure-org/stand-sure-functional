@@ -68,12 +68,18 @@ public static class ReportBuilder
 
     private static bool IsTransport(RunRecord r) => r.TransportError is not null;
 
-    private static bool IsExcluded(RunRecord r) => IsTransport(r) || r.Truncated;
+    private static bool IsRunnerError(RunRecord r) =>
+        r.TransportError is null && r.Notes is not null && r.Notes.StartsWith("runner error", StringComparison.Ordinal);
+
+    private static bool IsExcluded(RunRecord r) => IsTransport(r) || r.Truncated || IsRunnerError(r);
 
     private static IEnumerable<RunRecord> Eligible(IEnumerable<RunRecord> records) => records.Where(r => !IsExcluded(r));
 
     private static IEnumerable<RunRecord> Probed(IEnumerable<RunRecord> records) =>
         Eligible(records).Where(r => r.CompileSuccess && r.Probe is not null);
+
+    private static IEnumerable<RunRecord> CompiledNotProbed(IEnumerable<RunRecord> records) =>
+        Eligible(records).Where(r => r.CompileSuccess && r.Probe is null);
 
     private static IEnumerable<RunRecord> Analysable(IEnumerable<RunRecord> records) =>
         Eligible(records).Where(r => r.Usage is not null);
@@ -93,10 +99,10 @@ public static class ReportBuilder
     private static void AppendDataQuality(StringBuilder sb, List<Scope> scopes, int malformed, RunLog? compare, string? compareName)
     {
         sb.Append("## Data quality\n\n");
-        sb.Append("Read this first. Records with a transport error or a truncated model answer are counted here but are EXCLUDED from the compile-rate and probe-rate denominators below. ");
-        sb.Append("`Compile failed` counts eligible (non-excluded) records that did not compile; `extractFailed` is one cause of that.\n\n");
-        sb.Append("| Family | Records | Transport errors | Truncated | Extract failed | Concatenated | Compile failed | Probe crashed |\n");
-        sb.Append("|---|---|---|---|---|---|---|---|\n");
+        sb.Append("Read this first. Records with a transport error, a truncated model answer or a runner error (a failure of the harness itself after the model answered) are counted here but are EXCLUDED from the compile-rate and probe-rate denominators below. ");
+        sb.Append("`Compile failed` and `Probe crashed` count eligible (non-excluded) records only; `extractFailed` is one cause of a compile failure.\n\n");
+        sb.Append("| Family | Records | Transport errors | Truncated | Runner errors | Extract failed | Concatenated | Compile failed | Probe crashed |\n");
+        sb.Append("|---|---|---|---|---|---|---|---|---|\n");
         foreach (var s in scopes)
         {
             var truncated = s.Records.Where(r => r.Truncated).ToList();
@@ -113,10 +119,11 @@ public static class ReportBuilder
                 N(s.Records.Count),
                 N(s.Records.Count(IsTransport)),
                 truncatedCell,
+                N(s.Records.Count(IsRunnerError)),
                 N(s.Records.Count(r => r.ExtractStatus == "extractFailed")),
                 N(s.Records.Count(r => r.ExtractStatus == "concatenated")),
                 N(Eligible(s.Records).Count(r => !r.CompileSuccess)),
-                N(s.Records.Count(r => r.Probe?.Outcome == ProbeOutcome.Crashed)));
+                N(Eligible(s.Records).Count(r => r.Probe?.Outcome == ProbeOutcome.Crashed)));
         }
 
         sb.Append('\n').Append("Malformed lines skipped: ").Append(N(malformed)).Append('\n');
@@ -131,7 +138,7 @@ public static class ReportBuilder
     private static void AppendCompileRate(StringBuilder sb, List<Scope> scopes)
     {
         sb.Append("## 1. Compile rate\n\n");
-        sb.Append("Denominator n = records that are not transport errors and not truncated (those are excluded; see Data quality). Compile rate = compiled / n.\n\n");
+        sb.Append("Denominator n = records that are not transport errors, not truncated and not runner errors (those are excluded; see Data quality). Compile rate = compiled / n.\n\n");
         sb.Append("| Family | n (eligible) | Compiled | Compile rate |\n|---|---|---|---|\n");
         foreach (var s in scopes)
         {
@@ -146,8 +153,8 @@ public static class ReportBuilder
     private static void AppendProbeRates(StringBuilder sb, List<Scope> scopes)
     {
         sb.Append("## 2. Probe outcome rates\n\n");
-        sb.Append("Denominator n = eligible records that compiled and have a probe result (transport-error and truncated records excluded). `crashed` means no verdict and stays in n.\n\n");
-        sb.Append("| Family | n (probed) | threw | returned | timeout | crashed |\n|---|---|---|---|---|---|\n");
+        sb.Append("Denominator n = eligible records that compiled and have a probe result (transport-error, truncated and runner-error records excluded). `crashed` means no verdict and stays in n. `compiled, not probed` counts eligible records that compiled but have no probe result; they are not in n.\n\n");
+        sb.Append("| Family | n (probed) | threw | returned | timeout | crashed | compiled, not probed |\n|---|---|---|---|---|---|---|\n");
         foreach (var s in scopes)
         {
             var probed = Probed(s.Records).ToList();
@@ -157,7 +164,7 @@ public static class ReportBuilder
                 return $"{N(c)} ({Pct(c, probed.Count)})";
             }
 
-            Row(sb, Cell(s.Name), N(probed.Count), Count(ProbeOutcome.Threw), Count(ProbeOutcome.Returned), Count(ProbeOutcome.Timeout), Count(ProbeOutcome.Crashed));
+            Row(sb, Cell(s.Name), N(probed.Count), Count(ProbeOutcome.Threw), Count(ProbeOutcome.Returned), Count(ProbeOutcome.Timeout), Count(ProbeOutcome.Crashed), N(CompiledNotProbed(s.Records).Count()));
         }
 
         sb.Append('\n');

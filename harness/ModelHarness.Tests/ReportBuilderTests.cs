@@ -3,6 +3,7 @@ namespace ModelHarness.Tests;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 
 using AwesomeAssertions;
@@ -30,7 +31,9 @@ public sealed class ReportBuilderTests
         string? extract = "single",
         bool truncated = false,
         string? stop = "end_turn",
-        string? transport = null)
+        string? transport = null,
+        string? notes = null,
+        bool withProbe = true)
     {
         var usage = extract != "extractFailed" && transport is null && !truncated
             ? new UsageFacts(declared ?? [], [], methods ?? [], entry, 0, 0, 0, 0, idioms ?? [])
@@ -38,8 +41,8 @@ public sealed class ReportBuilderTests
         return new RunRecord(
             "2026-11-19T10:00:00Z", "r", "baseline", family, family + "-m", task, 1, "h", "raw", extract, compiled, [],
             transport is null ? usage : null,
-            compiled && probe is { } p ? new ProbeResult(p, p == ProbeOutcome.Threw ? "System.Exception" : null, null, 5) : null,
-            1, 1, 1, stop, truncated, transport, null);
+            compiled && withProbe && probe is { } p ? new ProbeResult(p, p == ProbeOutcome.Threw ? "System.Exception" : null, null, 5) : null,
+            1, 1, 1, stop, truncated, transport, notes);
     }
 
     private static RunLog Log(params RunRecord[] records) => new(records, 0);
@@ -175,7 +178,7 @@ public sealed class ReportBuilderTests
 
         report.IndexOf("## Data quality", StringComparison.Ordinal).Should().BeLessThan(report.IndexOf("## 1.", StringComparison.Ordinal));
         var dq = Section(report, "## Data quality");
-        dq.Should().Contain("| anthropic | 4 | 1 | 1 (max_tokens: 1) | 0 | 1 | 0 | 1 |");
+        dq.Should().Contain("| anthropic | 4 | 1 | 1 (max_tokens: 1) | 0 | 0 | 1 | 0 | 1 |");
         dq.Should().Contain("Malformed lines skipped: 3");
     }
 
@@ -291,5 +294,53 @@ public sealed class ReportBuilderTests
         {
             Directory.Delete(dir, true);
         }
+    }
+
+    [Fact]
+    public void RunnerErrors_AreCountedAndExcludedFromCompileAndProbeDenominators()
+    {
+        var log = Log(Rec(), Rec(compiled: false, probe: null, notes: "runner error: IOException: disk"));
+
+        var report = Build(log);
+
+        Section(report, "## Data quality").Should().Contain("Runner errors").And.Contain("| anthropic | 2 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |");
+        Section(report, "## Data quality").Should().Contain("EXCLUDED").And.Contain("runner error");
+        Section(report, "## 1. Compile rate").Should().Contain("| anthropic | 1 | 1 | 100.0% |");
+    }
+
+    [Fact]
+    public void ProbeCrashed_CountsEligibleRecordsOnly()
+    {
+        var log = Log(Rec(probe: ProbeOutcome.Crashed), Rec(probe: ProbeOutcome.Crashed, truncated: true, stop: "max_tokens"));
+
+        Section(Build(log), "## Data quality").Should().Contain("| anthropic | 2 | 0 | 1 (max_tokens: 1) | 0 | 0 | 0 | 0 | 1 |");
+    }
+
+    [Fact]
+    public void CompiledButNotProbed_IsCountedInProbeSection()
+    {
+        var log = Log(Rec(), Rec(withProbe: false));
+
+        var section = Section(Build(log), "## 2. Probe outcome rates");
+
+        section.Should().Contain("compiled, not probed");
+        section.Should().Contain("| anthropic | 1 | ");
+        section.Should().Contain("| 1 |");
+    }
+
+    [Fact]
+    public void NullArrayElements_DoNotCrashTheReport()
+    {
+        var line = JsonSerializer.Serialize(Rec(methods: ["Result.Map"], declared: ["Foo"], idioms: ["exception"]), Json)
+            .Replace("\"Result.Map\"", "null", StringComparison.Ordinal)
+            .Replace("\"Foo\"", "null", StringComparison.Ordinal)
+            .Replace("\"exception\"", "null", StringComparison.Ordinal);
+        line.Should().Contain("null");
+
+        var log = RunLog.Parse([line]);
+        var act = () => Build(log);
+
+        act.Should().NotThrow();
+        log.Records.Single().Usage!.InvokedMethods.Should().BeEmpty();
     }
 }
