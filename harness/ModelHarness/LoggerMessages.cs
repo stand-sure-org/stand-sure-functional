@@ -60,4 +60,10 @@ internal static partial class LoggerMessages
         EventName = nameof(CliError),
         Message = "{Message}")]
     public static partial void CliError(this ILogger logger, string message);
+
+    [LoggerMessage(LogLevel.Information,
+        EventId = 10,
+        EventName = nameof(ReportWritten),
+        Message = "Report written from {Records} records ({Malformed} malformed lines skipped) -> {Path}")]
+    public static partial void ReportWritten(this ILogger logger, int records, int malformed, string path);
 }

@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 using ModelHarness.Models;
+using ModelHarness.Report;
 using ModelHarness.Run;
 using ModelHarness.Tasks;
 
@@ -25,6 +26,18 @@ internal static class Program
     {
         using var loggerFactory = LoggerFactory.Create(b => b.AddSimpleConsole(o => o.SingleLine = true));
         var logger = loggerFactory.CreateLogger("ModelHarness");
+
+        if (args.Length > 0 && string.Equals(args[0], ReportOptions.Command, StringComparison.Ordinal))
+        {
+            var report = ReportOptions.Parse(args);
+            if (report.Options is not { } reportOptions)
+            {
+                logger.CliError(report.Error ?? ReportOptions.Usage);
+                return ExitUsage;
+            }
+
+            return ReportCommand.Run(reportOptions, logger);
+        }
 
         var parsed = CliOptions.Parse(args);
         if (parsed.Options is not { } options)

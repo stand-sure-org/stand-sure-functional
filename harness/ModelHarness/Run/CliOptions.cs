@@ -24,7 +24,7 @@ public sealed record CliOptions(
         ArgumentNullException.ThrowIfNull(args);
         if (args.Length == 0 || !string.Equals(args[0], "run", StringComparison.Ordinal))
         {
-            return Fail("expected the 'run' command");
+            return Fail("expected the 'run' or 'report' command");
         }
 
         string? condition = null;
