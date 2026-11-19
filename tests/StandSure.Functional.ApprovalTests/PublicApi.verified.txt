@@ -80,6 +80,18 @@ namespace StandSure.Functional
         public static StandSure.Functional.Result<StandSure.Functional.Unit> Success() { }
         public static StandSure.Functional.Result<T> Success<T>(T value) { }
     }
+    [System.Diagnostics.StackTraceHidden]
+    public static class ResultTaskExtensions
+    {
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> BindAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, StandSure.Functional.Result<TOut>> bind) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> BindAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>>> bind) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<bool>> predicate, StandSure.Functional.Error error) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, bool> predicate, StandSure.Functional.Error error) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> MapAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<TOut>> map) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> MapAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, TOut> map) { }
+        public static System.Threading.Tasks.Task<TOut> MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<StandSure.Functional.Error, System.Threading.Tasks.Task<TOut>> onFailure, System.Func<T, System.Threading.Tasks.Task<TOut>> onSuccess) { }
+        public static System.Threading.Tasks.Task<TOut> MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<StandSure.Functional.Error, TOut> onFailure, System.Func<T, TOut> onSuccess) { }
+    }
     [System.Diagnostics.DebuggerDisplay("{DebugView,nq}")]
     [System.Diagnostics.StackTraceHidden]
     [System.Runtime.CompilerServices.Union]
@@ -92,7 +104,16 @@ namespace StandSure.Functional
         public bool IsFailure { get; }
         public bool IsSuccess { get; }
         public object? Value { get; }
+        public StandSure.Functional.Result<TOut> Bind<TOut>(System.Func<T, StandSure.Functional.Result<TOut>> bind) { }
         public void Deconstruct(out T? value, out StandSure.Functional.Error? error) { }
+        public StandSure.Functional.Result<T> Ensure(System.Func<T, bool> predicate, StandSure.Functional.Error error) { }
+        [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
+        public StandSure.Functional.Result<T> Ensure(System.Func<T, bool> predicate, [System.Runtime.CompilerServices.CallerArgumentExpression("predicate")] string? expression = null) { }
+        public T GetValueOrDefault(T fallback) { }
+        public StandSure.Functional.Result<TOut> Map<TOut>(System.Func<T, TOut> map) { }
+        public StandSure.Functional.Result<T> MapError(System.Func<StandSure.Functional.Error, StandSure.Functional.Error> map) { }
+        public TOut Match<TOut>(System.Func<StandSure.Functional.Error, TOut> onFailure, System.Func<T, TOut> onSuccess) { }
+        public StandSure.Functional.Result<T> Tap(System.Action<T> action) { }
         public bool TryGetValue([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out StandSure.Functional.Error? error) { }
         public bool TryGetValue([System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out T value) { }
     }

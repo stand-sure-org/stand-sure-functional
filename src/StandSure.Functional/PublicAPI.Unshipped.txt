@@ -102,3 +102,20 @@ override StandSure.Functional.Json.OptionJsonConverter<T>.Write(System.Text.Json
 static StandSure.Functional.Result.Fail<T>(StandSure.Functional.Error! error) -> StandSure.Functional.Result<T>
 static StandSure.Functional.Result.Ok() -> StandSure.Functional.Result<StandSure.Functional.Unit>
 static StandSure.Functional.Result.Ok<T>(T value) -> StandSure.Functional.Result<T>
+StandSure.Functional.Result<T>.Bind<TOut>(System.Func<T, StandSure.Functional.Result<TOut>>! bind) -> StandSure.Functional.Result<TOut>
+StandSure.Functional.Result<T>.Ensure(System.Func<T, bool>! predicate, StandSure.Functional.Error! error) -> StandSure.Functional.Result<T>
+StandSure.Functional.Result<T>.Ensure(System.Func<T, bool>! predicate, string? expression = null) -> StandSure.Functional.Result<T>
+StandSure.Functional.Result<T>.GetValueOrDefault(T fallback) -> T
+StandSure.Functional.Result<T>.Map<TOut>(System.Func<T, TOut>! map) -> StandSure.Functional.Result<TOut>
+StandSure.Functional.Result<T>.MapError(System.Func<StandSure.Functional.Error!, StandSure.Functional.Error!>! map) -> StandSure.Functional.Result<T>
+StandSure.Functional.Result<T>.Match<TOut>(System.Func<StandSure.Functional.Error!, TOut>! onFailure, System.Func<T, TOut>! onSuccess) -> TOut
+StandSure.Functional.Result<T>.Tap(System.Action<T>! action) -> StandSure.Functional.Result<T>
+StandSure.Functional.ResultTaskExtensions
+static StandSure.Functional.ResultTaskExtensions.BindAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<T, StandSure.Functional.Result<TOut>>! bind) -> System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>>!
+static StandSure.Functional.ResultTaskExtensions.BindAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<T, System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>>!>! bind) -> System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>>!
+static StandSure.Functional.ResultTaskExtensions.EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<T, bool>! predicate, StandSure.Functional.Error! error) -> System.Threading.Tasks.Task<StandSure.Functional.Result<T>>!
+static StandSure.Functional.ResultTaskExtensions.EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<T, System.Threading.Tasks.Task<bool>!>! predicate, StandSure.Functional.Error! error) -> System.Threading.Tasks.Task<StandSure.Functional.Result<T>>!
+static StandSure.Functional.ResultTaskExtensions.MapAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<T, System.Threading.Tasks.Task<TOut>!>! map) -> System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>>!
+static StandSure.Functional.ResultTaskExtensions.MapAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<T, TOut>! map) -> System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>>!
+static StandSure.Functional.ResultTaskExtensions.MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<StandSure.Functional.Error!, System.Threading.Tasks.Task<TOut>!>! onFailure, System.Func<T, System.Threading.Tasks.Task<TOut>!>! onSuccess) -> System.Threading.Tasks.Task<TOut>!
+static StandSure.Functional.ResultTaskExtensions.MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<StandSure.Functional.Error!, TOut>! onFailure, System.Func<T, TOut>! onSuccess) -> System.Threading.Tasks.Task<TOut>!
