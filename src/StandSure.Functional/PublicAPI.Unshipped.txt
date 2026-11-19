@@ -59,3 +59,20 @@ static StandSure.Functional.Result.Ok<T>(T value) -> StandSure.Functional.Result
 static StandSure.Functional.Unit.operator !=(StandSure.Functional.Unit left, StandSure.Functional.Unit right) -> bool
 static StandSure.Functional.Unit.operator ==(StandSure.Functional.Unit left, StandSure.Functional.Unit right) -> bool
 static readonly StandSure.Functional.Unit.Value -> StandSure.Functional.Unit
+StandSure.Functional.None
+override StandSure.Functional.None.ToString() -> string!
+static readonly StandSure.Functional.None.Instance -> StandSure.Functional.None!
+StandSure.Functional.Option
+static StandSure.Functional.Option.None<T>() -> StandSure.Functional.Option<T>
+static StandSure.Functional.Option.Some<T>(T value) -> StandSure.Functional.Option<T>
+StandSure.Functional.Option<T>
+StandSure.Functional.Option<T>.HasValue.get -> bool
+StandSure.Functional.Option<T>.IsNone.get -> bool
+StandSure.Functional.Option<T>.IsSome.get -> bool
+StandSure.Functional.Option<T>.Option() -> void
+StandSure.Functional.Option<T>.Option(StandSure.Functional.None! none) -> void
+StandSure.Functional.Option<T>.Option(T value) -> void
+static StandSure.Functional.Option<T>.None.get -> StandSure.Functional.Option<T>
+StandSure.Functional.Option<T>.TryGetValue(out StandSure.Functional.None? none) -> bool
+StandSure.Functional.Option<T>.TryGetValue(out T value) -> bool
+StandSure.Functional.Option<T>.Value.get -> object?
