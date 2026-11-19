@@ -51,6 +51,16 @@ public sealed class GeminiClient(HttpClient http, string? apiKey, ILogger logger
     {
         var dto = JsonSerializer.Deserialize(body, HarnessJson.Default.GeminiResponse)
             ?? throw new JsonException("empty body");
+        if (dto.Error is not null)
+        {
+            return HttpCall.Parsed.ProviderError(dto.Error.Status, dto.Error.Message);
+        }
+
+        if (dto.Candidates is null && dto.PromptFeedback is null)
+        {
+            return HttpCall.Parsed.WrongShape();
+        }
+
         var parts = dto.Candidates?.FirstOrDefault()?.Content?.Parts ?? [];
         var text = string.Concat(parts.Select(p => p.Text));
         var finish = dto.Candidates?.FirstOrDefault()?.FinishReason;

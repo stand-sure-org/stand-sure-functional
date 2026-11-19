@@ -276,6 +276,39 @@ public sealed class ModelClientTests
         response.OutputTokens.Should().Be(3);
     }
 
+    [Theory]
+    [InlineData("anthropic", "{}", "unexpected response shape")]
+    [InlineData("anthropic", """{"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}""", "overloaded_error: Overloaded")]
+    [InlineData("gemini", "{}", "unexpected response shape")]
+    [InlineData("gemini", """{"error":{"code":429,"message":"quota exceeded","status":"RESOURCE_EXHAUSTED"}}""", "RESOURCE_EXHAUSTED: quota exceeded")]
+    [InlineData("ollama", "{}", "unexpected response shape")]
+    [InlineData("ollama", """{"error":"model 'x' not found"}""", "model 'x' not found")]
+    public async Task WrongShapeOrErrorBody_YieldsErrorNotEmptySuccess(string family, string body, string expected)
+    {
+        IModelClient client = family switch
+        {
+            "anthropic" => new AnthropicClient(new HttpClient(new FakeHandler(HttpStatusCode.OK, body)), "k", NullLogger.Instance),
+            "gemini" => new GeminiClient(new HttpClient(new FakeHandler(HttpStatusCode.OK, body)), "k", NullLogger.Instance),
+            _ => new OllamaClient(new HttpClient(new FakeHandler(HttpStatusCode.OK, body)), NullLogger.Instance),
+        };
+
+        var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
+
+        response.Error.Should().Contain(expected);
+        response.Text.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ProviderErrorMessage_IsCappedAt200Chars()
+    {
+        var body = $$$"""{"error":"{{{new string('x', 500)}}}"}""";
+        var client = new OllamaClient(new HttpClient(new FakeHandler(HttpStatusCode.OK, body)), NullLogger.Instance);
+
+        var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
+
+        response.Error!.Length.Should().BeLessThan(260);
+    }
+
     [Fact]
     public void Config_LoadsEnabledModelsOnly()
     {

@@ -46,6 +46,16 @@ public sealed class OllamaClient(HttpClient http, ILogger logger, Uri? baseAddre
     {
         var dto = JsonSerializer.Deserialize(body, HarnessJson.Default.OllamaResponse)
             ?? throw new JsonException("empty body");
+        if (dto.Error is not null)
+        {
+            return HttpCall.Parsed.ProviderError(null, dto.Error);
+        }
+
+        if (dto.Message is null && dto.DoneReason is null)
+        {
+            return HttpCall.Parsed.WrongShape();
+        }
+
         var text = dto.Message?.Content ?? string.Empty;
 
         return new HttpCall.Parsed(

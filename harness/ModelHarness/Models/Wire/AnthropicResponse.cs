@@ -9,6 +9,10 @@ internal sealed class AnthropicResponse
 
     public AnthropicUsage? Usage { get; init; }
 
+    public string? Type { get; init; }
+
+    public AnthropicError? Error { get; init; }
+
     [JsonPropertyName("stop_reason")]
     public string? StopReason { get; init; }
 }

@@ -12,7 +12,33 @@ using Microsoft.Extensions.Logging;
 /// <summary>Shared never-throw HTTP plumbing for the model clients.</summary>
 internal static class HttpCall
 {
-    internal readonly record struct Parsed(string Text, int InputTokens, int OutputTokens, string? StopReason = null, bool Truncated = false);
+    internal readonly record struct Parsed(
+        string Text,
+        int InputTokens,
+        int OutputTokens,
+        string? StopReason = null,
+        bool Truncated = false,
+        string? Error = null)
+    {
+        internal const int MaxProviderMessage = 200;
+
+        /// <summary>A well-formed JSON body that is not a completion (wrong shape or a provider error object).</summary>
+        public static Parsed Failure(string error) => new(string.Empty, 0, 0, Error: error);
+
+        public static Parsed WrongShape() => Failure("unexpected response shape");
+
+        /// <summary>Provider error text, capped; provider messages never carry our key.</summary>
+        public static Parsed ProviderError(string? kind, string? message)
+        {
+            var text = message ?? string.Empty;
+            if (text.Length > MaxProviderMessage)
+            {
+                text = text[..MaxProviderMessage];
+            }
+
+            return Failure(string.IsNullOrEmpty(kind) ? $"provider error: {text}" : $"provider error: {kind}: {text}");
+        }
+    }
 
     public static ModelResponse Fail(string modelId, string error, TimeSpan latency = default)
     {
@@ -42,6 +68,11 @@ internal static class HttpCall
             }
 
             var parsed = parse(body);
+            if (parsed.Error is not null)
+            {
+                return Failed(logger, family, modelId, parsed.Error, stopwatch.Elapsed);
+            }
+
             logger.RequestCompleted(family, modelId, stopwatch.ElapsedMilliseconds);
             return new ModelResponse(modelId, parsed.Text, parsed.InputTokens, parsed.OutputTokens, stopwatch.Elapsed, null, parsed.StopReason, parsed.Truncated);
         }

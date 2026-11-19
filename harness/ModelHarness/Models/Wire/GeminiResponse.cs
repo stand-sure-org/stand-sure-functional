@@ -10,4 +10,6 @@ internal sealed class GeminiResponse
     public GeminiUsage? UsageMetadata { get; init; }
 
     public GeminiPromptFeedback? PromptFeedback { get; init; }
+
+    public GeminiError? Error { get; init; }
 }
