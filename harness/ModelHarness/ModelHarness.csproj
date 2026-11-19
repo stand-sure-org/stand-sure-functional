@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>ModelHarness</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <None Include="..\models.json" Link="models.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

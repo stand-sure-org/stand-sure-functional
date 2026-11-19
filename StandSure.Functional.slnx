@@ -9,4 +9,8 @@
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/StandSure.Functional.Benchmarks/StandSure.Functional.Benchmarks.csproj" />
   </Folder>
+  <Folder Name="/harness/">
+    <Project Path="harness/ModelHarness/ModelHarness.csproj" />
+    <Project Path="harness/ModelHarness.Tests/ModelHarness.Tests.csproj" />
+  </Folder>
 </Solution>

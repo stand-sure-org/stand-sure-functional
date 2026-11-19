@@ -1,0 +1,11 @@
+{
+  "models": [
+    { "family": "anthropic", "id": "claude-opus-5-5", "enabled": true },
+    { "family": "anthropic", "id": "claude-sonnet-5-5", "enabled": true },
+    { "family": "anthropic", "id": "claude-haiku-5-5", "enabled": true },
+    { "family": "gemini", "id": "gemini-3.1-pro-preview", "enabled": true },
+    { "family": "gemini", "id": "gemini-3.8-flash", "enabled": true },
+    { "family": "ollama", "id": "TBD-ollama-1", "enabled": false },
+    { "family": "ollama", "id": "TBD-ollama-2", "enabled": false }
+  ]
+}
