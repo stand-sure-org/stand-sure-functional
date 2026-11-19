@@ -25,7 +25,8 @@ using ModelHarness.Tasks;
 /// Model calls are capped per family (default 4) with one semaphore per family. Probes are serialised by a single
 /// semaphore. Compile and usage extraction run on the worker that made the model call. Each finished record is written and
 /// flushed immediately, so files are crash-safe and records may land out of order. A failure of one record is recorded,
-/// never propagated; only cancellation stops the run.
+/// never propagated; only cancellation stops the run. On cancellation, records whose model call, compile or probe is still in
+/// flight are dropped (no partial or "cancelled" records); records already completed stay written and flushed.
 /// </remarks>
 public sealed class HarnessRunner(
     IReadOnlyDictionary<string, IModelClient> clients,

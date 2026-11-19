@@ -225,6 +225,57 @@ public sealed class ModelClientTests
         response.Truncated.Should().BeFalse();
     }
 
+    [Theory]
+    [InlineData("""{"candidates":[{"content":{"parts":[]},"finishReason":"SAFETY"}],"usageMetadata":{"promptTokenCount":4,"candidatesTokenCount":0}}""", "SAFETY")]
+    [InlineData("""{"candidates":[{"finishReason":"MAX_TOKENS"}],"usageMetadata":{"promptTokenCount":4}}""", "MAX_TOKENS")]
+    [InlineData("""{"promptFeedback":{"blockReason":"PROHIBITED_CONTENT"},"usageMetadata":{"promptTokenCount":4}}""", "PROHIBITED_CONTENT")]
+    public async Task Gemini_EmptyText_KeepsStopReasonAndIsNotAnError(string body, string expectedReason)
+    {
+        var client = new GeminiClient(new HttpClient(new FakeHandler(HttpStatusCode.OK, body)), "k", NullLogger.Instance);
+
+        var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
+
+        response.Error.Should().BeNull();
+        response.Text.Should().BeEmpty();
+        response.StopReason.Should().Be(expectedReason);
+        response.Truncated.Should().BeTrue();
+        response.InputTokens.Should().Be(4);
+    }
+
+    [Fact]
+    public async Task Anthropic_MaxTokensWithNoTextBlocks_KeepsStopReasonAndTokens()
+    {
+        var handler = new FakeHandler(HttpStatusCode.OK,
+            """{"content":[],"stop_reason":"max_tokens","usage":{"input_tokens":6,"output_tokens":4096}}""");
+        var client = new AnthropicClient(new HttpClient(handler), "k", NullLogger.Instance);
+
+        var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
+
+        response.Error.Should().BeNull();
+        response.Text.Should().BeEmpty();
+        response.StopReason.Should().Be("max_tokens");
+        response.Truncated.Should().BeTrue();
+        response.InputTokens.Should().Be(6);
+        response.OutputTokens.Should().Be(4096);
+    }
+
+    [Fact]
+    public async Task Ollama_LengthWithEmptyContent_KeepsStopReasonAndTokens()
+    {
+        var handler = new FakeHandler(HttpStatusCode.OK,
+            """{"message":{"role":"assistant","content":""},"done":true,"done_reason":"length","prompt_eval_count":7,"eval_count":3}""");
+        var client = new OllamaClient(new HttpClient(handler), NullLogger.Instance);
+
+        var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
+
+        response.Error.Should().BeNull();
+        response.Text.Should().BeEmpty();
+        response.StopReason.Should().Be("length");
+        response.Truncated.Should().BeTrue();
+        response.InputTokens.Should().Be(7);
+        response.OutputTokens.Should().Be(3);
+    }
+
     [Fact]
     public void Config_LoadsEnabledModelsOnly()
     {

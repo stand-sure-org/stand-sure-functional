@@ -8,4 +8,6 @@ internal sealed class GeminiResponse
     public List<GeminiCandidate>? Candidates { get; init; }
 
     public GeminiUsage? UsageMetadata { get; init; }
+
+    public GeminiPromptFeedback? PromptFeedback { get; init; }
 }

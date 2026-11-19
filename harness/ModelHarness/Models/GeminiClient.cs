@@ -53,12 +53,12 @@ public sealed class GeminiClient(HttpClient http, string? apiKey, ILogger logger
             ?? throw new JsonException("empty body");
         var parts = dto.Candidates?.FirstOrDefault()?.Content?.Parts ?? [];
         var text = string.Concat(parts.Select(p => p.Text));
-        if (text.Length == 0)
+        var finish = dto.Candidates?.FirstOrDefault()?.FinishReason;
+        if (string.IsNullOrEmpty(finish))
         {
-            throw new JsonException("no text content");
+            finish = dto.PromptFeedback?.BlockReason;
         }
 
-        var finish = dto.Candidates?.FirstOrDefault()?.FinishReason;
         var truncated = !string.IsNullOrEmpty(finish) && !string.Equals(finish, "STOP", StringComparison.Ordinal);
         return new HttpCall.Parsed(
             text, dto.UsageMetadata?.PromptTokenCount ?? 0, dto.UsageMetadata?.CandidatesTokenCount ?? 0, finish, truncated);

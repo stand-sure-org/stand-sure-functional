@@ -16,7 +16,7 @@ public sealed record CliOptions(
     public const int DefaultRuns = 5;
 
     public const string Usage =
-        "usage: run --condition baseline|with-library [--runs N] [--models id,...] [--tasks id,...] [--output dir] [--ollama-timeout-minutes N]";
+        "usage: run --condition baseline|with-library [--runs N] [--models id,...] [--tasks id,...] [--output dir] [--ollama-timeout-minutes N] (Ctrl+C stops gracefully: finished records stay in the file, in-flight ones are dropped)";
 
     /// <summary>Hand-rolled parser: tiny surface, no dependencies.</summary>
     public static CliParseResult Parse(string[] args)

@@ -12,6 +12,7 @@ using System.Text.Json.Serialization;
 [JsonSerializable(typeof(Wire.AnthropicResponse))]
 [JsonSerializable(typeof(Wire.GeminiRequest))]
 [JsonSerializable(typeof(Wire.GeminiResponse))]
+[JsonSerializable(typeof(Wire.GeminiPromptFeedback))]
 [JsonSerializable(typeof(Wire.OllamaRequest))]
 [JsonSerializable(typeof(Wire.OllamaResponse))]
 internal sealed partial class HarnessJson : JsonSerializerContext

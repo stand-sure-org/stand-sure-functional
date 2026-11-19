@@ -57,11 +57,6 @@ public sealed class AnthropicClient(HttpClient http, string? apiKey, ILogger log
         var dto = JsonSerializer.Deserialize(body, HarnessJson.Default.AnthropicResponse)
             ?? throw new JsonException("empty body");
         var text = string.Concat((dto.Content ?? []).Where(b => b.Type == "text").Select(b => b.Text));
-        if (text.Length == 0)
-        {
-            throw new JsonException("no text content");
-        }
-
         return new HttpCall.Parsed(text, dto.Usage?.InputTokens ?? 0, dto.Usage?.OutputTokens ?? 0,
             dto.StopReason, string.Equals(dto.StopReason, "max_tokens", StringComparison.Ordinal));
     }

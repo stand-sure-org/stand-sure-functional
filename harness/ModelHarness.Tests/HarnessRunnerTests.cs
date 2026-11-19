@@ -173,6 +173,23 @@ public sealed class HarnessRunnerTests
     }
 
     [Fact]
+    public async Task EmptyTruncatedResponse_IsExtractFailedNotTransportError()
+    {
+        var clients = Clients(new FakeClient("anthropic", _ => new ModelResponse("m", string.Empty, 5, 4096, TimeSpan.FromMilliseconds(3), null, "max_tokens", true)));
+        var probe = new FakeProbe();
+
+        var (_, lines) = await RunAsync(Plan(), clients, probe);
+
+        var r = lines.Single();
+        r.GetProperty("extractStatus").GetString().Should().Be("extractFailed");
+        r.GetProperty("truncated").GetBoolean().Should().BeTrue();
+        r.GetProperty("stopReason").GetString().Should().Be("max_tokens");
+        r.GetProperty("outputTokens").GetInt32().Should().Be(4096);
+        r.TryGetProperty("transportError", out _).Should().BeFalse();
+        probe.Calls.Should().Be(0);
+    }
+
+    [Fact]
     public async Task Truncation_IsRecorded()
     {
         var clients = Clients(new FakeClient("anthropic", _ => Ok(GoodCode) with { StopReason = "max_tokens", Truncated = true }));
