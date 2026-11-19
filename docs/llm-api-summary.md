@@ -5,12 +5,12 @@ Expected failures are values: `Result<T>` holds an `Error` or a `T`; `Option<T>`
 
 - `Result<T>`: `IsSuccess`, `IsFailure`, `Match`, `Map`, `Bind`, `MapError`, `Ensure`, `Tap`, `GetValueOrDefault(fallback)`, `Deconstruct`, `TryGetValue`.
   Create with `Result.Success(value)` or `Result.Failure<T>(error)`, or just return a `T` or an `Error` (also from an `async` method returning `Task<Result<T>>`). `Result.Success()` gives `Result<Unit>`, the "void" result.
-- `Error`: `Kind` (`ErrorKind.Validation`, `NotFound`, `Conflict`, `Unauthorized`, `Forbidden`, `Unavailable`, `Unexpected`), `Code` (dotted: `book.title.required`), `Message`, `Metadata`, `Inner`, `Errors`.
+- `Error`: `Kind` (`ErrorKind.Validation`, `NotFound`, `Conflict`, `Unauthorized`, `Forbidden`, `Unavailable`, `Unexpected`), `Code` (dotted: `book.title.required`), `Message`, `Metadata`, `Inner`, `Errors`, `Exception` (set by `Try`/`FromException`).
   One factory per kind: `Error.Validation(code, message)`, `Error.NotFound(code, message)`, ...; `Error.Validation(code, message, errors)` groups several; `Error.FromException(ex)`.
   `error.Wrap(code, message)` adds context (same `Kind`, old error becomes `Inner`); `error.Is(code)` searches the `Inner` chain.
 - `Option<T>`: `Option.Some(x)`, `Option<T>.None`, or a `T` directly. `IsSome`, `IsNone`, `Match`, `Map`, `Bind`, `Filter`, `GetValueOrDefault(fallback)`, `ToResult(errorIfNone)`.
 - `Try.Run(() => ...)` and `Try.RunAsync(ct => ..., ct)` turn exceptions into failures of kind `Unexpected`.
-- On `Task<Result<T>>` only: `MapAsync`, `BindAsync`, `EnsureAsync`, `MatchAsync`.
+- On `Task<Result<T>>` only (from a `Result<T>`, use `Task.FromResult(result)`): `MapAsync`, `BindAsync`, `EnsureAsync`, `MatchAsync`.
 - Sequences: `results.Combine()`, `items.Traverse(f)`, `results.Partition()`, `options.Choose()`, `items.Pairwise()`, `items.Scan(seed, f)`.
 
 **Failure comes first:** `Match(onFailure, onSuccess)` and `Match(onNone, onSome)`. Always pass them as named arguments.
@@ -43,25 +43,25 @@ return errors.Count > 0 ? Error.Validation("movie.invalid", "The movie has error
 
 ```csharp
 Option<string> raw = env.Read("RETRIES"); // string? converts; null becomes None
-int retries = raw.Bind(ParseInt).GetValueOrDefault(3);
-static Option<int> ParseInt(string s) => int.TryParse(s, out var n) ? n : Option<int>.None;
+Result<int> retries = raw.Match<Result<int>>( // missing: default 3; unparseable: a failure, not a silent default
+    onNone: () => 3,
+    onSome: s => int.TryParse(s, out var n) ? n : Error.Validation("retries.invalid", $"'{s}' is not a number."));
 
 Option<Theme> remembered = memory.Find(key); // Theme? converts; null becomes None
-Theme theme = remembered.Match(
-    onNone: () => disk.Find(key) ?? Theme.Default,
-    onSome: t => t);
+Theme theme = remembered.Match(onNone: () => disk.Find(key) ?? Theme.Default, onSome: t => t);
 ```
 
 ## Exceptions and async with a CancellationToken
 
 ```csharp
 Result<PrintJob> job = Try.Run(() => printer.Print(document))
-    .MapError(e => e.Wrap("print.failed", "Printing the document failed."));
+    .MapError(e => e.Exception is TimeoutException ? Error.Unavailable("print.no_response", "The printer did not respond.")
+        : e.Wrap("print.failed", "Printing the document failed."));
 
 public Task<Result<Forecast>> ForecastAsync(string city, CancellationToken ct) =>
-    Try.RunAsync(token => weather.GetTemperatureAsync(city, token), ct)   // Task<Result<double>>
-        .EnsureAsync(t => t > -100, Error.Unavailable("forecast.no_data", "No temperature returned."))
-        .MapAsync(t => new Forecast(city, t));
+    Try.RunAsync(token => weather.FindAsync(city, token), ct)   // Task<Result<Forecast?>>
+        .BindAsync(f => f is { } found ? Result.Success(found)
+            : Result.Failure<Forecast>(Error.NotFound("forecast.not_found", $"No forecast for {city}.")));
 ```
 
 ## Chain steps; add context as a failure moves up; Go-style Deconstruct
@@ -96,7 +96,6 @@ app.MapGet("/flights/{id}", (int id, FlightService flights) => flights.Get(id).M
     onSuccess: flight => Results.Ok(flight)));
 
 string text = result switch { Error e => e.Code, Book b => b.Title }; // exhaustive, no discard needed
-string label = result.Match(onFailure: e => e.Message, onSuccess: b => b.Title);
 int pages = await LoadAsync(id).MatchAsync(onFailure: e => 0, onSuccess: b => b.Pages);
 ```
 
@@ -110,11 +109,11 @@ IEnumerable<int> totals = steps.Scan(0, (sum, x) => sum + x); // [1, 2, 3] -> 1,
 
 ## Traps
 
-- Positional `Match` arguments are failure first. Name them: `onFailure:` / `onSuccess:`, `onNone:` / `onSome:`.
+- Inside a lambda (`Bind`, `BindAsync`, `Match`), `c ? value : Error.X(...)` has no type: use `Result.Success(v)` / `Result.Failure<T>(e)`, or give the lambda a return type: `Bind(Result<U> (x) => ...)` or `Match<Result<U>>(...)`.
+- A null reference converts to `Option<T>` as None, but a nullable value type (`int?`) does not convert: `n is { } v ? v : Option<int>.None`.
 - `MatchAsync`: both lambdas sync, or both async. Mixing them does not compile.
 - `result.Map(async x => ...)` gives `Result<Task<U>>`: use `MapAsync` on a `Task<Result<T>>`. If the lambda returns a `Result`, use `BindAsync` (`MapAsync` would nest `Result<Result<U>>`).
-- The `...Async` methods extend `Task<Result<T>>` only. From a `Result<T>`, use `Task.FromResult(result)`.
-- `switch` needs type patterns, `Error e => ..., T x => ...`, and is exhaustive without `_`. A `Result<Error>` can't be observed by `switch`: use `IsSuccess` or `Deconstruct`.
+- `switch` needs type patterns, `Error e => ..., T x => ...`, and is exhaustive without `_`. A `Result<Error>` always matches `Error e` in a `switch`: use `IsSuccess` or `Deconstruct`.
 - `default(Result<T>)` is a failure holding `Error.Uninitialized`. `default(Option<T>)` is None.
 - `Try.Run` / `Try.RunAsync` never catch `OperationCanceledException`: cancellation still throws.
-- There is no throwing `.Value` / `.Error`. Read values with `Match`, `Deconstruct`, `TryGetValue` or `GetValueOrDefault`.
+- `.Value` is the untyped union payload (`object?`): never use it. Read values with `Match`, `Deconstruct`, `TryGetValue` or `GetValueOrDefault`.
