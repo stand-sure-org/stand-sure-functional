@@ -111,4 +111,45 @@ public sealed class ErrorTests
         parent.Kind.Should().Be(ErrorKind.Validation);
         parent.Errors.Should().Equal(a, b);
     }
+
+    [Fact]
+    public void Validation_WithNullErrors_TreatsAsEmpty()
+    {
+        var error = Error.Validation("v.null", "m", (IEnumerable<Error>)null!);
+
+        error.Errors.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void FromException_Null_ReturnsUnexpected()
+    {
+        var error = Error.FromException(null!);
+
+        error.Kind.Should().Be(ErrorKind.Unexpected);
+        error.Code.Should().Be("exception.unhandled");
+        error.Message.Should().Contain("null");
+    }
+
+    [Fact]
+    public void Metadata_IsSnapshot_LaterCallerMutationDoesNotLeak()
+    {
+        var source = new Dictionary<string, string> { ["k"] = "v" };
+
+        var error = Error.NotFound("c", "m", source);
+        source["k"] = "changed";
+        source["extra"] = "x";
+
+        error.Metadata.Should().HaveCount(1);
+        error.Metadata["k"].Should().Be("v");
+    }
+
+    [Fact]
+    public void Metadata_IsNotCastableToMutableDictionary()
+    {
+        var fromFactory = Error.NotFound("c", "m", new Dictionary<string, string> { ["k"] = "v" }).Metadata;
+        var fromException = Error.FromException(new InvalidOperationException("boom")).Metadata;
+
+        fromFactory.Should().NotBeAssignableTo<Dictionary<string, string>>();
+        fromException.Should().NotBeAssignableTo<Dictionary<string, string>>();
+    }
 }

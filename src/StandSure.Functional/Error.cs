@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json.Serialization;
 
@@ -8,6 +9,8 @@ namespace StandSure.Functional;
 /// <summary>A failure: a kind, a stable machine-readable code, a message and optional context.</summary>
 public sealed record Error
 {
+    // EmptyMetadata and EmptyErrors must be declared before UninitializedInstance: static field initializers run in
+    // textual order, and the private constructor reads both.
     private static readonly IReadOnlyDictionary<string, string> EmptyMetadata =
         new Dictionary<string, string>();
 
@@ -82,7 +85,7 @@ public sealed record Error
     /// <param name="errors">The child errors.</param>
     /// <returns>The error.</returns>
     public static Error Validation(string code, string message, IEnumerable<Error> errors) =>
-        Create(ErrorKind.Validation, code, message, null, null, errors.ToArray());
+        Create(ErrorKind.Validation, code, message, null, null, errors is null ? null : errors.ToArray());
 
     /// <summary>Creates a <see cref="ErrorKind.NotFound"/> error.</summary>
     /// <param name="code">The error code.</param>
@@ -136,7 +139,9 @@ public sealed record Error
     /// <param name="exception">The exception; kept in <see cref="Exception"/>.</param>
     /// <returns>The error, with code <c>exception.unhandled</c>.</returns>
     public static Error FromException(Exception exception) =>
-        Create(
+        exception is null
+            ? Create(ErrorKind.Unexpected, "exception.unhandled", "The exception was null.", null)
+            : Create(
             ErrorKind.Unexpected,
             "exception.unhandled",
             exception.Message,
@@ -179,6 +184,23 @@ public sealed record Error
         IReadOnlyDictionary<string, string>? metadata,
         Error? inner = null,
         IReadOnlyList<Error>? errors = null,
-        Exception? exception = null) =>
-        new(kind, code, message, metadata, inner, errors, exception);
+        Exception? exception = null)
+    {
+        var error = new Error(kind, code, message, Snapshot(metadata), inner, errors, exception);
+        if (inner is null)
+        {
+            FunctionalDiagnostics.RecordFailure(error);
+        }
+        else
+        {
+            FunctionalDiagnostics.RecordWrap(error);
+        }
+
+        return error;
+    }
+
+    private static IReadOnlyDictionary<string, string>? Snapshot(IReadOnlyDictionary<string, string>? metadata) =>
+        metadata is null or { Count: 0 }
+            ? null
+            : new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(metadata.ToArray()));
 }
