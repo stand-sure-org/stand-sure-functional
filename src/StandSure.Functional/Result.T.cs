@@ -32,10 +32,10 @@ namespace StandSure.Functional;
 /// </para>
 /// <para>
 /// Success or failure comes from the stored state, never from the value's runtime type.
-/// <c>Result.Ok&lt;object&gt;(someError)</c> is a success. <c>Result&lt;object&gt; r = someError</c>
+/// <c>Result.Success&lt;object&gt;(someError)</c> is a success. <c>Result&lt;object&gt; r = someError</c>
 /// is a failure, because the more specific conversion wins. The implicit conversion from
 /// <see cref="Error"/> to <c>Result&lt;Error&gt;</c> is ambiguous and fails to compile (CS0457).
-/// Use <see cref="Result.Ok{T}(T)"/> or <see cref="Result.Fail{T}(Error)"/> to say which one you mean.
+/// Use <see cref="Result.Success{T}(T)"/> or <see cref="Result.Failure{T}(Error)"/> to say which one you mean.
 /// </para>
 /// </remarks>
 [Union]

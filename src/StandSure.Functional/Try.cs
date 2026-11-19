@@ -32,12 +32,12 @@ public static class Try
     {
         if (fn is null)
         {
-            return Result.Fail<T>(NullDelegate());
+            return Result.Failure<T>(NullDelegate());
         }
 
         try
         {
-            return Result.Ok(fn());
+            return Result.Success(fn());
         }
         catch (AggregateException ae) when (AllCancellation(ae))
         {
@@ -46,7 +46,7 @@ public static class Try
         }
         catch (Exception ex) when (IsCapturable(ex))
         {
-            return Result.Fail<T>(Error.FromException(ex));
+            return Result.Failure<T>(Error.FromException(ex));
         }
     }
 
@@ -57,13 +57,13 @@ public static class Try
     {
         if (action is null)
         {
-            return Result.Fail<Unit>(NullDelegate());
+            return Result.Failure<Unit>(NullDelegate());
         }
 
         try
         {
             action();
-            return Result.Ok();
+            return Result.Success();
         }
         catch (AggregateException ae) when (AllCancellation(ae))
         {
@@ -72,7 +72,7 @@ public static class Try
         }
         catch (Exception ex) when (IsCapturable(ex))
         {
-            return Result.Fail<Unit>(Error.FromException(ex));
+            return Result.Failure<Unit>(Error.FromException(ex));
         }
     }
 
@@ -91,13 +91,13 @@ public static class Try
     {
         if (fn is null)
         {
-            return Result.Fail<T>(NullDelegate());
+            return Result.Failure<T>(NullDelegate());
         }
 
         try
         {
             T value = await fn(cancellationToken).ConfigureAwait(false);
-            return Result.Ok(value);
+            return Result.Success(value);
         }
         catch (AggregateException ae) when (AllCancellation(ae))
         {
@@ -106,7 +106,7 @@ public static class Try
         }
         catch (Exception ex) when (IsCapturable(ex))
         {
-            return Result.Fail<T>(Error.FromException(ex));
+            return Result.Failure<T>(Error.FromException(ex));
         }
     }
 
@@ -123,13 +123,13 @@ public static class Try
     {
         if (fn is null)
         {
-            return Result.Fail<Unit>(NullDelegate());
+            return Result.Failure<Unit>(NullDelegate());
         }
 
         try
         {
             await fn(cancellationToken).ConfigureAwait(false);
-            return Result.Ok();
+            return Result.Success();
         }
         catch (AggregateException ae) when (AllCancellation(ae))
         {
@@ -138,7 +138,7 @@ public static class Try
         }
         catch (Exception ex) when (IsCapturable(ex))
         {
-            return Result.Fail<Unit>(Error.FromException(ex));
+            return Result.Failure<Unit>(Error.FromException(ex));
         }
     }
 

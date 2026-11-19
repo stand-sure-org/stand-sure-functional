@@ -20,7 +20,7 @@ public sealed class JsonTests
     [Fact]
     public void Result_Success_RoundTrips()
     {
-        var json = Ser(Result.Ok(42));
+        var json = Ser(Result.Success(42));
 
         json.Should().Be("""{"value":42}""");
         var back = De<Result<int>>(json);
@@ -32,7 +32,7 @@ public sealed class JsonTests
     [Fact]
     public void Result_NullSuccess_RoundTripsAsSuccess()
     {
-        var json = Ser(Result.Ok<string?>(null));
+        var json = Ser(Result.Success<string?>(null));
 
         json.Should().Be("""{"value":null}""");
         var back = De<Result<string?>>(json);
@@ -50,7 +50,7 @@ public sealed class JsonTests
         var withInner = Error.Conflict("top", "top", new Dictionary<string, string> { ["k"] = "v" }).Wrap("w", "w");
         var error = inner.Wrap("outer.2", "outer two");
 
-        var json = Ser(Result.Fail<int>(error));
+        var json = Ser(Result.Failure<int>(error));
         json.Should().StartWith("""{"error":{"kind":"NotFound","code":"outer.2","message":"outer two","metadata":{},"errors":[],"inner":{"kind":"NotFound","code":"db.row""");
 
         var back = De<Result<int>>(json);
@@ -60,7 +60,7 @@ public sealed class JsonTests
         e.Inner!.Code.Should().Be("db.row");
         e.Inner.Metadata["id"].Should().Be("7");
 
-        var back2 = De<Result<int>>(Ser(Result.Fail<int>(parent)));
+        var back2 = De<Result<int>>(Ser(Result.Failure<int>(parent)));
         back2.TryGetValue(out Error? p).Should().BeTrue();
         p!.Inner!.Errors.Should().ContainSingle().Which.Code.Should().Be("c.1");
         p.Errors.Should().BeEmpty();
@@ -158,7 +158,7 @@ public sealed class JsonTests
     {
         var error = Error.FromException(new InvalidOperationException("boom"));
 
-        var json = Ser(Result.Fail<int>(error));
+        var json = Ser(Result.Failure<int>(error));
 
         using var doc = JsonDocument.Parse(json);
         doc.RootElement.GetProperty("error").TryGetProperty("exception", out _).Should().BeFalse();
@@ -178,7 +178,7 @@ public sealed class JsonTests
     {
         var plain = new JsonSerializerOptions { TypeInfoResolver = new DefaultJsonTypeInfoResolver() };
 
-        var json = JsonSerializer.Serialize(Result.Fail<int>(Error.NotFound("a", "b")), plain);
+        var json = JsonSerializer.Serialize(Result.Failure<int>(Error.NotFound("a", "b")), plain);
         var back = JsonSerializer.Deserialize<Result<int>>(json, plain);
 
         back.TryGetValue(out Error? e).Should().BeTrue();

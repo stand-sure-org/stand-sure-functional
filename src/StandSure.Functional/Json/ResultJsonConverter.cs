@@ -63,15 +63,15 @@ public sealed class ResultJsonConverter<T> : JsonConverter<Result<T>>
 
         if (error is not null)
         {
-            return Result.Fail<T>(error);
+            return Result.Failure<T>(error);
         }
 
         if (hasValue && !(valueIsNull && hasError))
         {
-            return Result.Ok(value!);
+            return Result.Success(value!);
         }
 
-        return Result.Fail<T>(Error.Uninitialized);
+        return Result.Failure<T>(Error.Uninitialized);
     }
 
     /// <inheritdoc />

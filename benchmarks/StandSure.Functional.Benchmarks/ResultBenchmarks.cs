@@ -24,17 +24,17 @@ public class ResultBenchmarks
         _number = Environment.TickCount | 1;
         _text = "value" + _number.ToString(CultureInfo.InvariantCulture);
         _error = Failure;
-        _okInt = Result.Ok(_number);
-        _failedInt = Result.Fail<int>(_error);
-        _okString = Result.Ok(_text);
-        _failedString = Result.Fail<string>(_error);
+        _okInt = Result.Success(_number);
+        _failedInt = Result.Failure<int>(_error);
+        _okString = Result.Success(_text);
+        _failedString = Result.Failure<string>(_error);
     }
 
     [Benchmark]
-    public Result<int> CreateInt() => Result.Ok(_number);
+    public Result<int> CreateInt() => Result.Success(_number);
 
     [Benchmark]
-    public Result<int> CreateIntFailure() => Result.Fail<int>(_error);
+    public Result<int> CreateIntFailure() => Result.Failure<int>(_error);
 
     [Benchmark]
     public int SwitchIntOk() => Describe(_okInt);
@@ -57,7 +57,7 @@ public class ResultBenchmarks
     }
 
     [Benchmark]
-    public Result<string> CreateString() => Result.Ok(_text);
+    public Result<string> CreateString() => Result.Success(_text);
 
     [Benchmark]
     public int SwitchStringOk() => Describe(_okString);

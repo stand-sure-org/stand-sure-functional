@@ -74,8 +74,11 @@ namespace StandSure.Functional
     public static class Result
     {
         public static StandSure.Functional.Result<T> Fail<T>(StandSure.Functional.Error error) { }
+        public static StandSure.Functional.Result<T> Failure<T>(StandSure.Functional.Error error) { }
         public static StandSure.Functional.Result<StandSure.Functional.Unit> Ok() { }
         public static StandSure.Functional.Result<T> Ok<T>(T value) { }
+        public static StandSure.Functional.Result<StandSure.Functional.Unit> Success() { }
+        public static StandSure.Functional.Result<T> Success<T>(T value) { }
     }
     [System.Diagnostics.DebuggerDisplay("{DebugView,nq}")]
     [System.Diagnostics.StackTraceHidden]

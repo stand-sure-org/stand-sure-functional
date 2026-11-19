@@ -53,9 +53,9 @@ static StandSure.Functional.Error.Validation(string! code, string! message, Syst
 static StandSure.Functional.Error.Validation(string! code, string! message, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? metadata = null) -> StandSure.Functional.Error!
 static StandSure.Functional.Error.operator !=(StandSure.Functional.Error? left, StandSure.Functional.Error? right) -> bool
 static StandSure.Functional.Error.operator ==(StandSure.Functional.Error? left, StandSure.Functional.Error? right) -> bool
-static StandSure.Functional.Result.Fail<T>(StandSure.Functional.Error! error) -> StandSure.Functional.Result<T>
-static StandSure.Functional.Result.Ok() -> StandSure.Functional.Result<StandSure.Functional.Unit>
-static StandSure.Functional.Result.Ok<T>(T value) -> StandSure.Functional.Result<T>
+static StandSure.Functional.Result.Failure<T>(StandSure.Functional.Error! error) -> StandSure.Functional.Result<T>
+static StandSure.Functional.Result.Success() -> StandSure.Functional.Result<StandSure.Functional.Unit>
+static StandSure.Functional.Result.Success<T>(T value) -> StandSure.Functional.Result<T>
 static StandSure.Functional.Unit.operator !=(StandSure.Functional.Unit left, StandSure.Functional.Unit right) -> bool
 static StandSure.Functional.Unit.operator ==(StandSure.Functional.Unit left, StandSure.Functional.Unit right) -> bool
 static readonly StandSure.Functional.Unit.Value -> StandSure.Functional.Unit
@@ -99,3 +99,6 @@ StandSure.Functional.Json.OptionJsonConverter<T>
 StandSure.Functional.Json.OptionJsonConverter<T>.OptionJsonConverter() -> void
 override StandSure.Functional.Json.OptionJsonConverter<T>.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> StandSure.Functional.Option<T>
 override StandSure.Functional.Json.OptionJsonConverter<T>.Write(System.Text.Json.Utf8JsonWriter! writer, StandSure.Functional.Option<T> option, System.Text.Json.JsonSerializerOptions! options) -> void
+static StandSure.Functional.Result.Fail<T>(StandSure.Functional.Error! error) -> StandSure.Functional.Result<T>
+static StandSure.Functional.Result.Ok() -> StandSure.Functional.Result<StandSure.Functional.Unit>
+static StandSure.Functional.Result.Ok<T>(T value) -> StandSure.Functional.Result<T>

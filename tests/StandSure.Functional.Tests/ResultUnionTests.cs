@@ -70,7 +70,7 @@ public sealed class ResultUnionTests
     [Fact]
     public void NullErrorInput_IsFailureUninitialized_AndDoesNotThrow()
     {
-        var r = Result.Fail<int>(null!);
+        var r = Result.Failure<int>(null!);
 
         r.IsFailure.Should().BeTrue();
         r.TryGetValue(out Error? e).Should().BeTrue();
@@ -98,7 +98,7 @@ public sealed class ResultUnionTests
             return "ok:" + value;
         }
 
-        Handle(Result.Ok("hi")).Should().Be("ok:hi");
+        Handle(Result.Success("hi")).Should().Be("ok:hi");
         Handle(Error.Validation("bad", "Bad input.")).Should().Be("failed:bad");
         Handle(default).Should().Be("failed:" + Error.Uninitialized.Code);
     }
@@ -106,7 +106,7 @@ public sealed class ResultUnionTests
     [Fact]
     public void ResultOfObject_TagWinsOverRuntimeType()
     {
-        var r = Result.Ok<object>(Error.NotFound("x", "y"));
+        var r = Result.Success<object>(Error.NotFound("x", "y"));
 
         r.IsSuccess.Should().BeTrue();
         var arm = r switch
@@ -129,7 +129,7 @@ public sealed class ResultUnionTests
     public void ResultOfError_OkIsSuccess()
     {
         var payload = Error.NotFound("x", "y");
-        var r = Result.Ok(payload);
+        var r = Result.Success(payload);
 
         r.IsSuccess.Should().BeTrue();
         r.IsFailure.Should().BeFalse();
@@ -148,11 +148,11 @@ public sealed class ResultUnionTests
         // declaration), so on a success it returns false; the T overload is not callable.
         var payload = Error.NotFound("x", "y");
 
-        Result.Ok(payload).TryGetValue(out Error? onSuccess).Should().BeFalse();
+        Result.Success(payload).TryGetValue(out Error? onSuccess).Should().BeFalse();
         onSuccess.Should().BeNull();
 
         var failure = Error.Conflict("c", "Conflict.");
-        Result.Fail<Error>(failure).TryGetValue(out Error? onFailure).Should().BeTrue();
+        Result.Failure<Error>(failure).TryGetValue(out Error? onFailure).Should().BeTrue();
         onFailure.Should().BeSameAs(failure);
 
         default(Result<Error>).TryGetValue(out Error? onDefault).Should().BeTrue();
@@ -164,7 +164,7 @@ public sealed class ResultUnionTests
     {
         var failure = Error.Conflict("c", "Conflict.");
 
-        var (failValue, failError) = Result.Fail<Error>(failure);
+        var (failValue, failError) = Result.Failure<Error>(failure);
         failValue.Should().BeNull();
         failError.Should().BeSameAs(failure);
 
@@ -176,7 +176,7 @@ public sealed class ResultUnionTests
     [Fact]
     public void NullReferenceValue_IsSuccess()
     {
-        var r = Result.Ok<string?>(null);
+        var r = Result.Success<string?>(null);
 
         r.IsSuccess.Should().BeTrue();
         r.TryGetValue(out string? value).Should().BeTrue();
@@ -189,7 +189,7 @@ public sealed class ResultUnionTests
     [Fact]
     public void OkUnit_IsSuccess()
     {
-        var r = Result.Ok();
+        var r = Result.Success();
 
         r.IsSuccess.Should().BeTrue();
         r.TryGetValue(out Unit value).Should().BeTrue();
