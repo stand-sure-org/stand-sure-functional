@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Linq;
+
 using AwesomeAssertions;
+
 using Xunit;
 
 namespace StandSure.Functional.Tests;
@@ -22,48 +24,52 @@ public sealed class TelemetryTests : IDisposable
 
     public TelemetryTests()
     {
-        _activityListener = new ActivityListener
+        this._activityListener = new ActivityListener
         {
             ShouldListenTo = s => s.Name == "StandSure.Functional" || s.Name == TestSourceName,
             Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
         };
-        ActivitySource.AddActivityListener(_activityListener);
 
-        _meterListener.InstrumentPublished = (instrument, listener) =>
+        ActivitySource.AddActivityListener(this._activityListener);
+
+        this._meterListener.InstrumentPublished = (instrument, listener) =>
         {
             if (instrument.Meter.Name == "StandSure.Functional" && instrument.Name == "functional.failures")
             {
                 listener.EnableMeasurementEvents(instrument);
             }
         };
-        _meterListener.SetMeasurementEventCallback<long>((_, value, tags, _) =>
+
+        this._meterListener.SetMeasurementEventCallback<long>((_, value, tags, _) =>
         {
             var copy = new Dictionary<string, object?>();
+
             foreach (var tag in tags)
             {
                 copy[tag.Key] = tag.Value;
             }
 
-            lock (_gate)
+            lock (this._gate)
             {
-                _measurements.Add((value, copy));
+                this._measurements.Add((value, copy));
             }
         });
-        _meterListener.Start();
+
+        this._meterListener.Start();
     }
 
     public void Dispose()
     {
         AppContext.SetSwitch(DetailsSwitch, false);
-        _meterListener.Dispose();
-        _activityListener.Dispose();
-        _testSource.Dispose();
+        this._meterListener.Dispose();
+        this._activityListener.Dispose();
+        this._testSource.Dispose();
     }
 
     [Fact]
     public void Factory_AddsFailureEvent_WithKindAndCode()
     {
-        using var activity = _testSource.StartActivity("op")!;
+        using var activity = this._testSource.StartActivity("op")!;
 
         _ = Error.NotFound("tel.event.1", "missing");
 
@@ -77,7 +83,7 @@ public sealed class TelemetryTests : IDisposable
     {
         _ = Error.Conflict("tel.counter.1", "clash");
 
-        var hits = For("tel.counter.1");
+        var hits = this.For("tel.counter.1");
         hits.Should().ContainSingle();
         hits[0].Value.Should().Be(1);
         hits[0].Tags["error.kind"].Should().Be("Conflict");
@@ -87,7 +93,7 @@ public sealed class TelemetryTests : IDisposable
     public void Wrap_AddsWrappedEvent_DoesNotIncrementCounter()
     {
         var inner = Error.NotFound("tel.wrap.inner", "inner");
-        using var activity = _testSource.StartActivity("op")!;
+        using var activity = this._testSource.StartActivity("op")!;
 
         _ = inner.Wrap("tel.wrap.outer", "outer");
 
@@ -95,8 +101,8 @@ public sealed class TelemetryTests : IDisposable
         Tag(evt, "error.code").Should().Be("tel.wrap.outer");
         Tag(evt, "error.inner.code").Should().Be("tel.wrap.inner");
         activity.Events.Should().NotContain(e => e.Name == "functional.failure");
-        For("tel.wrap.outer").Should().BeEmpty();
-        For("tel.wrap.inner").Should().ContainSingle();
+        this.For("tel.wrap.outer").Should().BeEmpty();
+        this.For("tel.wrap.inner").Should().ContainSingle();
     }
 
     [Fact]
@@ -104,7 +110,7 @@ public sealed class TelemetryTests : IDisposable
     {
         var a = Error.Validation("tel.group.child.a", "a");
         var b = Error.Validation("tel.group.child.b", "b");
-        using var activity = _testSource.StartActivity("op")!;
+        using var activity = this._testSource.StartActivity("op")!;
 
         _ = Error.Validation("tel.group.parent", "two problems", [a, b]);
 
@@ -113,38 +119,40 @@ public sealed class TelemetryTests : IDisposable
         Tag(evt, "error.code").Should().Be("tel.group.parent");
         Tag(evt, "error.errors.count").Should().Be(2);
         activity.Events.Should().NotContain(e => e.Name == "functional.failure");
-        For("tel.group.parent").Should().BeEmpty();
+        this.For("tel.group.parent").Should().BeEmpty();
     }
 
     [Fact]
     public void ValidationGroup_WithNoChildren_IsARootFailure()
     {
-        using var activity = _testSource.StartActivity("op")!;
+        using var activity = this._testSource.StartActivity("op")!;
 
         _ = Error.Validation("tel.group.empty", "nothing inside", []);
 
         activity.Events.Should().ContainSingle(e => e.Name == "functional.failure");
-        For("tel.group.empty").Should().ContainSingle();
+        this.For("tel.group.empty").Should().ContainSingle();
     }
 
     [Fact]
     public void Combine_OfNFailures_IncrementsCounterByExactlyN()
     {
         string[] codes = ["tel.combine.1", "tel.combine.2", "tel.combine.3"];
-        using var activity = _testSource.StartActivity("op")!;
+        using var activity = this._testSource.StartActivity("op")!;
 
         var combined = codes
             .Select(c => Result.Failure<int>(Error.NotFound(c, c)))
             .Append(Result.Success(1))
             .Combine();
+
         var traversed = codes.Traverse(c => c == "tel.combine.1" ? Result.Success(1) : Result.Failure<int>(Error.Conflict(c + ".t", c)));
 
         combined.IsFailure.Should().BeTrue();
         traversed.IsFailure.Should().BeTrue();
-        codes.Sum(c => For(c).Count).Should().Be(3);
-        (For("tel.combine.2.t").Count + For("tel.combine.3.t").Count).Should().Be(2);
-        For("result.combine_failed").Should().BeEmpty();
+        codes.Sum(c => this.For(c).Count).Should().Be(3);
+        (this.For("tel.combine.2.t").Count + this.For("tel.combine.3.t").Count).Should().Be(2);
+        this.For("result.combine_failed").Should().BeEmpty();
         activity.Events.Count(e => e.Name == "functional.failure").Should().Be(5);
+
         activity.Events.Where(e => e.Name == "functional.failure.grouped")
             .Select(e => Tag(e, "error.errors.count"))
             .Should().Equal(3, 2);
@@ -162,7 +170,7 @@ public sealed class TelemetryTests : IDisposable
         a.IsFailure.Should().BeTrue();
         b.IsFailure.Should().BeTrue();
         c.IsFailure.Should().BeTrue();
-        For("tel.convert.1").Should().ContainSingle();
+        this.For("tel.convert.1").Should().ContainSingle();
     }
 
     [Fact]
@@ -173,14 +181,14 @@ public sealed class TelemetryTests : IDisposable
         var act = () => Error.Forbidden("tel.noactivity.1", "no");
 
         act.Should().NotThrow();
-        For("tel.noactivity.1").Should().ContainSingle();
+        this.For("tel.noactivity.1").Should().ContainSingle();
     }
 
     [Fact]
     public void Message_NotEmitted_ByDefault()
     {
         AppContext.SetSwitch(DetailsSwitch, false);
-        using var activity = _testSource.StartActivity("op")!;
+        using var activity = this._testSource.StartActivity("op")!;
 
         _ = Error.Unexpected("tel.msg.off", "secret message", new Dictionary<string, string> { ["k"] = "v" });
 
@@ -192,7 +200,7 @@ public sealed class TelemetryTests : IDisposable
     public void Message_Emitted_WhenSwitchOn()
     {
         AppContext.SetSwitch(DetailsSwitch, true);
-        using var activity = _testSource.StartActivity("op")!;
+        using var activity = this._testSource.StartActivity("op")!;
 
         _ = Error.Unexpected("tel.msg.on", "visible message", new Dictionary<string, string> { ["k"] = "v" });
 
@@ -204,14 +212,14 @@ public sealed class TelemetryTests : IDisposable
     [Fact]
     public void Uninitialized_IsNotRecorded()
     {
-        using var activity = _testSource.StartActivity("op")!;
+        using var activity = this._testSource.StartActivity("op")!;
 
         _ = Error.Uninitialized;
         Result<int> r = default;
         _ = r.IsFailure;
 
         activity.Events.Should().BeEmpty();
-        For("result.uninitialized").Should().BeEmpty();
+        this.For("result.uninitialized").Should().BeEmpty();
     }
 
     private static object? Tag(ActivityEvent evt, string key) =>
@@ -219,9 +227,9 @@ public sealed class TelemetryTests : IDisposable
 
     private List<(long Value, Dictionary<string, object?> Tags)> For(string code)
     {
-        lock (_gate)
+        lock (this._gate)
         {
-            return _measurements.Where(m => Equals(m.Tags.GetValueOrDefault("error.code"), code)).ToList();
+            return this._measurements.Where(m => Equals(m.Tags.GetValueOrDefault("error.code"), code)).ToList();
         }
     }
 }

@@ -7,7 +7,9 @@ using System.Threading.Tasks;
 using AwesomeAssertions;
 
 using Xunit;
+using Xunit.OpenCategories.V3;
 
+[Category(nameof(PackageConsumerTests))]
 public sealed class PackageConsumerTests
 {
     // No using directive on purpose: the package's buildTransitive props must supply StandSure.Functional.

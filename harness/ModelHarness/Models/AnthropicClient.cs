@@ -26,11 +26,11 @@ public sealed class AnthropicClient(HttpClient http, string? apiKey, ILogger log
     {
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            logger.MissingApiKey(Family, request.ModelId, KeyVariable);
+            logger.MissingApiKey(this.Family, request.ModelId, KeyVariable);
             return Task.FromResult(HttpCall.Fail(request.ModelId, $"{KeyVariable} is not set"));
         }
 
-        return HttpCall.SendAsync(http, logger, Family, request.ModelId, () => Build(request), Parse, ct);
+        return HttpCall.SendAsync(http, logger, this.Family, request.ModelId, () => this.Build(request), Parse, ct);
     }
 
     private HttpRequestMessage Build(ModelRequest request)
@@ -42,11 +42,15 @@ public sealed class AnthropicClient(HttpClient http, string? apiKey, ILogger log
             System = request.System,
             Messages = [new AnthropicMessage { Role = "user", Content = request.User }],
         };
+
         var message = new HttpRequestMessage(HttpMethod.Post, Endpoint)
         {
             Content = new StringContent(
-                JsonSerializer.Serialize(dto, HarnessJson.Default.AnthropicRequest), Encoding.UTF8, "application/json"),
+                JsonSerializer.Serialize(dto, HarnessJson.Default.AnthropicRequest),
+                Encoding.UTF8,
+                "application/json"),
         };
+
         message.Headers.Add("x-api-key", apiKey);
         message.Headers.Add("anthropic-version", "2023-06-01");
         return message;
@@ -55,7 +59,8 @@ public sealed class AnthropicClient(HttpClient http, string? apiKey, ILogger log
     private static HttpCall.Parsed Parse(string body)
     {
         var dto = JsonSerializer.Deserialize(body, HarnessJson.Default.AnthropicResponse)
-            ?? throw new JsonException("empty body");
+                  ?? throw new JsonException("empty body");
+
         if (string.Equals(dto.Type, "error", StringComparison.Ordinal) || dto.Error is not null)
         {
             return HttpCall.Parsed.ProviderError(dto.Error?.Type, dto.Error?.Message);
@@ -67,7 +72,11 @@ public sealed class AnthropicClient(HttpClient http, string? apiKey, ILogger log
         }
 
         var text = string.Concat((dto.Content ?? []).Where(b => b.Type == "text").Select(b => b.Text));
-        return new HttpCall.Parsed(text, dto.Usage?.InputTokens ?? 0, dto.Usage?.OutputTokens ?? 0,
-            dto.StopReason, string.Equals(dto.StopReason, "max_tokens", StringComparison.Ordinal));
+
+        return new HttpCall.Parsed(text,
+            dto.Usage?.InputTokens ?? 0,
+            dto.Usage?.OutputTokens ?? 0,
+            dto.StopReason,
+            string.Equals(dto.StopReason, "max_tokens", StringComparison.Ordinal));
     }
 }

@@ -31,6 +31,7 @@ public static class ReportCommand
 
         var input = RunLog.Parse(File.ReadLines(options.InputPath));
         var compare = options.ComparePath is null ? null : RunLog.Parse(File.ReadLines(options.ComparePath));
+
         var report = ReportBuilder.Build(
             input,
             compare,
@@ -38,6 +39,7 @@ public static class ReportCommand
             options.ComparePath is null ? null : Path.GetFileName(options.ComparePath));
 
         var directory = Path.GetDirectoryName(Path.GetFullPath(options.OutputPath));
+
         if (!string.IsNullOrEmpty(directory))
         {
             Directory.CreateDirectory(directory);

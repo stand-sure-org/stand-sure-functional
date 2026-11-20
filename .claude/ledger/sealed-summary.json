@@ -11,6 +11,17 @@
       "sealed_at": "2026-11-19T13:17:47.597419+00:00",
       "sealed_by_identity": "chris@standsure.io",
       "sealed_by_commit": "ff4bd2424de49059b0c9b0250a0803d7028eb8b5"
+    },
+    "session-1795094285-chore-commit-integrity": {
+      "branch": "chore/commit-integrity",
+      "worktree": "/Volumes/Repos/stand-sure-functional",
+      "started_at": "2026-11-19T13:18:05.519568+00:00",
+      "agent": "unknown",
+      "chain_hash": "sha256:76997b74d31957ce05dbe802ac316ffeba4f8a2c8c4a9fb5e2f4250cc7381bdf",
+      "sealed": true,
+      "sealed_at": "2026-11-20T18:32:42.161681+00:00",
+      "sealed_by_identity": "chris@standsure.io",
+      "sealed_by_commit": "622941d132a59fb8ea3765916e3b974e7fc261a4"
     }
   }
 }

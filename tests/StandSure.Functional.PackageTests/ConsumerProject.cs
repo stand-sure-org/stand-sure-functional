@@ -20,7 +20,7 @@ public sealed class ConsumerProject : IDisposable
 
     private ConsumerProject(string directory)
     {
-        Directory = directory;
+        this.Directory = directory;
     }
 
     /// <summary>Gets the consumer project directory.</summary>
@@ -36,28 +36,33 @@ public sealed class ConsumerProject : IDisposable
         System.IO.Directory.CreateDirectory(directory);
 
         File.Copy(Path.Combine(Metadata("RepoRoot"), "global.json"), Path.Combine(directory, "global.json"));
-        File.WriteAllText(Path.Combine(directory, "nuget.config"), $"""
-            <?xml version="1.0" encoding="utf-8"?>
-            <configuration>
-              <packageSources>
-                <clear />
-                <add key="local" value="{feed}" />
-              </packageSources>
-            </configuration>
-            """);
-        File.WriteAllText(Path.Combine(directory, "Consumer.csproj"), $"""
-            <Project Sdk="Microsoft.NET.Sdk">
-              <PropertyGroup>
-                <TargetFramework>net11.0</TargetFramework>
-                <Nullable>enable</Nullable>
-                <ImplicitUsings>disable</ImplicitUsings>
-                <RestorePackagesPath>{Path.Combine(directory, "packages")}</RestorePackagesPath>
-              </PropertyGroup>
-              <ItemGroup>
-                <PackageReference Include="{packageId}" Version="[{version}]" />
-              </ItemGroup>
-            </Project>
-            """);
+
+        File.WriteAllText(Path.Combine(directory, "nuget.config"),
+            $"""
+             <?xml version="1.0" encoding="utf-8"?>
+             <configuration>
+               <packageSources>
+                 <clear />
+                 <add key="local" value="{feed}" />
+               </packageSources>
+             </configuration>
+             """);
+
+        File.WriteAllText(Path.Combine(directory, "Consumer.csproj"),
+            $"""
+             <Project Sdk="Microsoft.NET.Sdk">
+               <PropertyGroup>
+                 <TargetFramework>net11.0</TargetFramework>
+                 <Nullable>enable</Nullable>
+                 <ImplicitUsings>disable</ImplicitUsings>
+                 <RestorePackagesPath>{Path.Combine(directory, "packages")}</RestorePackagesPath>
+               </PropertyGroup>
+               <ItemGroup>
+                 <PackageReference Include="{packageId}" Version="[{version}]" />
+               </ItemGroup>
+             </Project>
+             """);
+
         File.WriteAllText(Path.Combine(directory, "Consumer.cs"), source);
         return new ConsumerProject(directory);
     }
@@ -67,11 +72,12 @@ public sealed class ConsumerProject : IDisposable
     {
         var start = new ProcessStartInfo(DotnetPath())
         {
-            WorkingDirectory = Directory,
+            WorkingDirectory = this.Directory,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
         };
+
         foreach (var arg in new[] { "build", "--nologo", "-nodeReuse:false", "-p:UseSharedCompilation=false", "-v:minimal" })
         {
             start.ArgumentList.Add(arg);
@@ -91,6 +97,7 @@ public sealed class ConsumerProject : IDisposable
         var stderr = process.StandardError.ReadToEndAsync(cancellationToken);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(BuildTimeout);
+
         try
         {
             await process.WaitForExitAsync(timeout.Token).ConfigureAwait(false);
@@ -105,6 +112,7 @@ public sealed class ConsumerProject : IDisposable
             .Append(await stdout.ConfigureAwait(false))
             .Append(await stderr.ConfigureAwait(false))
             .ToString();
+
         return new BuildResult(process.ExitCode, output);
     }
 
@@ -113,7 +121,7 @@ public sealed class ConsumerProject : IDisposable
     {
         try
         {
-            System.IO.Directory.Delete(Directory, recursive: true);
+            System.IO.Directory.Delete(this.Directory, recursive: true);
         }
         catch (IOException)
         {
@@ -134,12 +142,14 @@ public sealed class ConsumerProject : IDisposable
     private static string LatestVersion(string feed, string packageId)
     {
         var prefix = packageId + ".";
+
         var package = new DirectoryInfo(feed)
-            .EnumerateFiles(prefix + "*.nupkg")
-            .Where(f => !f.Name.EndsWith(".symbols.nupkg", StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(f => f.LastWriteTimeUtc)
-            .FirstOrDefault()
-            ?? throw new FileNotFoundException($"No {packageId} package in {feed}. Build src/{packageId} first; it packs on build.");
+                          .EnumerateFiles(prefix + "*.nupkg")
+                          .Where(f => !f.Name.EndsWith(".symbols.nupkg", StringComparison.OrdinalIgnoreCase))
+                          .OrderByDescending(f => f.LastWriteTimeUtc)
+                          .FirstOrDefault()
+                      ?? throw new FileNotFoundException($"No {packageId} package in {feed}. Build src/{packageId} first; it packs on build.");
+
         return package.Name[prefix.Length..^".nupkg".Length];
     }
 

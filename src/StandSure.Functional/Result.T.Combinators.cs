@@ -26,14 +26,12 @@ public readonly partial struct Result<T>
     // For ResultTaskExtensions, which cannot see the private state. Valid only after IsSuccess / IsFailure was checked.
     internal T ValueUnchecked
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => _value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)] get => this.resultValue;
     }
 
     internal Error ErrorUnchecked
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => FailureError;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)] get => this.FailureError;
     }
 
     /// <summary>Runs one of two functions depending on the case. The failure function comes first.</summary>
@@ -43,14 +41,14 @@ public readonly partial struct Result<T>
     /// <param name="onSuccess">Runs on a success with the value.
     /// A <see langword="null"/> value makes a success return <c>default(TOut)</c>.</param>
     /// <returns>The result of the function that ran.</returns>
-    public TOut Match<TOut>(Func<Error, TOut> onFailure, Func<T, TOut> onSuccess)
+    public TOut Match<TOut>(Func<Error, TOut>? onFailure, Func<T, TOut>? onSuccess)
     {
-        if (_tag == TagOk)
+        if (this.tag == TagOk)
         {
-            return onSuccess is null ? NullBranch<TOut>(nameof(onSuccess)) : onSuccess(_value);
+            return onSuccess is null ? NullBranch<TOut>(nameof(onSuccess)) : onSuccess(this.resultValue);
         }
 
-        return onFailure is null ? NullBranch<TOut>(nameof(onFailure)) : onFailure(FailureError);
+        return onFailure is null ? NullBranch<TOut>(nameof(onFailure)) : onFailure(this.FailureError);
     }
 
     // A null active branch still counts as a failure in telemetry (building the error records it), then yields default.
@@ -65,19 +63,14 @@ public readonly partial struct Result<T>
     /// <param name="map">The transformation. A <see langword="null"/> value turns a success into a
     /// <c>result.null_delegate</c> failure.</param>
     /// <returns>A success holding the mapped value, or the original failure.</returns>
-    public Result<TOut> Map<TOut>(Func<T, TOut> map)
+    public Result<TOut> Map<TOut>(Func<T, TOut>? map)
     {
-        if (_tag != TagOk)
+        if (this.tag != TagOk)
         {
-            return new Result<TOut>(FailureError);
+            return new Result<TOut>(this.FailureError);
         }
 
-        if (map is null)
-        {
-            return new Result<TOut>(ResultErrors.NullDelegate(nameof(map)));
-        }
-
-        return new Result<TOut>(map(_value));
+        return map is null ? new Result<TOut>(ResultErrors.NullDelegate(nameof(map))) : new Result<TOut>(map(this.resultValue));
     }
 
     /// <summary>Chains an operation that itself returns a <see cref="Result{T}"/>; a failure short-circuits.</summary>
@@ -85,19 +78,14 @@ public readonly partial struct Result<T>
     /// <param name="bind">The next step. A <see langword="null"/> value turns a success into a
     /// <c>result.null_delegate</c> failure.</param>
     /// <returns>The result of <paramref name="bind"/>, or the original failure without calling it.</returns>
-    public Result<TOut> Bind<TOut>(Func<T, Result<TOut>> bind)
+    public Result<TOut> Bind<TOut>(Func<T, Result<TOut>>? bind)
     {
-        if (_tag != TagOk)
+        if (this.tag != TagOk)
         {
-            return new Result<TOut>(FailureError);
+            return new Result<TOut>(this.FailureError);
         }
 
-        if (bind is null)
-        {
-            return new Result<TOut>(ResultErrors.NullDelegate(nameof(bind)));
-        }
-
-        return bind(_value);
+        return bind?.Invoke(this.resultValue) ?? new Result<TOut>(ResultErrors.NullDelegate(nameof(bind)));
     }
 
     /// <summary>Transforms the error of a failure; a success passes through unchanged.</summary>
@@ -105,19 +93,14 @@ public readonly partial struct Result<T>
     /// A <see langword="null"/> return becomes <see cref="Error.Uninitialized"/>. A <see langword="null"/> delegate
     /// turns a failure into a <c>result.null_delegate</c> failure.</param>
     /// <returns>The original success, or a failure with the mapped error.</returns>
-    public Result<T> MapError(Func<Error, Error> map)
+    public Result<T> MapError(Func<Error, Error>? map)
     {
-        if (_tag == TagOk)
+        if (this.tag == TagOk)
         {
             return this;
         }
 
-        if (map is null)
-        {
-            return new Result<T>(ResultErrors.NullDelegate(nameof(map)));
-        }
-
-        return new Result<T>(map(FailureError));
+        return map is null ? new Result<T>(ResultErrors.NullDelegate(nameof(map))) : new Result<T>(map(this.FailureError));
     }
 
     /// <summary>Turns a success into the given failure when the predicate is false.</summary>
@@ -128,9 +111,9 @@ public readonly partial struct Result<T>
     /// <returns>This result if it is a failure or the predicate holds; otherwise a failure with <paramref name="error"/>.</returns>
     /// <remarks>The <see cref="Error"/> is built before the call and is recorded in telemetry when built, even if the
     /// predicate holds; prefer the factory overload <see cref="Ensure(Func{T, bool}, Func{T, Error})"/>.</remarks>
-    public Result<T> Ensure(Func<T, bool> predicate, Error error)
+    public Result<T> Ensure(Func<T, bool>? predicate, Error error)
     {
-        if (_tag != TagOk)
+        if (this.tag != TagOk)
         {
             return this;
         }
@@ -140,7 +123,7 @@ public readonly partial struct Result<T>
             return new Result<T>(ResultErrors.NullDelegate(nameof(predicate)));
         }
 
-        return predicate(_value) ? this : new Result<T>(error);
+        return predicate(this.resultValue) ? this : new Result<T>(error);
     }
 
     /// <summary>Turns a success into a failure built by <paramref name="error"/> when the predicate is false.</summary>
@@ -154,9 +137,9 @@ public readonly partial struct Result<T>
     // literal binding to the Error overload; lambdas and method groups still reach this one.
 #pragma warning disable RS0027
     [OverloadResolutionPriority(-1)]
-    public Result<T> Ensure(Func<T, bool> predicate, Func<T, Error> error)
+    public Result<T> Ensure(Func<T, bool>? predicate, Func<T, Error>? error)
     {
-        if (_tag != TagOk)
+        if (this.tag != TagOk)
         {
             return this;
         }
@@ -166,17 +149,12 @@ public readonly partial struct Result<T>
             return new Result<T>(ResultErrors.NullDelegate(nameof(predicate)));
         }
 
-        if (predicate(_value))
+        if (predicate(this.resultValue))
         {
             return this;
         }
 
-        if (error is null)
-        {
-            return new Result<T>(ResultErrors.NullDelegate(nameof(error)));
-        }
-
-        return new Result<T>(error(_value));
+        return error is null ? new Result<T>(ResultErrors.NullDelegate(nameof(error))) : new Result<T>(error(this.resultValue));
     }
 #pragma warning restore RS0027
 
@@ -191,9 +169,9 @@ public readonly partial struct Result<T>
     // RS0027: the (predicate, Error) overload is a distinct type-based overload, not a later optional-parameter addition.
 #pragma warning disable RS0027
     [OverloadResolutionPriority(-1)]
-    public Result<T> Ensure(Func<T, bool> predicate, [CallerArgumentExpression(nameof(predicate))] string? expression = null)
+    public Result<T> Ensure(Func<T, bool>? predicate, [CallerArgumentExpression(nameof(predicate))] string? expression = null)
     {
-        if (_tag != TagOk)
+        if (this.tag != TagOk)
         {
             return this;
         }
@@ -203,12 +181,9 @@ public readonly partial struct Result<T>
             return new Result<T>(ResultErrors.NullDelegate(nameof(predicate)));
         }
 
-        if (predicate(_value))
-        {
-            return this;
-        }
-
-        return new Result<T>(Error.Validation(ResultErrors.EnsureFailedCode, expression ?? "The predicate returned false."));
+        return predicate(this.resultValue)
+            ? this
+            : new Result<T>(Error.Validation(ResultErrors.EnsureFailedCode, expression ?? "The predicate returned false."));
     }
 #pragma warning restore RS0027
 
@@ -216,9 +191,9 @@ public readonly partial struct Result<T>
     /// <param name="action">The side effect. A <see langword="null"/> value turns a success into a
     /// <c>result.null_delegate</c> failure.</param>
     /// <returns>This result.</returns>
-    public Result<T> Tap(Action<T> action)
+    public Result<T> Tap(Action<T>? action)
     {
-        if (_tag != TagOk)
+        if (this.tag != TagOk)
         {
             return this;
         }
@@ -228,7 +203,7 @@ public readonly partial struct Result<T>
             return new Result<T>(ResultErrors.NullDelegate(nameof(action)));
         }
 
-        action(_value);
+        action(this.resultValue);
         return this;
     }
 
@@ -236,5 +211,5 @@ public readonly partial struct Result<T>
     /// <param name="fallback">The value returned when this result is not a success.</param>
     /// <returns>The value or <paramref name="fallback"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T GetValueOrDefault(T fallback) => _tag == TagOk ? _value : fallback;
+    public T GetValueOrDefault(T fallback) => this.tag == TagOk ? this.resultValue : fallback;
 }

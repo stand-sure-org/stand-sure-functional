@@ -27,11 +27,11 @@ public readonly partial struct Option<T>
     /// <param name="onSome">Runs on some with the value.
     /// A <see langword="null"/> value makes some return <c>default(TOut)</c>.</param>
     /// <returns>The result of the function that ran.</returns>
-    public TOut Match<TOut>(Func<TOut> onNone, Func<T, TOut> onSome)
+    public TOut Match<TOut>(Func<TOut>? onNone, Func<T, TOut>? onSome)
     {
-        if (_isSome)
+        if (this.isSome)
         {
-            return onSome is null ? NullBranch<TOut>(nameof(onSome)) : onSome(_value);
+            return onSome is null ? NullBranch<TOut>(nameof(onSome)) : onSome(this.optionValue);
         }
 
         return onNone is null ? NullBranch<TOut>(nameof(onNone)) : onNone();
@@ -49,9 +49,9 @@ public readonly partial struct Option<T>
     /// <param name="map">The transformation. A <see langword="null"/> value turns some into none and records a
     /// <c>result.null_delegate</c> failure. A <see langword="null"/> return also gives none.</param>
     /// <returns>Some holding the mapped value, or none.</returns>
-    public Option<TOut> Map<TOut>(Func<T, TOut> map)
+    public Option<TOut> Map<TOut>(Func<T, TOut>? map)
     {
-        if (!_isSome)
+        if (!this.isSome)
         {
             return default;
         }
@@ -62,7 +62,7 @@ public readonly partial struct Option<T>
             return default;
         }
 
-        return new Option<TOut>(map(_value));
+        return new Option<TOut>(map(this.optionValue));
     }
 
     /// <summary>Chains an operation that itself returns an <see cref="Option{T}"/>; none short-circuits.</summary>
@@ -70,9 +70,9 @@ public readonly partial struct Option<T>
     /// <param name="bind">The next step. A <see langword="null"/> value turns some into none and records a
     /// <c>result.null_delegate</c> failure.</param>
     /// <returns>The result of <paramref name="bind"/>, or none without calling it.</returns>
-    public Option<TOut> Bind<TOut>(Func<T, Option<TOut>> bind)
+    public Option<TOut> Bind<TOut>(Func<T, Option<TOut>>? bind)
     {
-        if (!_isSome)
+        if (!this.isSome)
         {
             return default;
         }
@@ -83,16 +83,16 @@ public readonly partial struct Option<T>
             return default;
         }
 
-        return bind(_value);
+        return bind(this.optionValue);
     }
 
     /// <summary>Keeps some only when the predicate holds.</summary>
     /// <param name="predicate">The check on the value. A <see langword="null"/> value turns some into none and
     /// records a <c>result.null_delegate</c> failure.</param>
     /// <returns>This option if it is some and the predicate holds; otherwise none.</returns>
-    public Option<T> Filter(Func<T, bool> predicate)
+    public Option<T> Filter(Func<T, bool>? predicate)
     {
-        if (!_isSome)
+        if (!this.isSome)
         {
             return default;
         }
@@ -103,14 +103,14 @@ public readonly partial struct Option<T>
             return default;
         }
 
-        return predicate(_value) ? this : default;
+        return predicate(this.optionValue) ? this : default;
     }
 
     /// <summary>Gets the value, or a fallback for none (including <c>default</c>).</summary>
     /// <param name="fallback">The value returned when this option is none.</param>
     /// <returns>The value or <paramref name="fallback"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T GetValueOrDefault(T fallback) => _isSome ? _value : fallback;
+    public T GetValueOrDefault(T fallback) => this.isSome ? this.optionValue : fallback;
 
     /// <summary>Converts to a <see cref="Result{T}"/>.</summary>
     /// <param name="ifNone">The error for none. A <see langword="null"/> value becomes
@@ -119,7 +119,7 @@ public readonly partial struct Option<T>
     /// <remarks>The <see cref="Error"/> is built before the call and is recorded in telemetry when built, even if this
     /// option has a value; prefer the factory overload <see cref="ToResult(Func{Error})"/>.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Result<T> ToResult(Error ifNone) => _isSome ? new Result<T>(_value) : new Result<T>(ifNone);
+    public Result<T> ToResult(Error ifNone) => this.isSome ? new Result<T>(this.optionValue) : new Result<T>(ifNone);
 
     /// <summary>Converts to a <see cref="Result{T}"/>, building the error only for none.</summary>
     /// <param name="ifNone">Builds the error for none; not called when there is a value, so nothing is built or
@@ -128,18 +128,13 @@ public readonly partial struct Option<T>
     /// <returns>A success holding the value, or a failure with the built error.</returns>
     // Priority -1 keeps a null literal binding to the Error overload; lambdas and method groups still reach this one.
     [OverloadResolutionPriority(-1)]
-    public Result<T> ToResult(Func<Error> ifNone)
+    public Result<T> ToResult(Func<Error>? ifNone)
     {
-        if (_isSome)
+        if (this.isSome)
         {
-            return new Result<T>(_value);
+            return new Result<T>(this.optionValue);
         }
 
-        if (ifNone is null)
-        {
-            return new Result<T>(ResultErrors.NullDelegate(nameof(ifNone)));
-        }
-
-        return new Result<T>(ifNone());
+        return ifNone is null ? new Result<T>(ResultErrors.NullDelegate(nameof(ifNone))) : new Result<T>(ifNone());
     }
 }

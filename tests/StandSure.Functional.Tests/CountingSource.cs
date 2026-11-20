@@ -12,13 +12,14 @@ internal sealed class CountingSource<T>(IEnumerable<T> items) : IEnumerable<T>
 
     public IEnumerator<T> GetEnumerator()
     {
-        EnumeratorCount++;
+        this.EnumeratorCount++;
+
         foreach (var item in items)
         {
-            MoveNextCount++;
+            this.MoveNextCount++;
             yield return item;
         }
     }
 
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 }

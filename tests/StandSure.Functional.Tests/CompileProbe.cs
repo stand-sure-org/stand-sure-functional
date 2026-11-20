@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -13,6 +14,7 @@ internal static class CompileProbe
     public static CSharpCompilation Create(string source)
     {
         var tpa = (string)(AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty);
+
         var references = tpa
             .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
             .Append(typeof(Result<>).Assembly.Location)

@@ -27,6 +27,7 @@ internal static class Program
 #pragma warning restore RS0030
 
         ProbeOutput output;
+
         if (args.Length != 3)
         {
             output = ProbeOutput.Fail("usage: ProbeRunner <assemblyPath> <entryType> <entryMethod>");

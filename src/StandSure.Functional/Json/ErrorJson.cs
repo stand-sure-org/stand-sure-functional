@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Text.Json;
 
 namespace StandSure.Functional.Json;
@@ -9,7 +8,8 @@ internal static class ErrorJson
     internal static Error Read(ref Utf8JsonReader reader)
     {
         var error = JsonSerializer.Deserialize(ref reader, FunctionalJsonContext.Default.Error)
-            ?? throw new JsonException("An Error must not be null.");
+                    ?? throw new JsonException("An Error must not be null.");
+
         Validate(error);
         return error;
     }

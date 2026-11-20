@@ -12,6 +12,7 @@ namespace StandSure.Functional;
 public readonly struct Unit : IEquatable<Unit>, IComparable<Unit>
 {
     /// <summary>The single <see cref="Unit"/> value.</summary>
+    // ReSharper disable once UnassignedReadonlyField
     public static readonly Unit Value;
 
     /// <summary>Always <see langword="true"/>: every <see cref="Unit"/> is equal.</summary>

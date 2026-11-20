@@ -1,6 +1,8 @@
 using System;
 using System.Runtime.CompilerServices;
+
 using AwesomeAssertions;
+
 using Xunit;
 
 namespace StandSure.Functional.Tests;
@@ -32,13 +34,16 @@ public sealed class ResultAllocationTests
     private static long CreateAndMatch(int iterations)
     {
         long sum = 0;
+
         for (var i = 0; i < iterations; i++)
         {
             Result<int> r = (i & 1) == 0 ? i : Failure;
+
             sum += r switch
             {
                 Error e => e.Code.Length,
                 int value => value,
+                null => 0,
             };
         }
 
@@ -66,9 +71,11 @@ public sealed class ResultAllocationTests
     private static long Combinators(int iterations)
     {
         long sum = 0;
+
         for (var i = 0; i < iterations; i++)
         {
             Result<int> r = (i & 1) == 0 ? i + 1 : Failure;
+
             sum += r
                 .Map(static v => v + 1)
                 .Bind(static v => Result.Success(v * 2))
@@ -78,6 +85,7 @@ public sealed class ResultAllocationTests
                 .MapError(static e => e)
                 .Tap(static _ => { })
                 .GetValueOrDefault(7);
+
             sum += r.Match(static e => 1, static v => v);
         }
 

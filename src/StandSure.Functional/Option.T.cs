@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
+
 using StandSure.Functional.Json;
 
 namespace StandSure.Functional;
@@ -31,79 +32,81 @@ namespace StandSure.Functional;
 [JsonConverter(typeof(OptionJsonConverterFactory))]
 [StackTraceHidden]
 [DebuggerDisplay("{DebugView,nq}")]
+// [PublicAPI]
 public readonly partial struct Option<T> : IUnion
 {
-    private readonly T _value;
-    private readonly bool _isSome;
+    private readonly T optionValue;
+    private readonly bool isSome;
 
     /// <summary>Initializes a new instance of the <see cref="Option{T}"/> struct holding a value.</summary>
     /// <param name="value">The value; <see langword="null"/> produces none.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Option([AllowNull] T value)
+    public Option(T? value)
     {
         if (default(T) is null && value is null)
         {
-            _value = default!;
-            _isSome = false;
+            this.optionValue = default!;
+            this.isSome = false;
             return;
         }
 
-        _value = value!;
-        _isSome = true;
+        this.optionValue = value!;
+        this.isSome = true;
     }
 
     /// <summary>Initializes a new instance of the <see cref="Option{T}"/> struct as none.</summary>
     /// <param name="none">Ignored; the only <see cref="StandSure.Functional.None"/> value is the absence case.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // ReSharper disable once RedundantNameQualifier
+    // ReSharper disable once UnusedParameter.Local
+#pragma warning disable IDE0060
     public Option(global::StandSure.Functional.None none)
+#pragma warning restore IDE0060
     {
-        _value = default!;
-        _isSome = false;
+        this.optionValue = default!;
+        this.isSome = false;
     }
 
     /// <summary>Gets the none option.</summary>
     public static Option<T> None
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => default;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)] get => default;
     }
 
     /// <summary>Gets a value indicating whether this option holds a value.</summary>
     public bool IsSome
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => _isSome;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)] get => this.isSome;
     }
 
     /// <summary>Gets a value indicating whether this option is none, including the <c>default</c> value.</summary>
     public bool IsNone
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => !_isSome;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)] get => !this.isSome;
     }
 
     /// <summary>Gets a value indicating whether the union holds a case. Always <see langword="true"/>,
     /// because the <c>default</c> value is none.</summary>
     public bool HasValue
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => true;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true;
     }
 
     /// <summary>Gets the current case as an object: the value, or <see cref="StandSure.Functional.None.Instance"/>
     /// when absent. Never throws. Boxes a value-type <typeparamref name="T"/>, so prefer <c>switch</c> or
     /// <c>TryGetValue</c>.</summary>
-    public object? Value => _isSome ? _value : global::StandSure.Functional.None.Instance;
+    public object? Value => this.isSome ? this.optionValue : global::StandSure.Functional.None.Instance;
 
-    private string DebugView => _isSome ? $"Some({_value})" : "None";
+    private string DebugView => this.isSome ? $"Some({this.optionValue})" : "None";
 
     /// <summary>Gets the none case if this option is none.</summary>
     /// <param name="none"><see cref="StandSure.Functional.None.Instance"/> when none; <see langword="null"/> otherwise.</param>
     /// <returns><see langword="true"/> if this option is none.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // ReSharper disable once RedundantNameQualifier
     public bool TryGetValue([NotNullWhen(true)] out global::StandSure.Functional.None? none)
     {
-        if (_isSome)
+        if (this.isSome)
         {
             none = null;
             return false;
@@ -119,9 +122,9 @@ public readonly partial struct Option<T> : IUnion
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetValue([MaybeNullWhen(false)] out T value)
     {
-        if (_isSome)
+        if (this.isSome)
         {
-            value = _value;
+            value = this.optionValue;
             return true;
         }
 

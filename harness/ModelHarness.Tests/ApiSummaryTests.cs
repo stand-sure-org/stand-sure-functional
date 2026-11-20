@@ -51,6 +51,7 @@ public sealed partial class ApiSummaryTests
     public void Summary_CodeFencesAreLabelledCsharp()
     {
         var opening = true;
+
         foreach (var line in File.ReadAllLines(SummaryPath))
         {
             if (!line.StartsWith("```", StringComparison.Ordinal))
@@ -73,10 +74,14 @@ public sealed partial class ApiSummaryTests
     public void Summary_EveryMatchUsesNamedArguments()
     {
         var matches = new List<InvocationExpressionSyntax>();
+
         foreach (var block in CsharpBlocks(File.ReadAllText(SummaryPath)))
         {
-            var root = CSharpSyntaxTree.ParseText(block, new CSharpParseOptions(kind: SourceCodeKind.Script), cancellationToken: TestContext.Current.CancellationToken)
+            var root = CSharpSyntaxTree.ParseText(block,
+                    new CSharpParseOptions(kind: SourceCodeKind.Script),
+                    cancellationToken: TestContext.Current.CancellationToken)
                 .GetRoot(TestContext.Current.CancellationToken);
+
             foreach (var invocation in root.DescendantNodes())
             {
                 if (invocation is InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax member } call
@@ -88,10 +93,11 @@ public sealed partial class ApiSummaryTests
         }
 
         matches.Should().HaveCountGreaterThanOrEqualTo(3, "the summary should show Match with named arguments");
+
         foreach (var call in matches)
         {
-            call.ArgumentList.Arguments.Should().AllSatisfy(
-                a => a.NameColon.Should().NotBeNull("failure-first Match needs named arguments: {0}", call.ToString()));
+            call.ArgumentList.Arguments.Should()
+                .AllSatisfy(a => a.NameColon.Should().NotBeNull("failure-first Match needs named arguments: {0}", call.ToString()));
         }
     }
 
@@ -101,6 +107,7 @@ public sealed partial class ApiSummaryTests
         // The summary is generic: an example in a task's own domain would hand the with-library condition a worked answer.
         var summary = File.ReadAllText(SummaryPath);
         var leaked = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
         foreach (var word in TaskDomainWords())
         {
             if (!GenericWords.Contains(word) && Regex.IsMatch(summary, $@"\b{Regex.Escape(word)}\b", RegexOptions.IgnoreCase))
@@ -125,15 +132,18 @@ public sealed partial class ApiSummaryTests
             {
                 var root = CSharpSyntaxTree.ParseText(source, cancellationToken: TestContext.Current.CancellationToken)
                     .GetRoot(TestContext.Current.CancellationToken);
+
                 foreach (var type in root.DescendantNodes().OfType<BaseTypeDeclarationSyntax>())
                 {
                     var name = type.Identifier.ValueText;
+
                     if (name == "HarnessProbe" || name.StartsWith("Probe", StringComparison.Ordinal))
                     {
                         continue;
                     }
 
                     yield return name;
+
                     foreach (Match part in PascalWord().Matches(name))
                     {
                         yield return part.Value;

@@ -1,5 +1,7 @@
 using System.Linq;
+
 using AwesomeAssertions;
+
 using Xunit;
 
 namespace StandSure.Functional.Tests;
@@ -38,7 +40,7 @@ public sealed class TryAsyncLambdaCompileTests
     {
         var method = typeof(Try).GetMethods()
             .Single(m => m.Name == "Run" && !m.IsGenericMethod
-                && m.GetParameters()[0].ParameterType == typeof(System.Func<System.Threading.Tasks.Task>));
+                                         && m.GetParameters()[0].ParameterType == typeof(System.Func<System.Threading.Tasks.Task>));
 
         var result = (Result<Unit>)method.Invoke(null, [(System.Func<System.Threading.Tasks.Task>)(() => System.Threading.Tasks.Task.CompletedTask)])!;
 
@@ -47,14 +49,14 @@ public sealed class TryAsyncLambdaCompileTests
     }
 
     private static string Wrap(string call) => $$"""
-        using System.Threading.Tasks;
-        using StandSure.Functional;
-        public static class Probe
-        {
-            public static void Run()
-            {
-                _ = {{call}};
-            }
-        }
-        """;
+                                                 using System.Threading.Tasks;
+                                                 using StandSure.Functional;
+                                                 public static class Probe
+                                                 {
+                                                     public static void Run()
+                                                     {
+                                                         _ = {{call}};
+                                                     }
+                                                 }
+                                                 """;
 }

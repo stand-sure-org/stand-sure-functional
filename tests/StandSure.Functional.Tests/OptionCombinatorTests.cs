@@ -1,5 +1,7 @@
 using System;
+
 using AwesomeAssertions;
+
 using Xunit;
 
 namespace StandSure.Functional.Tests;
@@ -35,7 +37,11 @@ public sealed class OptionCombinatorTests
     {
         var called = false;
 
-        var r = NoneInt.Map(v => { called = true; return v; });
+        var r = NoneInt.Map(v =>
+        {
+            called = true;
+            return v;
+        });
 
         r.IsNone.Should().BeTrue();
         called.Should().BeFalse();
@@ -59,7 +65,11 @@ public sealed class OptionCombinatorTests
     {
         var called = false;
 
-        var r = NoneInt.Bind(v => { called = true; return Option.Some(v); });
+        var r = NoneInt.Bind(v =>
+        {
+            called = true;
+            return Option.Some(v);
+        });
 
         r.IsNone.Should().BeTrue();
         called.Should().BeFalse();
@@ -82,7 +92,11 @@ public sealed class OptionCombinatorTests
     {
         var called = false;
 
-        var r = NoneInt.Filter(_ => { called = true; return true; });
+        var r = NoneInt.Filter(_ =>
+        {
+            called = true;
+            return true;
+        });
 
         r.IsNone.Should().BeTrue();
         called.Should().BeFalse();
@@ -123,7 +137,11 @@ public sealed class OptionCombinatorTests
     {
         var called = false;
 
-        var r = Some(5).ToResult(() => { called = true; return Boom; });
+        var r = Some(5).ToResult(() =>
+        {
+            called = true;
+            return Boom;
+        });
 
         r.TryGetValue(out int v).Should().BeTrue();
         v.Should().Be(5);

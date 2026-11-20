@@ -28,8 +28,12 @@ public sealed class HarnessRunnerTests
         int runs = 1,
         IReadOnlyList<ModelConfig>? models = null,
         IReadOnlyList<HarnessTask>? tasks = null) =>
-        new(Guid.Parse("11111111-2222-3333-4444-555555555555"), condition, "SYSTEM", runs,
-            models ?? [Model("anthropic", "m1")], tasks ?? [T("t1")]);
+        new(Guid.Parse("11111111-2222-3333-4444-555555555555"),
+            condition,
+            "SYSTEM",
+            runs,
+            models ?? [Model("anthropic", "m1")],
+            tasks ?? [T("t1")]);
 
     private static ModelResponse Ok(string text) => new("m", text, 10, 20, TimeSpan.FromMilliseconds(5), null);
 
@@ -42,10 +46,12 @@ public sealed class HarnessRunnerTests
         var runner = new HarnessRunner(clients, probe ?? new FakeProbe(), NullLogger.Instance);
         var writer = new StringWriter();
         var summary = await runner.RunAsync(plan, writer, ct ?? TestContext.Current.CancellationToken);
+
         var lines = writer.ToString()
             .Split('\n', StringSplitOptions.RemoveEmptyEntries)
             .Select(l => JsonDocument.Parse(l).RootElement.Clone())
             .ToList();
+
         return (summary, lines);
     }
 
@@ -63,6 +69,7 @@ public sealed class HarnessRunnerTests
         lines.Should().HaveCount(8);
         summary.Written.Should().Be(8);
         summary.Cancelled.Should().BeFalse();
+
         lines.Select(l => (l.GetProperty("model").GetString(), l.GetProperty("task").GetString(), l.GetProperty("run").GetInt32()))
             .Distinct().Should().HaveCount(8);
     }
@@ -175,7 +182,9 @@ public sealed class HarnessRunnerTests
     [Fact]
     public async Task EmptyTruncatedResponse_IsExtractFailedNotTransportError()
     {
-        var clients = Clients(new FakeClient("anthropic", _ => new ModelResponse("m", string.Empty, 5, 4096, TimeSpan.FromMilliseconds(3), null, "max_tokens", true)));
+        var clients = Clients(new FakeClient("anthropic",
+            _ => new ModelResponse("m", string.Empty, 5, 4096, TimeSpan.FromMilliseconds(3), null, "max_tokens", true)));
+
         var probe = new FakeProbe();
 
         var (_, lines) = await RunAsync(Plan(), clients, probe);
@@ -213,8 +222,10 @@ public sealed class HarnessRunnerTests
         string Hash(JsonElement l) => l.GetProperty("promptHash").GetString()!;
         first.Where(l => l.GetProperty("task").GetString() == "t1").Select(Hash).Distinct().Should().HaveCount(1);
         first.Select(Hash).Distinct().Should().HaveCount(2);
+
         first.OrderBy(l => l.GetProperty("task").GetString()).Select(Hash).Distinct()
             .Should().Equal(second.OrderBy(l => l.GetProperty("task").GetString()).Select(Hash).Distinct());
+
         other.Select(Hash).Intersect(first.Select(Hash)).Should().BeEmpty();
         HarnessRunner.PromptHash("S", "U").Should().MatchRegex("^[0-9a-f]{64}$");
     }
@@ -250,6 +261,7 @@ public sealed class HarnessRunnerTests
             peak.AddOrUpdate(family, now, (_, v) => Math.Max(v, now));
             var all = Interlocked.Increment(ref total);
             InterlockedMax(ref peakTotal, all);
+
             if (all >= 8)
             {
                 open.TrySetResult();
@@ -262,6 +274,7 @@ public sealed class HarnessRunnerTests
         }
 
         var plan = Plan(runs: 12, models: [Model("anthropic", "a"), Model("gemini", "g")]);
+
         var clients = Clients(
             new FakeClient("anthropic", _ => throw new InvalidOperationException("sync path unused")) { RespondAsync = _ => Gated("anthropic") },
             new FakeClient("gemini", _ => throw new InvalidOperationException("sync path unused")) { RespondAsync = _ => Gated("gemini") });
@@ -294,16 +307,18 @@ public sealed class HarnessRunnerTests
     {
         using var cts = new CancellationTokenSource();
         var started = 0;
-        var clients = Clients(new FakeClient("anthropic", _ =>
-        {
-            if (Interlocked.Increment(ref started) >= 2)
-            {
-                cts.Cancel();
-            }
 
-            return Ok(GoodCode);
-        })
-        { Async = true });
+        var clients = Clients(new FakeClient("anthropic",
+                _ =>
+                {
+                    if (Interlocked.Increment(ref started) >= 2)
+                    {
+                        cts.Cancel();
+                    }
+
+                    return Ok(GoodCode);
+                })
+            { Async = true });
 
         var (summary, lines) = await RunAsync(Plan(runs: 50), clients, ct: cts.Token);
 
@@ -314,15 +329,16 @@ public sealed class HarnessRunnerTests
     private static void InterlockedMax(ref int target, int value)
     {
         int current;
+
         do
         {
             current = Volatile.Read(ref target);
+
             if (value <= current)
             {
                 return;
             }
-        }
-        while (Interlocked.CompareExchange(ref target, value, current) != current);
+        } while (Interlocked.CompareExchange(ref target, value, current) != current);
     }
 
     private sealed class FakeClient(string family, Func<ModelRequest, ModelResponse> respond) : IModelClient
@@ -336,12 +352,13 @@ public sealed class HarnessRunnerTests
         public async Task<ModelResponse> CompleteAsync(ModelRequest request, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
-            if (RespondAsync is not null)
+
+            if (this.RespondAsync is not null)
             {
-                return await RespondAsync(request);
+                return await this.RespondAsync(request);
             }
 
-            if (Async)
+            if (this.Async)
             {
                 await Task.Yield();
             }
@@ -360,32 +377,33 @@ public sealed class HarnessRunnerTests
 
         public TimeSpan Delay { get; init; }
 
-        public int Calls => Volatile.Read(ref calls);
+        public int Calls => Volatile.Read(ref this.calls);
 
-        public int Peak => Volatile.Read(ref peak);
+        public int Peak => Volatile.Read(ref this.peak);
 
         public async Task<ProbeResult> RunAsync(byte[] assembly, HarnessTask task, CancellationToken ct)
         {
-            Interlocked.Increment(ref calls);
-            var now = Interlocked.Increment(ref active);
-            InterlockedMax(ref peak, now);
+            Interlocked.Increment(ref this.calls);
+            var now = Interlocked.Increment(ref this.active);
+            InterlockedMax(ref this.peak, now);
+
             try
             {
-                if (Throw)
+                if (this.Throw)
                 {
                     throw new InvalidOperationException("probe exploded");
                 }
 
-                if (Delay > TimeSpan.Zero)
+                if (this.Delay > TimeSpan.Zero)
                 {
-                    await Task.Delay(Delay, ct);
+                    await Task.Delay(this.Delay, ct);
                 }
 
                 return new ProbeResult(ProbeOutcome.Returned, null, null, 1);
             }
             finally
             {
-                Interlocked.Decrement(ref active);
+                Interlocked.Decrement(ref this.active);
             }
         }
     }

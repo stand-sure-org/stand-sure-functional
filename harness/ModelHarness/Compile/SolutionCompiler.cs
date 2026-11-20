@@ -45,6 +45,7 @@ public static class SolutionCompiler
         var fixtureTree = CSharpSyntaxTree.ParseText(task.FixtureSource, parseOptions, "fixture.cs");
         var probeTree = CSharpSyntaxTree.ParseText(task.ProbeSource, parseOptions, "probe.cs");
         var reserved = new HashSet<string>(StringComparer.Ordinal);
+
         foreach (var name in TopLevelTypeNames(fixtureTree.GetRoot()).Concat(TopLevelTypeNames(probeTree.GetRoot())))
         {
             reserved.Add(name);
@@ -55,6 +56,7 @@ public static class SolutionCompiler
         var modelRoot = CSharpSyntaxTree.ParseText(code ?? string.Empty, parseOptions, ModelFileName).GetRoot();
         var doomed = TopLevelTypes(modelRoot).Where(t => reserved.Contains(NameOf(t))).ToList();
         var stripped = doomed.Select(NameOf).Distinct(StringComparer.Ordinal).ToList();
+
         if (doomed.Count > 0)
         {
             modelRoot = modelRoot.RemoveNodes(doomed, SyntaxRemoveOptions.KeepNoTrivia) ?? modelRoot;
@@ -62,6 +64,7 @@ public static class SolutionCompiler
 
         var modelTree = CSharpSyntaxTree.Create((CSharpSyntaxNode)modelRoot, parseOptions, ModelFileName);
         var references = withLibrary ? [.. Framework.Value, Library.Value] : Framework.Value;
+
         var compilation = CSharpCompilation.Create(
             "ModelSolution_" + Guid.NewGuid().ToString("N"),
             [modelTree, fixtureTree, probeTree],
@@ -73,10 +76,12 @@ public static class SolutionCompiler
 
         using var stream = new MemoryStream();
         var emit = compilation.Emit(stream);
+
         var errors = emit.Diagnostics
             .Where(d => d.Severity == DiagnosticSeverity.Error)
             .Select(Format)
             .ToList();
+
         var success = emit.Success && errors.Count == 0;
         return new CompileResult(success, errors, success ? stream.ToArray() : null, compilation, stripped);
     }
@@ -84,9 +89,11 @@ public static class SolutionCompiler
     private static string Format(Diagnostic diagnostic)
     {
         var span = diagnostic.Location.GetLineSpan();
+
         var where = diagnostic.Location.IsInSource
             ? $" [{span.Path}({span.StartLinePosition.Line + 1},{span.StartLinePosition.Character + 1})]"
             : string.Empty;
+
         return $"{diagnostic.Id}: {diagnostic.GetMessage()}{where}";
     }
 

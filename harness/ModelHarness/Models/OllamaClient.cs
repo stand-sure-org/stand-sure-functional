@@ -20,7 +20,7 @@ public sealed class OllamaClient(HttpClient http, ILogger logger, Uri? baseAddre
 
     public Task<ModelResponse> CompleteAsync(ModelRequest request, CancellationToken ct)
     {
-        return HttpCall.SendAsync(http, logger, Family, request.ModelId, () => Build(request), Parse, ct);
+        return HttpCall.SendAsync(http, logger, this.Family, request.ModelId, () => this.Build(request), Parse, ct);
     }
 
     private HttpRequestMessage Build(ModelRequest request)
@@ -35,17 +35,21 @@ public sealed class OllamaClient(HttpClient http, ILogger logger, Uri? baseAddre
                 new OllamaMessage { Role = "user", Content = request.User },
             ],
         };
-        return new HttpRequestMessage(HttpMethod.Post, endpoint)
+
+        return new HttpRequestMessage(HttpMethod.Post, this.endpoint)
         {
             Content = new StringContent(
-                JsonSerializer.Serialize(dto, HarnessJson.Default.OllamaRequest), Encoding.UTF8, "application/json"),
+                JsonSerializer.Serialize(dto, HarnessJson.Default.OllamaRequest),
+                Encoding.UTF8,
+                "application/json"),
         };
     }
 
     private static HttpCall.Parsed Parse(string body)
     {
         var dto = JsonSerializer.Deserialize(body, HarnessJson.Default.OllamaResponse)
-            ?? throw new JsonException("empty body");
+                  ?? throw new JsonException("empty body");
+
         if (dto.Error is not null)
         {
             return HttpCall.Parsed.ProviderError(null, dto.Error);
@@ -59,6 +63,10 @@ public sealed class OllamaClient(HttpClient http, ILogger logger, Uri? baseAddre
         var text = dto.Message?.Content ?? string.Empty;
 
         return new HttpCall.Parsed(
-            text, dto.PromptEvalCount, dto.EvalCount, dto.DoneReason, string.Equals(dto.DoneReason, "length", StringComparison.Ordinal));
+            text,
+            dto.PromptEvalCount,
+            dto.EvalCount,
+            dto.DoneReason,
+            string.Equals(dto.DoneReason, "length", StringComparison.Ordinal));
     }
 }

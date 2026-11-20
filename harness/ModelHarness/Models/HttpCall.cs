@@ -31,6 +31,7 @@ internal static class HttpCall
         public static Parsed ProviderError(string? kind, string? message)
         {
             var text = message ?? string.Empty;
+
             if (text.Length > MaxProviderMessage)
             {
                 text = text[..MaxProviderMessage];
@@ -57,24 +58,35 @@ internal static class HttpCall
         ct.ThrowIfCancellationRequested();
         logger.RequestStarted(family, modelId);
         var stopwatch = Stopwatch.StartNew();
+
         try
         {
             using var request = buildRequest();
             using var response = await http.SendAsync(request, ct).ConfigureAwait(false);
             var body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+
             if (!response.IsSuccessStatusCode)
             {
                 return Failed(logger, family, modelId, $"HTTP {(int)response.StatusCode} from {family}", stopwatch.Elapsed);
             }
 
             var parsed = parse(body);
+
             if (parsed.Error is not null)
             {
                 return Failed(logger, family, modelId, parsed.Error, stopwatch.Elapsed);
             }
 
             logger.RequestCompleted(family, modelId, stopwatch.ElapsedMilliseconds);
-            return new ModelResponse(modelId, parsed.Text, parsed.InputTokens, parsed.OutputTokens, stopwatch.Elapsed, null, parsed.StopReason, parsed.Truncated);
+
+            return new ModelResponse(modelId,
+                parsed.Text,
+                parsed.InputTokens,
+                parsed.OutputTokens,
+                stopwatch.Elapsed,
+                null,
+                parsed.StopReason,
+                parsed.Truncated);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {

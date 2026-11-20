@@ -1,6 +1,8 @@
 using System;
 using System.Runtime.CompilerServices;
+
 using AwesomeAssertions;
+
 using Xunit;
 
 namespace StandSure.Functional.Tests;
@@ -46,12 +48,14 @@ public sealed class OptionAllocationTests
     private static long Combine(int iterations)
     {
         long sum = 0;
+
         for (var i = 1; i <= iterations; i++)
         {
             var o = Option.Some(i)
                 .Map(static v => v + 1)
                 .Bind(static v => Option.Some(v * 2))
                 .Filter(static v => v > 0);
+
             sum += o.Match(static () => 0, static v => v) + o.GetValueOrDefault(0);
             sum += o.ToResult(Error.Uninitialized).GetValueOrDefault(0);
             sum += o.ToResult(static () => Error.Uninitialized).GetValueOrDefault(0);
@@ -64,9 +68,11 @@ public sealed class OptionAllocationTests
     private static long CreateAndMatch(int iterations)
     {
         long sum = 0;
+
         for (var i = 0; i < iterations; i++)
         {
             Option<int> o = (i & 1) == 0 ? i : global::StandSure.Functional.None.Instance;
+
             sum += o switch
             {
                 None => 1,

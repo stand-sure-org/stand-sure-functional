@@ -31,6 +31,7 @@ internal static class Program
         if (args.Length > 0 && string.Equals(args[0], ReportOptions.Command, StringComparison.Ordinal))
         {
             var report = ReportOptions.Parse(args);
+
             if (report.Options is not { } reportOptions)
             {
                 logger.CliError(report.Error ?? ReportOptions.Usage);
@@ -43,6 +44,7 @@ internal static class Program
         if (args.Length > 0 && string.Equals(args[0], ReextractOptions.Command, StringComparison.Ordinal))
         {
             var reextract = ReextractOptions.Parse(args);
+
             if (reextract.Options is not { } reextractOptions)
             {
                 logger.CliError(reextract.Error ?? ReextractOptions.Usage);
@@ -50,6 +52,7 @@ internal static class Program
             }
 
             var root = FindRoot();
+
             if (root is null)
             {
                 logger.CliError($"Could not find {RepoLocator.SolutionFileName} above the current or base directory.");
@@ -60,6 +63,7 @@ internal static class Program
         }
 
         var parsed = CliOptions.Parse(args);
+
         if (parsed.Options is not { } options)
         {
             logger.CliError(parsed.Error ?? CliOptions.Usage);
@@ -67,16 +71,20 @@ internal static class Program
         }
 
         using var cts = new CancellationTokenSource();
-        using var sigint = PosixSignalRegistration.Create(PosixSignal.SIGINT, context =>
-        {
-            context.Cancel = true;
-            cts.Cancel();
-        });
-        using var sigterm = PosixSignalRegistration.Create(PosixSignal.SIGTERM, context =>
-        {
-            context.Cancel = true;
-            cts.Cancel();
-        });
+
+        using var sigint = PosixSignalRegistration.Create(PosixSignal.SIGINT,
+            context =>
+            {
+                context.Cancel = true;
+                cts.Cancel();
+            });
+
+        using var sigterm = PosixSignalRegistration.Create(PosixSignal.SIGTERM,
+            context =>
+            {
+                context.Cancel = true;
+                cts.Cancel();
+            });
 
         try
         {
@@ -91,6 +99,7 @@ internal static class Program
     private static async Task<int> RunAsync(CliOptions options, ILogger logger, CancellationToken ct)
     {
         var root = FindRoot();
+
         if (root is null)
         {
             logger.CliError($"Could not find {RepoLocator.SolutionFileName} above the current or base directory.");
@@ -100,9 +109,11 @@ internal static class Program
         var promptsDir = Path.Combine(root, "harness", "prompts");
         var withLibrary = string.Equals(options.Condition, RunPlan.WithLibrary, StringComparison.Ordinal);
         string systemPrompt;
+
         if (withLibrary)
         {
             var summaryPath = Path.Combine(root, "docs", "llm-api-summary.md");
+
             if (!File.Exists(summaryPath))
             {
                 logger.CliError($"with-library needs {summaryPath}, which does not exist yet. No models were called.");
@@ -123,6 +134,7 @@ internal static class Program
         var allTasks = TaskCatalog.Load(Path.Combine(root, "harness", "tasks"));
         var models = Select(allModels, options.Models, m => m.Id, "model", logger, out var modelsOk);
         var tasks = Select(allTasks, options.Tasks, t => t.Id, "task", logger, out var tasksOk);
+
         if (!modelsOk || !tasksOk)
         {
             return ExitUsage;
@@ -135,7 +147,11 @@ internal static class Program
         var plan = new RunPlan(Guid.NewGuid(), options.Condition, systemPrompt, options.Runs, models, tasks);
 
         var clients = ClientFactory.Create(
-            new ProcessEnvironment(), logger, timeout => new HttpClient { Timeout = timeout }, options.OllamaTimeout);
+            new ProcessEnvironment(),
+            logger,
+            timeout => new HttpClient { Timeout = timeout },
+            options.OllamaTimeout);
+
         var runner = new HarnessRunner(clients, new ProbeExecutorRunner(), logger);
 
         logger.RunStarted(plan.RunId.ToString(), plan.Condition, models.Count, tasks.Count, plan.Runs, path);
@@ -155,12 +171,14 @@ internal static class Program
         out bool ok)
     {
         ok = true;
+
         if (wanted is null)
         {
             return all;
         }
 
         var unknown = wanted.Where(w => !all.Any(a => string.Equals(id(a), w, StringComparison.Ordinal))).ToList();
+
         if (unknown.Count > 0)
         {
             logger.CliError($"Unknown {kind} id(s): {string.Join(", ", unknown)}. Known: {string.Join(", ", all.Select(id))}");

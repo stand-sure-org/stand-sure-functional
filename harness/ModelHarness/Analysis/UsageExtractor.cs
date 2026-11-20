@@ -30,6 +30,7 @@ public static class UsageExtractor
     {
         ArgumentNullException.ThrowIfNull(compilation);
         ArgumentNullException.ThrowIfNull(task);
+
         try
         {
             return ExtractCore(compilation, task);
@@ -45,6 +46,7 @@ public static class UsageExtractor
         var trees = compilation.SyntaxTrees
             .Where(t => string.Equals(t.FilePath, SolutionCompiler.ModelFileName, StringComparison.Ordinal))
             .ToList();
+
         var declared = new SortedSet<string>(StringComparer.Ordinal);
         var used = new SortedSet<string>(StringComparer.Ordinal);
         var invoked = new SortedSet<string>(StringComparer.Ordinal);
@@ -91,10 +93,11 @@ public static class UsageExtractor
         var candidates = compilation.GetSymbolsWithName(task.EntryType, SymbolFilter.Type)
             .OfType<INamedTypeSymbol>()
             .Where(t => t.Locations.Any(l => l.SourceTree is { } s && trees.Contains(s)));
+
         return candidates
-            .SelectMany(t => t.GetMembers(task.EntryMethod).OfType<IMethodSymbol>())
-            .FirstOrDefault(m => m.DeclaredAccessibility == Accessibility.Public)
-            ?? candidates.SelectMany(t => t.GetMembers(task.EntryMethod).OfType<IMethodSymbol>()).FirstOrDefault();
+                   .SelectMany(t => t.GetMembers(task.EntryMethod).OfType<IMethodSymbol>())
+                   .FirstOrDefault(m => m.DeclaredAccessibility == Accessibility.Public)
+               ?? candidates.SelectMany(t => t.GetMembers(task.EntryMethod).OfType<IMethodSymbol>()).FirstOrDefault();
     }
 
     private static bool IsNullable(ITypeSymbol type) =>

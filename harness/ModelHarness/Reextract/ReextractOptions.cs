@@ -7,11 +7,13 @@ public sealed record ReextractOptions(string InputPath, string OutputPath)
 {
     public const string Command = "reextract";
 
-    public const string Usage = "usage: reextract --input <jsonl> --output <new jsonl> (re-runs extraction, compile and usage facts from rawOutput; no model calls, no probe)";
+    public const string Usage =
+        "usage: reextract --input <jsonl> --output <new jsonl> (re-runs extraction, compile and usage facts from rawOutput; no model calls, no probe)";
 
     public static ReextractParseResult Parse(string[] args)
     {
         ArgumentNullException.ThrowIfNull(args);
+
         if (args.Length == 0 || !string.Equals(args[0], Command, StringComparison.Ordinal))
         {
             return Fail("expected the 'reextract' command");
@@ -19,15 +21,18 @@ public sealed record ReextractOptions(string InputPath, string OutputPath)
 
         string? input = null;
         string? output = null;
+
         for (var i = 1; i < args.Length; i += 2)
         {
             var name = args[i];
+
             if (i + 1 >= args.Length)
             {
                 return Fail($"option {name} needs a value");
             }
 
             var value = args[i + 1];
+
             switch (name)
             {
                 case "--input":

@@ -55,6 +55,7 @@ public sealed class HarnessRunner(
         ArgumentNullException.ThrowIfNull(output);
 
         var familyGates = new Dictionary<string, SemaphoreSlim>(StringComparer.Ordinal);
+
         foreach (var model in plan.Models)
         {
             familyGates.TryAdd(model.Family, new SemaphoreSlim(maxConcurrentPerFamily, maxConcurrentPerFamily));
@@ -64,6 +65,7 @@ public sealed class HarnessRunner(
         using var writeGate = new SemaphoreSlim(1, 1);
         var written = 0;
         var workers = new List<Task>();
+
         foreach (var model in plan.Models)
         {
             foreach (var task in plan.Tasks)
@@ -71,18 +73,21 @@ public sealed class HarnessRunner(
                 for (var run = 1; run <= plan.Runs; run++)
                 {
                     var (m, t, r) = (model, task, run);
+
                     workers.Add(Task.Run(async () =>
-                    {
-                        var record = await ExecuteAsync(plan, m, t, r, familyGates[m.Family], probeGate, ct).ConfigureAwait(false);
-                        await WriteAsync(output, writeGate, record).ConfigureAwait(false);
-                        Interlocked.Increment(ref written);
-                        logger.RecordWritten(record.Family, record.Model, record.Task, record.Run, record.CompileSuccess);
-                    }, CancellationToken.None));
+                        {
+                            var record = await this.ExecuteAsync(plan, m, t, r, familyGates[m.Family], probeGate, ct).ConfigureAwait(false);
+                            await WriteAsync(output, writeGate, record).ConfigureAwait(false);
+                            Interlocked.Increment(ref written);
+                            logger.RecordWritten(record.Family, record.Model, record.Task, record.Run, record.CompileSuccess);
+                        },
+                        CancellationToken.None));
                 }
             }
         }
 
         var cancelled = false;
+
         try
         {
             await Task.WhenAll(workers).ConfigureAwait(false);
@@ -123,6 +128,7 @@ public sealed class HarnessRunner(
     {
         var line = JsonSerializer.Serialize(record, RunJson.Default.RunRecord);
         await gate.WaitAsync(CancellationToken.None).ConfigureAwait(false);
+
         try
         {
             await output.WriteAsync((line + "\n").AsMemory(), CancellationToken.None).ConfigureAwait(false);
@@ -152,23 +158,27 @@ public sealed class HarnessRunner(
         ProbeResult? probeResult = null;
         string? transportError = null;
         string? notes = null;
+
         try
         {
-            response = await CallModelAsync(plan, model, task, familyGate, ct).ConfigureAwait(false);
+            response = await this.CallModelAsync(plan, model, task, familyGate, ct).ConfigureAwait(false);
             transportError = response.Error;
+
             if (transportError is null)
             {
                 var extract = CodeExtractor.Extract(response.Text);
                 extractStatus = StatusName(extract.Status);
+
                 if (extract.Code is not null)
                 {
                     var compiled = SolutionCompiler.Compile(task, extract.Code, plan.IsWithLibrary);
                     compileSuccess = compiled.Success;
                     diagnostics = compiled.Diagnostics;
                     usage = UsageExtractor.Extract(compiled, task);
+
                     if (compiled.Success && compiled.Assembly is not null)
                     {
-                        (probeResult, notes) = await ProbeAsync(compiled.Assembly, task, probeGate, ct).ConfigureAwait(false);
+                        (probeResult, notes) = await this.ProbeAsync(compiled.Assembly, task, probeGate, ct).ConfigureAwait(false);
                     }
                 }
             }
@@ -177,6 +187,7 @@ public sealed class HarnessRunner(
         {
             var message = $"{ex.GetType().Name}: {ex.Message}";
             logger.RecordFailed(model.Family, model.Id, task.Id, run, ex.GetType().Name);
+
             if (response is null)
             {
                 transportError = message;
@@ -188,7 +199,7 @@ public sealed class HarnessRunner(
         }
 
         return new RunRecord(
-            Ts: clock.GetUtcNow().UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture),
+            Ts: this.clock.GetUtcNow().UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture),
             RunId: plan.RunId.ToString(),
             Condition: plan.Condition,
             Family: model.Family,
@@ -224,6 +235,7 @@ public sealed class HarnessRunner(
         }
 
         await familyGate.WaitAsync(ct).ConfigureAwait(false);
+
         try
         {
             return await client.CompleteAsync(new ModelRequest(model.Id, plan.SystemPrompt, task.Prompt), ct).ConfigureAwait(false);
@@ -241,6 +253,7 @@ public sealed class HarnessRunner(
         CancellationToken ct)
     {
         await probeGate.WaitAsync(ct).ConfigureAwait(false);
+
         try
         {
             return (await probe.RunAsync(assembly, task, ct).ConfigureAwait(false), null);

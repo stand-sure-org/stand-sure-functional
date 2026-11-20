@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
+
 using AwesomeAssertions;
+
 using Xunit;
 
 namespace StandSure.Functional.Tests;
@@ -55,8 +57,18 @@ public sealed class ResultAsyncTests
     {
         var called = false;
 
-        var r = await Bad().MapAsync(x => { called = true; return x; });
-        var r2 = await Bad().MapAsync(async x => { called = true; await Task.Yield(); return x; });
+        var r = await Bad().MapAsync(x =>
+        {
+            called = true;
+            return x;
+        });
+
+        var r2 = await Bad().MapAsync(async x =>
+        {
+            called = true;
+            await Task.Yield();
+            return x;
+        });
 
         called.Should().BeFalse();
         r.IsFailure.Should().BeTrue();
@@ -154,8 +166,17 @@ public sealed class ResultAsyncTests
     {
         var called = false;
 
-        var r = await Bad().BindAsync(x => { called = true; return Result.Success(x); });
-        var r2 = await Bad().BindAsync(x => { called = true; return Task.FromResult(Result.Success(x)); });
+        var r = await Bad().BindAsync(x =>
+        {
+            called = true;
+            return Result.Success(x);
+        });
+
+        var r2 = await Bad().BindAsync(x =>
+        {
+            called = true;
+            return Task.FromResult(Result.Success(x));
+        });
 
         called.Should().BeFalse();
         r.IsFailure.Should().BeTrue();
@@ -170,7 +191,11 @@ public sealed class ResultAsyncTests
         var r = await Ok(1)
             .BindAsync(x => Task.FromResult(Result.Success(x + 1)))
             .BindAsync(_ => Task.FromResult(Result.Failure<int>(Boom)))
-            .BindAsync(x => { thirdCalled = true; return Task.FromResult(Result.Success(x)); });
+            .BindAsync(x =>
+            {
+                thirdCalled = true;
+                return Task.FromResult(Result.Success(x));
+            });
 
         thirdCalled.Should().BeFalse();
         r.TryGetValue(out Error? e).Should().BeTrue();
@@ -183,7 +208,11 @@ public sealed class ResultAsyncTests
         var r = await Ok(1)
             .BindAsync(x => Task.FromResult(Result.Success(x + 1)))
             .BindAsync(x => Result.Success(x * 10))
-            .BindAsync(async x => { await Task.Yield(); return Result.Success(x + 5); });
+            .BindAsync(async x =>
+            {
+                await Task.Yield();
+                return Result.Success(x + 5);
+            });
 
         r.GetValueOrDefault(-1).Should().Be(25);
     }
@@ -231,11 +260,28 @@ public sealed class ResultAsyncTests
     public async Task MatchAsync_AsyncLambdas_BothBranches()
     {
         var ok = await Ok(2).MatchAsync(
-            onFailure: async e => { await Task.Yield(); return -1; },
-            onSuccess: async v => { await Task.Yield(); return v * 3; });
+            onFailure: async e =>
+            {
+                await Task.Yield();
+                return -1;
+            },
+            onSuccess: async v =>
+            {
+                await Task.Yield();
+                return v * 3;
+            });
+
         var bad = await Bad().MatchAsync(
-            onFailure: async e => { await Task.Yield(); return -1; },
-            onSuccess: async v => { await Task.Yield(); return v * 3; });
+            onFailure: async e =>
+            {
+                await Task.Yield();
+                return -1;
+            },
+            onSuccess: async v =>
+            {
+                await Task.Yield();
+                return v * 3;
+            });
 
         ok.Should().Be(6);
         bad.Should().Be(-1);
@@ -283,8 +329,19 @@ public sealed class ResultAsyncTests
     [Fact]
     public async Task EnsureAsync_AsyncPredicate_TrueAndFalse()
     {
-        var pass = await Ok(5).EnsureAsync(async v => { await Task.Yield(); return v > 0; }, Boom);
-        var fail = await Ok(-5).EnsureAsync(async v => { await Task.Yield(); return v > 0; }, Boom);
+        var pass = await Ok(5).EnsureAsync(async v =>
+            {
+                await Task.Yield();
+                return v > 0;
+            },
+            Boom);
+
+        var fail = await Ok(-5).EnsureAsync(async v =>
+            {
+                await Task.Yield();
+                return v > 0;
+            },
+            Boom);
 
         pass.IsSuccess.Should().BeTrue();
         fail.TryGetValue(out Error? e).Should().BeTrue();
@@ -296,8 +353,19 @@ public sealed class ResultAsyncTests
     {
         var called = false;
 
-        var r = await Bad().EnsureAsync(v => { called = true; return true; }, Error.Conflict("c", "m"));
-        var r2 = await Bad().EnsureAsync(v => { called = true; return Task.FromResult(true); }, Error.Conflict("c", "m"));
+        var r = await Bad().EnsureAsync(v =>
+            {
+                called = true;
+                return true;
+            },
+            Error.Conflict("c", "m"));
+
+        var r2 = await Bad().EnsureAsync(v =>
+            {
+                called = true;
+                return Task.FromResult(true);
+            },
+            Error.Conflict("c", "m"));
 
         called.Should().BeFalse();
         r.TryGetValue(out Error? e).Should().BeTrue();
@@ -318,12 +386,29 @@ public sealed class ResultAsyncTests
     public async Task EnsureAsync_Factory_SyncAndAsyncPredicates_TrueAndFalse()
     {
         var calls = 0;
-        Error Make(int v) { calls++; return Error.Validation("v.bad", $"{v}"); }
+
+        Error Make(int v)
+        {
+            calls++;
+            return Error.Validation("v.bad", $"{v}");
+        }
 
         var syncPass = await Ok(5).EnsureAsync(v => v > 0, Make);
         var syncFail = await Ok(-5).EnsureAsync(v => v > 0, Make);
-        var asyncPass = await Ok(5).EnsureAsync(async v => { await Task.Yield(); return v > 0; }, Make);
-        var asyncFail = await Ok(-6).EnsureAsync(async v => { await Task.Yield(); return v > 0; }, Make);
+
+        var asyncPass = await Ok(5).EnsureAsync(async v =>
+            {
+                await Task.Yield();
+                return v > 0;
+            },
+            Make);
+
+        var asyncFail = await Ok(-6).EnsureAsync(async v =>
+            {
+                await Task.Yield();
+                return v > 0;
+            },
+            Make);
 
         syncPass.IsSuccess.Should().BeTrue();
         asyncPass.IsSuccess.Should().BeTrue();
@@ -339,8 +424,27 @@ public sealed class ResultAsyncTests
     {
         var called = false;
 
-        var r = await Bad().EnsureAsync(v => { called = true; return true; }, v => { called = true; return Boom; });
-        var r2 = await Bad().EnsureAsync(v => { called = true; return Task.FromResult(true); }, v => { called = true; return Boom; });
+        var r = await Bad().EnsureAsync(v =>
+            {
+                called = true;
+                return true;
+            },
+            v =>
+            {
+                called = true;
+                return Boom;
+            });
+
+        var r2 = await Bad().EnsureAsync(v =>
+            {
+                called = true;
+                return Task.FromResult(true);
+            },
+            v =>
+            {
+                called = true;
+                return Boom;
+            });
 
         called.Should().BeFalse();
         r.TryGetValue(out Error? e).Should().BeTrue();
