@@ -21,6 +21,7 @@ public sealed class TelemetryTests : IDisposable
     private readonly MeterListener _meterListener = new();
     private readonly List<(long Value, Dictionary<string, object?> Tags)> _measurements = [];
     private readonly object _gate = new();
+    private readonly List<Activity> _librarySpans = [];
 
     public TelemetryTests()
     {
@@ -28,6 +29,18 @@ public sealed class TelemetryTests : IDisposable
         {
             ShouldListenTo = s => s.Name == "StandSure.Functional" || s.Name == TestSourceName,
             Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            ActivityStopped = a =>
+            {
+                if (a.Source.Name != "StandSure.Functional")
+                {
+                    return;
+                }
+
+                lock (this._gate)
+                {
+                    this._librarySpans.Add(a);
+                }
+            },
         };
 
         ActivitySource.AddActivityListener(this._activityListener);
@@ -151,11 +164,25 @@ public sealed class TelemetryTests : IDisposable
         codes.Sum(c => this.For(c).Count).Should().Be(3);
         (this.For("tel.combine.2.t").Count + this.For("tel.combine.3.t").Count).Should().Be(2);
         this.For("result.combine_failed").Should().BeEmpty();
-        activity.Events.Count(e => e.Name == "functional.failure").Should().Be(5);
 
+        // Combine runs no caller code, so its events stay on the caller's activity. Traverse runs the caller's map
+        // inside its own span (DESIGN v1.3, "Known consequence"), so the errors built there land on that span.
+        activity.Events.Count(e => e.Name == "functional.failure").Should().Be(3);
         activity.Events.Where(e => e.Name == "functional.failure.grouped")
             .Select(e => Tag(e, "error.errors.count"))
-            .Should().Equal(3, 2);
+            .Should().Equal(3);
+
+        Activity traverseSpan;
+        lock (this._gate)
+        {
+            traverseSpan = this._librarySpans.Should()
+                .ContainSingle(a => a.OperationName == "Traverse" && a.ParentSpanId == activity.SpanId).Subject;
+        }
+
+        traverseSpan.Events.Count(e => e.Name == "functional.failure").Should().Be(2);
+        traverseSpan.Events.Where(e => e.Name == "functional.failure.grouped")
+            .Select(e => Tag(e, "error.errors.count"))
+            .Should().Equal(2);
     }
 
     [Fact]

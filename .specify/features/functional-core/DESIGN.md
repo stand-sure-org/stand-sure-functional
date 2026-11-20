@@ -293,8 +293,7 @@ Exclude anything LINQ already provides.
 
 #### Spans (v1.3)
 
-> **Open decision (owner):** confirm that the sync combinators are in scope. The rule
-> below covers them as written. Build waits on this answer.
+Owner confirmed 2026-11-20: the sync combinators are in scope.
 
 Before v1.3 the `ActivitySource` existed but never started an activity, so subscribing
 to it with `AddSource("StandSure.Functional")` gave nothing.
@@ -332,9 +331,9 @@ the caller's span. The sample apps exist to show whether this reads well in a re
 |---|---|
 | `Try` | `Run` (both), `RunAsync` (both) |
 | Async (`ResultTaskExtensions`) | `BindAsync` ×2, `MapAsync` ×2, `MatchAsync` ×2, `EnsureAsync` ×4 |
-| Sync `Result<T>` (pending the open decision) | `Match`, `Map`, `Bind`, `MapError`, `Ensure` ×3, `Tap` |
-| Sync `Option<T>` (pending the open decision) | `Match`, `Map`, `Bind`, `Filter`, `ToResult` (lazy) |
-| Collections (pending the open decision) | `Traverse` |
+| Sync `Result<T>` | `Match`, `Map`, `Bind`, `MapError`, `Ensure` ×3, `Tap` |
+| Sync `Option<T>` | `Match`, `Map`, `Bind`, `Filter`, `ToResult` (lazy) |
+| Collections | `Traverse` |
 
 **Excluded: iterators.** `Choose`, `Scan` and `Pairwise` use `yield`. In an iterator the
 first-line `using` runs at the first `MoveNext`, stays open until the enumerator is
