@@ -31,6 +31,7 @@ public static class ReferenceAssemblies
     public static string DotnetRoot()
     {
         var fromEnvironment = Environment.GetEnvironmentVariable("DOTNET_ROOT");
+
         if (!string.IsNullOrEmpty(fromEnvironment) && Directory.Exists(Path.Combine(fromEnvironment, "packs")))
         {
             return fromEnvironment;
@@ -38,8 +39,10 @@ public static class ReferenceAssemblies
 
         // RuntimeEnvironment.GetRuntimeDirectory() = {root}/shared/Microsoft.NETCore.App/{version}/
         var runtimeDirectory = new DirectoryInfo(RuntimeEnvironment.GetRuntimeDirectory().TrimEnd(Path.DirectorySeparatorChar));
+
         var root = runtimeDirectory.Parent?.Parent?.Parent
-            ?? throw new DirectoryNotFoundException($"Cannot derive the dotnet root from '{runtimeDirectory.FullName}'.");
+                   ?? throw new DirectoryNotFoundException($"Cannot derive the dotnet root from '{runtimeDirectory.FullName}'.");
+
         return root.FullName;
     }
 
@@ -48,6 +51,7 @@ public static class ReferenceAssemblies
         var root = DotnetRoot();
         var major = Environment.Version.Major;
         var byName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
         foreach (var pack in new[] { NetCorePack, AspNetCorePack })
         {
             foreach (var path in PackAssemblies(root, pack, major))
@@ -63,6 +67,7 @@ public static class ReferenceAssemblies
     {
         var packDirectory = Path.Combine(root, "packs", pack);
         var tfm = $"net{major}.0";
+
         var versionDirectory = Directory.Exists(packDirectory)
             ? Directory.GetDirectories(packDirectory)
                 .Select(d => (Path: d, Version: Version.TryParse(Path.GetFileName(d).Split('-')[0], out var v) ? v : null))

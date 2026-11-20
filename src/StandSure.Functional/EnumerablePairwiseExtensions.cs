@@ -11,7 +11,7 @@ public static class EnumerablePairwiseExtensions
     /// <c>result.null_source</c> error in telemetry; it never throws.</param>
     /// <returns>For <c>[1, 2, 3]</c>: <c>(1, 2), (2, 3)</c>. An empty or single-element source gives an empty sequence.
     /// Lazy: nothing is enumerated until the result is iterated, and the source is enumerated once.</returns>
-    public static IEnumerable<(T Previous, T Current)> Pairwise<T>(this IEnumerable<T> source)
+    public static IEnumerable<(T Previous, T Current)> Pairwise<T>(this IEnumerable<T>? source)
     {
         if (source is null)
         {
@@ -24,12 +24,14 @@ public static class EnumerablePairwiseExtensions
         static IEnumerable<(T Previous, T Current)> Iterate(IEnumerable<T> source)
         {
             using var e = source.GetEnumerator();
+
             if (!e.MoveNext())
             {
                 yield break;
             }
 
             var previous = e.Current;
+
             while (e.MoveNext())
             {
                 var current = e.Current;

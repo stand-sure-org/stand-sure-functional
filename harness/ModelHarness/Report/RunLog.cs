@@ -18,6 +18,7 @@ public sealed record RunLog(IReadOnlyList<RunRecord> Records, int MalformedLines
         ArgumentNullException.ThrowIfNull(lines);
         var records = new List<RunRecord>();
         var malformed = 0;
+
         foreach (var line in lines)
         {
             if (string.IsNullOrWhiteSpace(line))
@@ -26,6 +27,7 @@ public sealed record RunLog(IReadOnlyList<RunRecord> Records, int MalformedLines
             }
 
             var record = TryParse(line);
+
             if (record is null)
             {
                 malformed++;

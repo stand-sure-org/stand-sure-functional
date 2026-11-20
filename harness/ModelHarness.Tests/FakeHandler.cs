@@ -14,9 +14,9 @@ internal sealed class FakeHandler(HttpStatusCode status, string body) : HttpMess
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        Calls++;
-        Request = request;
-        RequestBody = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
+        this.Calls++;
+        this.Request = request;
+        this.RequestBody = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
         return new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
     }
 }

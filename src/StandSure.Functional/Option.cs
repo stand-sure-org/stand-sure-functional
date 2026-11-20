@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace StandSure.Functional;
@@ -11,7 +10,7 @@ public static class Option
     /// <param name="value">The value. A <see langword="null"/> value produces <see cref="Option{T}.None"/>.</param>
     /// <returns>An option that is some when <paramref name="value"/> is not <see langword="null"/>; otherwise none.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Option<T> Some<T>([AllowNull] T value) => new(value);
+    public static Option<T> Some<T>(T? value) => new(value);
 
     /// <summary>Creates an option holding nothing.</summary>
     /// <typeparam name="T">The value type the option would have held.</typeparam>

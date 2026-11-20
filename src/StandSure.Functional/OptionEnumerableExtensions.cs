@@ -10,7 +10,7 @@ public static class OptionEnumerableExtensions
     /// <param name="source">The options. A <see langword="null"/> value gives an empty sequence and records a
     /// <c>result.null_source</c> error in telemetry; it never throws.</param>
     /// <returns>A lazy sequence: nothing is enumerated until the result is iterated, and the source is enumerated once.</returns>
-    public static IEnumerable<T> Choose<T>(this IEnumerable<Option<T>> source)
+    public static IEnumerable<T> Choose<T>(this IEnumerable<Option<T>>? source)
     {
         if (source is null)
         {

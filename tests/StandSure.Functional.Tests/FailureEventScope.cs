@@ -18,24 +18,26 @@ internal sealed class FailureEventScope : IDisposable
     public FailureEventScope()
     {
         var name = "StandSure.Functional.Tests.Scope." + Guid.NewGuid().ToString("N");
-        _source = new ActivitySource(name);
-        _listener = new ActivityListener
+        this._source = new ActivitySource(name);
+
+        this._listener = new ActivityListener
         {
             ShouldListenTo = s => s.Name == name,
             Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
         };
-        ActivitySource.AddActivityListener(_listener);
-        _activity = _source.StartActivity("test")!;
+
+        ActivitySource.AddActivityListener(this._listener);
+        this._activity = this._source.StartActivity("test")!;
     }
 
     public int Count(string code) =>
-        _activity.Events.Count(e => e.Name == "functional.failure"
-            && e.Tags.Any(t => t.Key == "error.code" && Equals(t.Value, code)));
+        this._activity.Events.Count(e => e.Name == "functional.failure"
+                                         && e.Tags.Any(t => t.Key == "error.code" && Equals(t.Value, code)));
 
     public void Dispose()
     {
-        _activity.Dispose();
-        _listener.Dispose();
-        _source.Dispose();
+        this._activity.Dispose();
+        this._listener.Dispose();
+        this._source.Dispose();
     }
 }

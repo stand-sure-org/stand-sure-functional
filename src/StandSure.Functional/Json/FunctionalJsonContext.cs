@@ -8,6 +8,4 @@ namespace StandSure.Functional.Json;
     RespectRequiredConstructorParameters = true)]
 [JsonSerializable(typeof(Error))]
 [JsonSerializable(typeof(ErrorKind))]
-internal sealed partial class FunctionalJsonContext : JsonSerializerContext
-{
-}
+internal sealed partial class FunctionalJsonContext : JsonSerializerContext;

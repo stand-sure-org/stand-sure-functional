@@ -21,6 +21,7 @@ public sealed class ModelClientTests
     {
         var handler = new FakeHandler(HttpStatusCode.OK,
             """{"content":[{"type":"text","text":"hel"},{"type":"text","text":"lo"}],"usage":{"input_tokens":11,"output_tokens":7}}""");
+
         var client = new AnthropicClient(new HttpClient(handler), "test-key", NullLogger.Instance);
 
         var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
@@ -48,6 +49,7 @@ public sealed class ModelClientTests
     {
         var handler = new FakeHandler(HttpStatusCode.OK,
             """{"candidates":[{"content":{"parts":[{"text":"hi "},{"text":"there"}]}}],"usageMetadata":{"promptTokenCount":5,"candidatesTokenCount":3}}""");
+
         var client = new GeminiClient(new HttpClient(handler), "test-key", NullLogger.Instance);
 
         var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
@@ -73,6 +75,7 @@ public sealed class ModelClientTests
     {
         var handler = new FakeHandler(HttpStatusCode.OK,
             """{"message":{"role":"assistant","content":"local reply"},"prompt_eval_count":9,"eval_count":4,"done":true}""");
+
         var client = new OllamaClient(new HttpClient(handler), NullLogger.Instance);
 
         var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
@@ -97,6 +100,7 @@ public sealed class ModelClientTests
     public async Task Http500_ReturnsErrorNotThrow()
     {
         var ct = TestContext.Current.CancellationToken;
+
         var clients = new IModelClient[]
         {
             new AnthropicClient(new HttpClient(new FakeHandler(HttpStatusCode.InternalServerError, "boom")), "test-key", NullLogger.Instance),
@@ -159,6 +163,7 @@ public sealed class ModelClientTests
     {
         var handler = new FakeHandler(HttpStatusCode.OK,
             """{"content":[{"type":"text","text":"cut"}],"stop_reason":"max_tokens","usage":{"input_tokens":1,"output_tokens":2}}""");
+
         var client = new AnthropicClient(new HttpClient(handler), "k", NullLogger.Instance);
 
         var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
@@ -172,6 +177,7 @@ public sealed class ModelClientTests
     {
         var handler = new FakeHandler(HttpStatusCode.OK,
             """{"content":[{"type":"text","text":"ok"}],"stop_reason":"end_turn","usage":{"input_tokens":1,"output_tokens":2}}""");
+
         var client = new AnthropicClient(new HttpClient(handler), "k", NullLogger.Instance);
 
         var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
@@ -189,6 +195,7 @@ public sealed class ModelClientTests
     {
         var handler = new FakeHandler(HttpStatusCode.OK,
             $$$"""{"candidates":[{"content":{"parts":[{"text":"t"}]},"finishReason":"{{{finishReason}}}"}],"usageMetadata":{"promptTokenCount":1,"candidatesTokenCount":1}}""");
+
         var client = new GeminiClient(new HttpClient(handler), "k", NullLogger.Instance);
 
         var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
@@ -204,6 +211,7 @@ public sealed class ModelClientTests
     {
         var handler = new FakeHandler(HttpStatusCode.OK,
             $$$"""{"message":{"role":"assistant","content":"t"},"done":true,"done_reason":"{{{doneReason}}}","prompt_eval_count":1,"eval_count":1}""");
+
         var client = new OllamaClient(new HttpClient(handler), NullLogger.Instance);
 
         var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
@@ -217,6 +225,7 @@ public sealed class ModelClientTests
     {
         var handler = new FakeHandler(HttpStatusCode.OK,
             """{"content":[{"type":"text","text":"ok"}],"usage":{"input_tokens":1,"output_tokens":2}}""");
+
         var client = new AnthropicClient(new HttpClient(handler), "k", NullLogger.Instance);
 
         var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
@@ -226,7 +235,8 @@ public sealed class ModelClientTests
     }
 
     [Theory]
-    [InlineData("""{"candidates":[{"content":{"parts":[]},"finishReason":"SAFETY"}],"usageMetadata":{"promptTokenCount":4,"candidatesTokenCount":0}}""", "SAFETY")]
+    [InlineData("""{"candidates":[{"content":{"parts":[]},"finishReason":"SAFETY"}],"usageMetadata":{"promptTokenCount":4,"candidatesTokenCount":0}}""",
+        "SAFETY")]
     [InlineData("""{"candidates":[{"finishReason":"MAX_TOKENS"}],"usageMetadata":{"promptTokenCount":4}}""", "MAX_TOKENS")]
     [InlineData("""{"promptFeedback":{"blockReason":"PROHIBITED_CONTENT"},"usageMetadata":{"promptTokenCount":4}}""", "PROHIBITED_CONTENT")]
     public async Task Gemini_EmptyText_KeepsStopReasonAndIsNotAnError(string body, string expectedReason)
@@ -247,6 +257,7 @@ public sealed class ModelClientTests
     {
         var handler = new FakeHandler(HttpStatusCode.OK,
             """{"content":[],"stop_reason":"max_tokens","usage":{"input_tokens":6,"output_tokens":4096}}""");
+
         var client = new AnthropicClient(new HttpClient(handler), "k", NullLogger.Instance);
 
         var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
@@ -264,6 +275,7 @@ public sealed class ModelClientTests
     {
         var handler = new FakeHandler(HttpStatusCode.OK,
             """{"message":{"role":"assistant","content":""},"done":true,"done_reason":"length","prompt_eval_count":7,"eval_count":3}""");
+
         var client = new OllamaClient(new HttpClient(handler), NullLogger.Instance);
 
         var response = await client.CompleteAsync(Request, TestContext.Current.CancellationToken);
@@ -313,11 +325,11 @@ public sealed class ModelClientTests
     public void Config_LoadsEnabledModelsOnly()
     {
         const string json = """
-            {"models":[
-              {"family":"anthropic","id":"a","enabled":true},
-              {"family":"ollama","id":"b","enabled":false},
-              {"family":"gemini","id":"c","enabled":true}]}
-            """;
+                            {"models":[
+                              {"family":"anthropic","id":"a","enabled":true},
+                              {"family":"ollama","id":"b","enabled":false},
+                              {"family":"gemini","id":"c","enabled":true}]}
+                            """;
 
         var models = ModelConfig.LoadEnabled(json);
 

@@ -20,15 +20,15 @@ namespace StandSure.Functional;
 /// </remarks>
 internal static class FunctionalDiagnostics
 {
-    public const string Name = "StandSure.Functional";
+    private const string Name = "StandSure.Functional";
 
-    public const string EmitErrorDetailsSwitch = "StandSure.Functional.EmitErrorDetails";
+    private const string EmitErrorDetailsSwitch = "StandSure.Functional.EmitErrorDetails";
 
     public static readonly ActivitySource Source = new(Name);
 
-    public static readonly Meter Meter = new(Name);
+    private static readonly Meter Meter = new(Name);
 
-    public static readonly Counter<long> Failures = Meter.CreateCounter<long>(
+    private static readonly Counter<long> Failures = Meter.CreateCounter<long>(
         "functional.failures",
         unit: "{failure}",
         description: "Root failures created by the library (one per Error construction; wraps and groups of child errors are not counted).");
@@ -55,6 +55,7 @@ internal static class FunctionalDiagnostics
             ["error.kind"] = error.Kind.ToString(),
             ["error.code"] = error.Code,
         };
+
         AddDetails(tags, error);
         activity.AddEvent(new ActivityEvent("functional.failure", tags: tags));
     }
@@ -74,6 +75,7 @@ internal static class FunctionalDiagnostics
             ["error.code"] = outer.Code,
             ["error.inner.code"] = outer.Inner?.Code,
         };
+
         AddDetails(tags, outer);
         activity.AddEvent(new ActivityEvent("functional.failure.wrapped", tags: tags));
     }
@@ -93,6 +95,7 @@ internal static class FunctionalDiagnostics
             ["error.code"] = parent.Code,
             ["error.errors.count"] = parent.Errors.Count,
         };
+
         AddDetails(tags, parent);
         activity.AddEvent(new ActivityEvent("functional.failure.grouped", tags: tags));
     }
@@ -107,6 +110,7 @@ internal static class FunctionalDiagnostics
         }
 
         tags["error.message"] = error.Message;
+
         foreach (var (key, value) in error.Metadata)
         {
             tags["error.metadata." + key] = value;

@@ -23,11 +23,11 @@ public sealed class GeminiClient(HttpClient http, string? apiKey, ILogger logger
     {
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            logger.MissingApiKey(Family, request.ModelId, KeyVariable);
+            logger.MissingApiKey(this.Family, request.ModelId, KeyVariable);
             return Task.FromResult(HttpCall.Fail(request.ModelId, $"{KeyVariable} is not set"));
         }
 
-        return HttpCall.SendAsync(http, logger, Family, request.ModelId, () => Build(request), Parse, ct);
+        return HttpCall.SendAsync(http, logger, this.Family, request.ModelId, () => this.Build(request), Parse, ct);
     }
 
     private HttpRequestMessage Build(ModelRequest request)
@@ -37,12 +37,17 @@ public sealed class GeminiClient(HttpClient http, string? apiKey, ILogger logger
             SystemInstruction = new GeminiContent { Parts = [new GeminiPart { Text = request.System }] },
             Contents = [new GeminiContent { Role = "user", Parts = [new GeminiPart { Text = request.User }] }],
         };
+
         var uri = new Uri($"https://generativelanguage.googleapis.com/v1beta/models/{Uri.EscapeDataString(request.ModelId)}:generateContent");
+
         var message = new HttpRequestMessage(HttpMethod.Post, uri)
         {
             Content = new StringContent(
-                JsonSerializer.Serialize(dto, HarnessJson.Default.GeminiRequest), Encoding.UTF8, "application/json"),
+                JsonSerializer.Serialize(dto, HarnessJson.Default.GeminiRequest),
+                Encoding.UTF8,
+                "application/json"),
         };
+
         message.Headers.Add("x-goog-api-key", apiKey);
         return message;
     }
@@ -50,7 +55,8 @@ public sealed class GeminiClient(HttpClient http, string? apiKey, ILogger logger
     private static HttpCall.Parsed Parse(string body)
     {
         var dto = JsonSerializer.Deserialize(body, HarnessJson.Default.GeminiResponse)
-            ?? throw new JsonException("empty body");
+                  ?? throw new JsonException("empty body");
+
         if (dto.Error is not null)
         {
             return HttpCall.Parsed.ProviderError(dto.Error.Status, dto.Error.Message);
@@ -64,13 +70,19 @@ public sealed class GeminiClient(HttpClient http, string? apiKey, ILogger logger
         var parts = dto.Candidates?.FirstOrDefault()?.Content?.Parts ?? [];
         var text = string.Concat(parts.Select(p => p.Text));
         var finish = dto.Candidates?.FirstOrDefault()?.FinishReason;
+
         if (string.IsNullOrEmpty(finish))
         {
             finish = dto.PromptFeedback?.BlockReason;
         }
 
         var truncated = !string.IsNullOrEmpty(finish) && !string.Equals(finish, "STOP", StringComparison.Ordinal);
+
         return new HttpCall.Parsed(
-            text, dto.UsageMetadata?.PromptTokenCount ?? 0, dto.UsageMetadata?.CandidatesTokenCount ?? 0, finish, truncated);
+            text,
+            dto.UsageMetadata?.PromptTokenCount ?? 0,
+            dto.UsageMetadata?.CandidatesTokenCount ?? 0,
+            finish,
+            truncated);
     }
 }

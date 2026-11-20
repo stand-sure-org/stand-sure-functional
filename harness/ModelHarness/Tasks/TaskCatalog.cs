@@ -50,6 +50,7 @@ public static class TaskCatalog
         Array.Sort(directories, StringComparer.Ordinal);
 
         var tasks = new List<HarnessTask>(directories.Length);
+
         foreach (var directory in directories)
         {
             tasks.Add(LoadOne(directory));
@@ -66,6 +67,7 @@ public static class TaskCatalog
         var probe = ReadRequired(directory, "Probe.cs");
 
         var (entryMethod, body) = SplitFrontMatter(id, markdown);
+
         if (CountOccurrences(body, FixtureMarker) != 1)
         {
             throw new InvalidDataException($"{id}/task.md must contain {FixtureMarker} exactly once.");
@@ -80,6 +82,7 @@ public static class TaskCatalog
     private static string ReadRequired(string directory, string fileName)
     {
         var path = Path.Combine(directory, fileName);
+
         if (!File.Exists(path))
         {
             throw new InvalidDataException($"Task file missing: {path}");
@@ -91,15 +94,18 @@ public static class TaskCatalog
     private static (string EntryMethod, string Body) SplitFrontMatter(string id, string markdown)
     {
         var lines = markdown.Split('\n');
+
         if (lines.Length == 0 || lines[0].Trim() != FrontMatterDelimiter)
         {
             throw new InvalidDataException($"{id}/task.md must start with front matter.");
         }
 
         string? entryMethod = null;
+
         for (var i = 1; i < lines.Length; i++)
         {
             var line = lines[i].Trim();
+
             if (line == FrontMatterDelimiter)
             {
                 if (string.IsNullOrEmpty(entryMethod))
@@ -122,6 +128,7 @@ public static class TaskCatalog
     private static int CountOccurrences(string text, string value)
     {
         var count = 0;
+
         for (var index = text.IndexOf(value, StringComparison.Ordinal); index >= 0; index = text.IndexOf(value, index + value.Length, StringComparison.Ordinal))
         {
             count++;

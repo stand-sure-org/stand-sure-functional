@@ -2,9 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+
 using AwesomeAssertions;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+
 using Xunit;
 
 namespace StandSure.Functional.Tests;
@@ -15,20 +18,20 @@ public sealed class OptionNullableConversionTests
     public void NullableValues_ConvertToOption_WithoutNullableWarnings()
     {
         const string source = """
-            using StandSure.Functional;
-            public static class Probe
-            {
-                public static void Run()
-                {
-                    string? s = null;
-                    Option<string> a = s;
-                    var b = Option.Some(s);
-                    var d = new Option<string>(s);
-                    int? n = null;
-                    Option<int?> c = n;
-                }
-            }
-            """;
+                              using StandSure.Functional;
+                              public static class Probe
+                              {
+                                  public static void Run()
+                                  {
+                                      string? s = null;
+                                      Option<string> a = s;
+                                      var b = Option.Some(s);
+                                      var d = new Option<string>(s);
+                                      int? n = null;
+                                      Option<int?> c = n;
+                                  }
+                              }
+                              """;
 
         var diagnostics = Compile(source);
 
@@ -49,6 +52,7 @@ public sealed class OptionNullableConversionTests
     private static IReadOnlyList<Diagnostic> Compile(string source)
     {
         var tpa = (string)(AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty);
+
         var references = tpa
             .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
             .Append(typeof(Result<>).Assembly.Location)

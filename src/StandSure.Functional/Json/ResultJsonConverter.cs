@@ -40,6 +40,7 @@ public sealed class ResultJsonConverter<T> : JsonConverter<Result<T>>
                 reader.Read();
                 hasValue = true;
                 valueIsNull = reader.TokenType == JsonTokenType.Null;
+
                 if (!valueIsNull)
                 {
                     value = JsonSerializer.Deserialize(ref reader, (JsonTypeInfo<T>)options.GetTypeInfo(typeof(T)));
@@ -49,6 +50,7 @@ public sealed class ResultJsonConverter<T> : JsonConverter<Result<T>>
             {
                 reader.Read();
                 hasError = true;
+
                 if (reader.TokenType != JsonTokenType.Null)
                 {
                     error = ErrorJson.Read(ref reader);
@@ -79,6 +81,7 @@ public sealed class ResultJsonConverter<T> : JsonConverter<Result<T>>
     {
         writer.WriteStartObject();
         var (value, error) = result;
+
         if (error is not null)
         {
             writer.WritePropertyName("error"u8);

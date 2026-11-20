@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
+
 using StandSure.Functional.Json;
 
 namespace StandSure.Functional;
@@ -12,7 +13,8 @@ namespace StandSure.Functional;
 /// </summary>
 /// <typeparam name="T">The success value type.</typeparam>
 /// <remarks>
-/// <para>
+/// <para
+/// >
 /// A non-boxing C# union: <c>switch</c> on it directly, for example
 /// <c>r switch { Error e =&gt; …, T value =&gt; … }</c>. For a non-nullable <typeparamref name="T"/> other than
 /// <see cref="Error"/>, that switch is exhaustive without a discard, and leaving out a case is error CS8509.
@@ -48,42 +50,42 @@ public readonly partial struct Result<T> : IUnion
     private const byte TagOk = 1;
     private const byte TagFail = 2;
 
-    private readonly T _value;
-    private readonly Error? _error;
-    private readonly byte _tag;
+    private readonly T resultValue;
+    private readonly Error? resultError;
+    private readonly byte tag;
 
     /// <summary>Initializes a new instance of the <see cref="Result{T}"/> struct as a success.</summary>
     /// <param name="value">The success value; <see langword="null"/> is allowed and is still a success.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Result(T value)
     {
-        _value = value;
-        _error = null;
-        _tag = TagOk;
+        this.resultValue = value;
+        this.resultError = null;
+        this.tag = TagOk;
     }
 
     /// <summary>Initializes a new instance of the <see cref="Result{T}"/> struct as a failure.</summary>
     /// <param name="error">The error. A <see langword="null"/> error is replaced with <see cref="Error.Uninitialized"/>.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Result(Error error)
+    public Result(Error? error)
     {
-        _value = default!;
-        _error = error ?? Error.Uninitialized;
-        _tag = TagFail;
+        this.resultValue = default!;
+        this.resultError = error ?? Error.Uninitialized;
+        this.tag = TagFail;
     }
 
     /// <summary>Gets a value indicating whether this result is a success.</summary>
     public bool IsSuccess
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => _tag == TagOk;
+        get => this.tag == TagOk;
     }
 
     /// <summary>Gets a value indicating whether this result is a failure, including the <c>default</c> value.</summary>
     public bool IsFailure
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => _tag != TagOk;
+        get => this.tag != TagOk;
     }
 
     /// <summary>Gets a value indicating whether the union holds a case. Always <see langword="true"/>,
@@ -96,15 +98,15 @@ public readonly partial struct Result<T> : IUnion
 
     /// <summary>Gets the current case as an object: the success value, or the <see cref="Error"/>.
     /// Never throws. Boxes a value-type <typeparamref name="T"/>, so prefer <c>switch</c> or <c>TryGetValue</c>.</summary>
-    public object? Value => _tag == TagOk ? _value : FailureError;
+    public object? Value => this.tag == TagOk ? this.resultValue : this.FailureError;
 
     private Error FailureError
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => _tag == TagDefault ? Error.Uninitialized : _error ?? Error.Uninitialized;
+        get => this.tag == TagDefault ? Error.Uninitialized : this.resultError ?? Error.Uninitialized;
     }
 
-    private string DebugView => _tag == TagOk ? $"Ok({_value})" : $"Fail({FailureError.Code})";
+    private string DebugView => this.tag == TagOk ? $"Ok({this.resultValue})" : $"Fail({this.FailureError.Code})";
 
     /// <summary>Gets the error if this result is a failure.</summary>
     /// <param name="error">The error (<see cref="Error.Uninitialized"/> for <c>default</c>); <see langword="null"/> on success.</param>
@@ -112,13 +114,13 @@ public readonly partial struct Result<T> : IUnion
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetValue([NotNullWhen(true)] out Error? error)
     {
-        if (_tag == TagOk)
+        if (this.tag == TagOk)
         {
             error = null;
             return false;
         }
 
-        error = FailureError;
+        error = this.FailureError;
         return true;
     }
 
@@ -128,9 +130,9 @@ public readonly partial struct Result<T> : IUnion
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetValue([MaybeNullWhen(false)] out T value)
     {
-        if (_tag == TagOk)
+        if (this.tag == TagOk)
         {
-            value = _value;
+            value = this.resultValue;
             return true;
         }
 
@@ -145,14 +147,14 @@ public readonly partial struct Result<T> : IUnion
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Deconstruct(out T? value, out Error? error)
     {
-        if (_tag == TagOk)
+        if (this.tag == TagOk)
         {
-            value = _value;
+            value = this.resultValue;
             error = null;
             return;
         }
 
         value = default;
-        error = FailureError;
+        error = this.FailureError;
     }
 }

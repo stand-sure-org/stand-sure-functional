@@ -69,29 +69,29 @@ public static class ProbeExecutor
     /// <para>Writes only inside the probe directory (and <c>/dev/null</c>). <c>sysctl-read</c> is the only other allowance.</para>
     /// </remarks>
     internal const string SandboxProfile = """
-        (version 1)
-        (deny default)
-        (deny network*)
-        (allow process-exec (literal (param "DOTNET")))
-        (allow file-read-metadata
-            (literal "/etc")
-            (literal "/var")
-            (path-ancestors (param "DOTNET_ROOT"))
-            (path-ancestors (param "RUNNER_DIR"))
-            (path-ancestors (param "PROBE_DIR")))
-        (allow file-read*
-            (literal "/")
-            (subpath "/usr/share/icu")
-            (subpath "/usr/share/zoneinfo")
-            (subpath "/private/var/db/timezone")
-            (literal "/private/etc/localtime")
-            (subpath (param "DOTNET_ROOT"))
-            (subpath (param "RUNNER_DIR"))
-            (subpath (param "PROBE_DIR")))
-        (allow file-write* (subpath (param "PROBE_DIR")))
-        (allow file-write-data (literal "/dev/null"))
-        (allow sysctl-read)
-        """;
+                                           (version 1)
+                                           (deny default)
+                                           (deny network*)
+                                           (allow process-exec (literal (param "DOTNET")))
+                                           (allow file-read-metadata
+                                               (literal "/etc")
+                                               (literal "/var")
+                                               (path-ancestors (param "DOTNET_ROOT"))
+                                               (path-ancestors (param "RUNNER_DIR"))
+                                               (path-ancestors (param "PROBE_DIR")))
+                                           (allow file-read*
+                                               (literal "/")
+                                               (subpath "/usr/share/icu")
+                                               (subpath "/usr/share/zoneinfo")
+                                               (subpath "/private/var/db/timezone")
+                                               (literal "/private/etc/localtime")
+                                               (subpath (param "DOTNET_ROOT"))
+                                               (subpath (param "RUNNER_DIR"))
+                                               (subpath (param "PROBE_DIR")))
+                                           (allow file-write* (subpath (param "PROBE_DIR")))
+                                           (allow file-write-data (literal "/dev/null"))
+                                           (allow sysctl-read)
+                                           """;
 
     private const string SandboxExec = "/usr/bin/sandbox-exec";
     private const string AssemblyFileName = "solution.dll";
@@ -151,12 +151,14 @@ public static class ProbeExecutor
 
         var dotnetRoot = RealPath(ReferenceAssemblies.DotnetRoot());
         var dotnet = Path.Combine(dotnetRoot, "dotnet");
+
         if (!File.Exists(dotnet))
         {
             return Crashed("dotnet-missing");
         }
 
         var directory = RealPath(Directory.CreateTempSubdirectory("probe-").FullName);
+
         try
         {
             var assemblyPath = Path.Combine(directory, AssemblyFileName);
@@ -189,12 +191,12 @@ public static class ProbeExecutor
         };
 
         foreach (var (name, value) in new[]
-        {
-            ("PROBE_DIR", directory),
-            ("RUNNER_DIR", Path.GetDirectoryName(runner)!),
-            ("DOTNET_ROOT", dotnetRoot),
-            ("DOTNET", dotnet),
-        })
+                 {
+                     ("PROBE_DIR", directory),
+                     ("RUNNER_DIR", Path.GetDirectoryName(runner)!),
+                     ("DOTNET_ROOT", dotnetRoot),
+                     ("DOTNET", dotnet),
+                 })
         {
             startInfo.ArgumentList.Add("-D");
             startInfo.ArgumentList.Add(name + "=" + value);
@@ -234,6 +236,7 @@ public static class ProbeExecutor
     {
         using var process = new Process { StartInfo = startInfo };
         var stopwatch = Stopwatch.StartNew();
+
         try
         {
             process.Start();
@@ -250,6 +253,7 @@ public static class ProbeExecutor
 
         using var timeoutSource = new CancellationTokenSource(timeout);
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutSource.Token);
+
         try
         {
             await process.WaitForExitAsync(linked.Token).ConfigureAwait(false);
@@ -264,6 +268,7 @@ public static class ProbeExecutor
         }
 
         var duration = stopwatch.ElapsedMilliseconds;
+
         if (!await WithinGrace(Task.WhenAll(stdout, stderr)).ConfigureAwait(false))
         {
             // Only possible if something outside the killed tree still holds the pipe.
@@ -277,15 +282,18 @@ public static class ProbeExecutor
     private static ProbeResult Parse(byte[] stdout, int exitCode, long duration)
     {
         var lines = Encoding.UTF8.GetString(stdout).Split('\n');
+
         foreach (var raw in lines.Reverse())
         {
             var line = raw.Trim();
+
             if (!line.StartsWith('{'))
             {
                 continue;
             }
 
             ProbeRunnerLine? parsed;
+
             try
             {
                 parsed = JsonSerializer.Deserialize(line, ProbeJson.Default.ProbeRunnerLine);
@@ -302,6 +310,7 @@ public static class ProbeExecutor
                 "crashed" => ProbeOutcome.Crashed,
                 _ => null,
             };
+
             if (outcome is { } value)
             {
                 return new ProbeResult(value, Truncate(parsed!.ExceptionType), Truncate(parsed.Reason), duration);
@@ -317,9 +326,11 @@ public static class ProbeExecutor
         var buffer = ArrayPool<byte>.Shared.Rent(16 * 1024);
         var tail = new byte[capacity];
         var length = 0;
+
         try
         {
             int read;
+
             while ((read = await stream.ReadAsync(buffer).ConfigureAwait(false)) > 0)
             {
                 if (capacity == 0)
@@ -335,6 +346,7 @@ public static class ProbeExecutor
                 }
 
                 var overflow = Math.Max(0, length + read - capacity);
+
                 if (overflow > 0)
                 {
                     Array.Copy(tail, overflow, tail, 0, length - overflow);
@@ -389,6 +401,7 @@ public static class ProbeExecutor
     private static string RealPath(string path)
     {
         var current = Path.GetPathRoot(Path.GetFullPath(path)) ?? "/";
+
         foreach (var part in Path.GetFullPath(path).Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries))
         {
             var next = Path.Combine(current, part);

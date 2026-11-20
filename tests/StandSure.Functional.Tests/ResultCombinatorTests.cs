@@ -1,5 +1,7 @@
 using System;
+
 using AwesomeAssertions;
+
 using Xunit;
 
 namespace StandSure.Functional.Tests;
@@ -27,7 +29,12 @@ public sealed class ResultCombinatorTests
     {
         Error? seen = null;
 
-        Result.Failure<int>(Boom).Match(e => { seen = e; return 0; }, v => v);
+        Result.Failure<int>(Boom).Match(e =>
+            {
+                seen = e;
+                return 0;
+            },
+            v => v);
 
         seen.Should().BeSameAs(Boom);
     }
@@ -69,7 +76,11 @@ public sealed class ResultCombinatorTests
     {
         var called = false;
 
-        var r = Result.Failure<int>(Boom).Map(v => { called = true; return v; });
+        var r = Result.Failure<int>(Boom).Map(v =>
+        {
+            called = true;
+            return v;
+        });
 
         called.Should().BeFalse();
         r.TryGetValue(out Error? e).Should().BeTrue();
@@ -145,7 +156,11 @@ public sealed class ResultCombinatorTests
 
         var r = Result.Success(1)
             .Bind(_ => Result.Failure<int>(Boom))
-            .Bind(v => { secondCalled = true; return Result.Success(v); });
+            .Bind(v =>
+            {
+                secondCalled = true;
+                return Result.Success(v);
+            });
 
         secondCalled.Should().BeFalse();
         r.IsFailure.Should().BeTrue();
@@ -156,7 +171,11 @@ public sealed class ResultCombinatorTests
     {
         var called = false;
 
-        var r = default(Result<int>).Bind(v => { called = true; return Result.Success(v); });
+        var r = default(Result<int>).Bind(v =>
+        {
+            called = true;
+            return Result.Success(v);
+        });
 
         called.Should().BeFalse();
         r.TryGetValue(out Error? e).Should().BeTrue();
@@ -199,7 +218,11 @@ public sealed class ResultCombinatorTests
     {
         var called = false;
 
-        var r = Result.Success(5).MapError(e => { called = true; return e; });
+        var r = Result.Success(5).MapError(e =>
+        {
+            called = true;
+            return e;
+        });
 
         called.Should().BeFalse();
         r.IsSuccess.Should().BeTrue();
@@ -210,7 +233,11 @@ public sealed class ResultCombinatorTests
     {
         Error? seen = null;
 
-        var r = default(Result<int>).MapError(e => { seen = e; return Boom; });
+        var r = default(Result<int>).MapError(e =>
+        {
+            seen = e;
+            return Boom;
+        });
 
         seen.Should().BeSameAs(Error.Uninitialized);
         r.TryGetValue(out Error? e2).Should().BeTrue();
@@ -263,7 +290,12 @@ public sealed class ResultCombinatorTests
     {
         var called = false;
 
-        var r = Result.Failure<int>(Boom).Ensure(v => { called = true; return true; }, Error.Conflict("c", "m"));
+        var r = Result.Failure<int>(Boom).Ensure(v =>
+            {
+                called = true;
+                return true;
+            },
+            Error.Conflict("c", "m"));
 
         called.Should().BeFalse();
         r.TryGetValue(out Error? e).Should().BeTrue();
@@ -332,7 +364,12 @@ public sealed class ResultCombinatorTests
     {
         var called = false;
 
-        var r = Result.Success(5).Ensure(v => v > 0, v => { called = true; return Boom; });
+        var r = Result.Success(5).Ensure(v => v > 0,
+            v =>
+            {
+                called = true;
+                return Boom;
+            });
 
         r.IsSuccess.Should().BeTrue();
         called.Should().BeFalse();
@@ -353,7 +390,17 @@ public sealed class ResultCombinatorTests
     {
         var called = false;
 
-        var r = Result.Failure<int>(Boom).Ensure(v => { called = true; return true; }, v => { called = true; return Boom; });
+        var r = Result.Failure<int>(Boom).Ensure(v =>
+            {
+                called = true;
+                return true;
+            },
+            v =>
+            {
+                called = true;
+                return Boom;
+            });
+
         var d = default(Result<int>).Ensure(v => true, v => Boom);
 
         called.Should().BeFalse();

@@ -28,6 +28,7 @@ public static class CodeExtractor
         }
 
         var fences = ReadFences(modelText);
+
         if (fences.Count == 0)
         {
             return fences.SawFence || !ParsesCleanly(modelText)
@@ -51,12 +52,15 @@ public static class CodeExtractor
         var usings = new List<string>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
         var bodies = new List<string>();
+
         foreach (var fence in fences)
         {
             var root = CSharpSyntaxTree.ParseText(fence).GetCompilationUnitRoot();
+
             foreach (var directive in root.Usings)
             {
                 var text = directive.ToString().Trim();
+
                 if (seen.Add(text))
                 {
                     usings.Add(text);
@@ -67,6 +71,7 @@ public static class CodeExtractor
         }
 
         var builder = new StringBuilder();
+
         foreach (var directive in usings)
         {
             builder.Append(directive).Append('\n');
@@ -84,9 +89,11 @@ public static class CodeExtractor
     {
         var fences = new Fences();
         var lines = text.Split('\n');
+
         for (var i = 0; i < lines.Length; i++)
         {
             var (marker, length, info) = ParseOpening(lines[i].TrimEnd('\r'));
+
             if (length == 0)
             {
                 continue;
@@ -94,9 +101,11 @@ public static class CodeExtractor
 
             fences.SawFence = true;
             var body = new List<string>();
+
             for (i++; i < lines.Length; i++)
             {
                 var line = lines[i].TrimEnd('\r');
+
                 if (IsClosing(line, marker, length))
                 {
                     break;
@@ -107,6 +116,7 @@ public static class CodeExtractor
 
             var label = info.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
             var content = string.Join('\n', body);
+
             if (IsCSharpLabel(label) && !string.IsNullOrWhiteSpace(content))
             {
                 fences.Add(content);
@@ -125,6 +135,7 @@ public static class CodeExtractor
     private static (char Marker, int Length, string Info) ParseOpening(string line)
     {
         var trimmed = line.TrimStart();
+
         if (line.Length - trimmed.Length > 3 || trimmed.Length < 3 || (trimmed[0] != '`' && trimmed[0] != '~'))
         {
             return default;
@@ -132,6 +143,7 @@ public static class CodeExtractor
 
         var marker = trimmed[0];
         var length = 0;
+
         while (length < trimmed.Length && trimmed[length] == marker)
         {
             length++;

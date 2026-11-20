@@ -43,6 +43,8 @@ public static class ResultTaskExtensions
     /// <returns>The mapped result, or the original failure.</returns>
     public static async Task<Result<TOut>> MapAsync<T, TOut>(this Task<Result<T>> source, Func<T, TOut> map)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         var result = await Resolve(source).ConfigureAwait(false);
         return result.Map(map);
     }
@@ -53,9 +55,10 @@ public static class ResultTaskExtensions
     /// <param name="source">The pending result.</param>
     /// <param name="map">The asynchronous transformation.</param>
     /// <returns>The mapped result, or the original failure.</returns>
-    public static async Task<Result<TOut>> MapAsync<T, TOut>(this Task<Result<T>> source, Func<T, Task<TOut>> map)
+    public static async Task<Result<TOut>> MapAsync<T, TOut>(this Task<Result<T>> source, Func<T, Task<TOut>?>? map)
     {
         var result = await Resolve(source).ConfigureAwait(false);
+
         if (result.IsFailure)
         {
             return Result.Failure<TOut>(result.ErrorUnchecked);
@@ -67,12 +70,7 @@ public static class ResultTaskExtensions
         }
 
         var task = map(result.ValueUnchecked);
-        if (task is null)
-        {
-            return Result.Failure<TOut>(ResultErrors.NullTask(nameof(map)));
-        }
-
-        return Result.Success(await task.ConfigureAwait(false));
+        return task is null ? Result.Failure<TOut>(ResultErrors.NullTask(nameof(map))) : Result.Success(await task.ConfigureAwait(false));
     }
 
     /// <summary>Chains a result-returning step onto an awaited result.</summary>
@@ -93,9 +91,10 @@ public static class ResultTaskExtensions
     /// <param name="source">The pending result.</param>
     /// <param name="bind">The next asynchronous step.</param>
     /// <returns>The result of <paramref name="bind"/>, or the original failure without calling it.</returns>
-    public static async Task<Result<TOut>> BindAsync<T, TOut>(this Task<Result<T>> source, Func<T, Task<Result<TOut>>> bind)
+    public static async Task<Result<TOut>> BindAsync<T, TOut>(this Task<Result<T>> source, Func<T, Task<Result<TOut>>?>? bind)
     {
         var result = await Resolve(source).ConfigureAwait(false);
+
         if (result.IsFailure)
         {
             return Result.Failure<TOut>(result.ErrorUnchecked);
@@ -107,6 +106,7 @@ public static class ResultTaskExtensions
         }
 
         var task = bind(result.ValueUnchecked);
+
         if (task is null)
         {
             return Result.Failure<TOut>(ResultErrors.NullTask(nameof(bind)));
@@ -141,11 +141,12 @@ public static class ResultTaskExtensions
     /// returned is <see langword="null"/>.</returns>
     public static async Task<TOut> MatchAsync<T, TOut>(
         this Task<Result<T>> source,
-        Func<Error, Task<TOut>> onFailure,
-        Func<T, Task<TOut>> onSuccess)
+        Func<Error, Task<TOut>>? onFailure,
+        Func<T, Task<TOut>?>? onSuccess)
     {
         var result = await Resolve(source).ConfigureAwait(false);
         Task<TOut>? task;
+
         if (result.IsSuccess)
         {
             if (onSuccess is null)
@@ -198,9 +199,10 @@ public static class ResultTaskExtensions
     /// <returns>The original result when it is a failure or the predicate holds; otherwise a failure with <paramref name="error"/>.</returns>
     /// <remarks>The <see cref="Error"/> is built before the call and is recorded in telemetry when built, even if the
     /// predicate holds; prefer the factory overload <see cref="EnsureAsync{T}(Task{Result{T}}, Func{T, Task{bool}}, Func{T, Error})"/>.</remarks>
-    public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> source, Func<T, Task<bool>> predicate, Error error)
+    public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> source, Func<T, Task<bool>?>? predicate, Error error)
     {
         var result = await Resolve(source).ConfigureAwait(false);
+
         if (result.IsFailure)
         {
             return result;
@@ -212,6 +214,7 @@ public static class ResultTaskExtensions
         }
 
         var task = predicate(result.ValueUnchecked);
+
         if (task is null)
         {
             return Result.Failure<T>(ResultErrors.NullTask(nameof(predicate)));
@@ -245,9 +248,10 @@ public static class ResultTaskExtensions
     /// failure when it would be called.</param>
     /// <returns>The original result when it is a failure or the predicate holds; otherwise a failure with the built error.</returns>
     [OverloadResolutionPriority(-1)]
-    public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> source, Func<T, Task<bool>> predicate, Func<T, Error> error)
+    public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> source, Func<T, Task<bool>?>? predicate, Func<T, Error>? error)
     {
         var result = await Resolve(source).ConfigureAwait(false);
+
         if (result.IsFailure)
         {
             return result;
@@ -259,6 +263,7 @@ public static class ResultTaskExtensions
         }
 
         var task = predicate(result.ValueUnchecked);
+
         if (task is null)
         {
             return Result.Failure<T>(ResultErrors.NullTask(nameof(predicate)));
@@ -269,15 +274,10 @@ public static class ResultTaskExtensions
             return result;
         }
 
-        if (error is null)
-        {
-            return Result.Failure<T>(ResultErrors.NullDelegate(nameof(error)));
-        }
-
-        return Result.Failure<T>(error(result.ValueUnchecked));
+        return Result.Failure<T>(error is null ? ResultErrors.NullDelegate(nameof(error)) : error(result.ValueUnchecked));
     }
 
     // A null source task is a failure rather than a NullReferenceException.
-    private static Task<Result<T>> Resolve<T>(Task<Result<T>> source) =>
+    private static Task<Result<T>> Resolve<T>(Task<Result<T>>? source) =>
         source ?? Task.FromResult(Result.Failure<T>(ResultErrors.NullTask(SourceName)));
 }

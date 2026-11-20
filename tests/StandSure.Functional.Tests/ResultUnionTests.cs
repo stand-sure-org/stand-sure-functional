@@ -2,9 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+
 using AwesomeAssertions;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+
 using Xunit;
 
 namespace StandSure.Functional.Tests;
@@ -15,6 +18,7 @@ public sealed class ResultUnionTests
     {
         Error e => e.Code,
         int i => i.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        null => string.Empty,
     };
 
     [Fact]
@@ -90,6 +94,7 @@ public sealed class ResultUnionTests
         static string Handle(Result<string> r)
         {
             var (value, error) = r;
+
             if (error is not null)
             {
                 return "failed:" + error.Code;
@@ -109,11 +114,14 @@ public sealed class ResultUnionTests
         var r = Result.Success<object>(Error.NotFound("x", "y"));
 
         r.IsSuccess.Should().BeTrue();
+
         var arm = r switch
         {
             Error e => "error:" + e.Code,
             object o => "object:" + o.GetType().Name,
+            null => string.Empty,
         };
+
         arm.Should().Be("object:Error");
     }
 
@@ -200,19 +208,20 @@ public sealed class ResultUnionTests
     public void MissingCase_IsCs8509()
     {
         const string exhaustive = """
-            using StandSure.Functional;
-            public static class Probe
-            {
-                public static string Describe(Result<int> r) => r switch { Error e => e.Code, int i => "int" };
-            }
-            """;
+                                  using StandSure.Functional;
+                                  public static class Probe
+                                  {
+                                      public static string Describe(Result<int> r) => r switch { Error e => e.Code, int i => "int" };
+                                  }
+                                  """;
+
         const string missingCase = """
-            using StandSure.Functional;
-            public static class Probe
-            {
-                public static string Describe(Result<int> r) => r switch { int i => "int" };
-            }
-            """;
+                                   using StandSure.Functional;
+                                   public static class Probe
+                                   {
+                                       public static string Describe(Result<int> r) => r switch { int i => "int" };
+                                   }
+                                   """;
 
         // Positive control: proves references and language version resolve, so the CS8509 below is real.
         Compile(exhaustive).Where(d => d.Severity == DiagnosticSeverity.Error).Should().BeEmpty();
@@ -222,6 +231,7 @@ public sealed class ResultUnionTests
     private static IReadOnlyList<Diagnostic> Compile(string source)
     {
         var tpa = (string)(AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty);
+
         var references = tpa
             .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
             .Append(typeof(Result<>).Assembly.Location)

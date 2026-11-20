@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+
 using AwesomeAssertions;
+
 using Xunit;
 
 namespace StandSure.Functional.Tests;

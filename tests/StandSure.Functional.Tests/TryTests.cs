@@ -1,7 +1,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+
 using AwesomeAssertions;
+
 using Xunit;
 
 namespace StandSure.Functional.Tests;
@@ -105,10 +107,11 @@ public sealed class TryTests
     public async Task RunAsync_ThrowsInTask_BecomesFailure()
     {
         Result<int> r = await Try.RunAsync<int>(async _ =>
-        {
-            await Task.Yield();
-            throw new InvalidOperationException("late");
-        }, TestContext.Current.CancellationToken);
+            {
+                await Task.Yield();
+                throw new InvalidOperationException("late");
+            },
+            TestContext.Current.CancellationToken);
 
         r.IsFailure.Should().BeTrue();
     }
@@ -145,10 +148,11 @@ public sealed class TryTests
     public async Task RunAsync_AggregateWrappingOce_Propagates()
     {
         Func<Task> act = async () => await Try.RunAsync<int>(_ =>
-        {
-            Task.FromCanceled(new CancellationToken(true)).Wait();
-            return Task.FromResult(1);
-        }, TestContext.Current.CancellationToken);
+            {
+                Task.FromCanceled(new CancellationToken(true)).Wait();
+                return Task.FromResult(1);
+            },
+            TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<OperationCanceledException>();
     }
@@ -160,10 +164,11 @@ public sealed class TryTests
         CancellationToken seen = default;
 
         await Try.RunAsync(ct =>
-        {
-            seen = ct;
-            return Task.CompletedTask;
-        }, cts.Token);
+            {
+                seen = ct;
+                return Task.CompletedTask;
+            },
+            cts.Token);
 
         seen.Should().Be(cts.Token);
     }

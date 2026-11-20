@@ -38,12 +38,14 @@ public static class ReextractCommand
 
         var tasks = TaskCatalog.Load(tasksRoot);
         var directory = Path.GetDirectoryName(Path.GetFullPath(options.OutputPath));
+
         if (!string.IsNullOrEmpty(directory))
         {
             Directory.CreateDirectory(directory);
         }
 
         ReextractSummary summary;
+
         using (var stream = new FileStream(options.OutputPath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
         using (var writer = new StreamWriter(stream, new UTF8Encoding(false)) { NewLine = "\n" })
         {
@@ -51,7 +53,13 @@ public static class ReextractCommand
         }
 
         logger.ReextractWritten(
-            summary.Total, summary.Rewritten, summary.PassedThrough, summary.Malformed, summary.CompileDrift, options.OutputPath);
+            summary.Total,
+            summary.Rewritten,
+            summary.PassedThrough,
+            summary.Malformed,
+            summary.CompileDrift,
+            options.OutputPath);
+
         return ExitOk;
     }
 }

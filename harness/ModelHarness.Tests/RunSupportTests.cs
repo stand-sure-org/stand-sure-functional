@@ -25,8 +25,12 @@ public sealed class RunSupportTests
     public async Task ClientFactory_MissingKeys_ClientsReturnErrorNotThrow()
     {
         var handler = new FakeHandler(HttpStatusCode.OK, "{}");
+
         var clients = ClientFactory.Create(
-            new FakeEnvironment([]), NullLogger.Instance, _ => new HttpClient(handler), TimeSpan.FromMinutes(10));
+            new FakeEnvironment([]),
+            NullLogger.Instance,
+            _ => new HttpClient(handler),
+            TimeSpan.FromMinutes(10));
 
         var anthropic = await clients["anthropic"].CompleteAsync(Request, TestContext.Current.CancellationToken);
         var gemini = await clients["gemini"].CompleteAsync(Request, TestContext.Current.CancellationToken);
@@ -42,6 +46,7 @@ public sealed class RunSupportTests
     {
         var handler = new FakeHandler(HttpStatusCode.OK,
             """{"content":[{"type":"text","text":"x"}],"usage":{"input_tokens":1,"output_tokens":1}}""");
+
         var env = new FakeEnvironment(new() { ["ANTHROPIC_API_KEY"] = "secret-a", ["GEMINI_API_KEY"] = "secret-g" });
         var clients = ClientFactory.Create(env, NullLogger.Instance, _ => new HttpClient(handler), TimeSpan.FromMinutes(10));
 
@@ -55,11 +60,15 @@ public sealed class RunSupportTests
     public void ClientFactory_OllamaGetsConfiguredTimeout()
     {
         var timeouts = new List<TimeSpan>();
-        var clients = ClientFactory.Create(new FakeEnvironment([]), NullLogger.Instance, t =>
-        {
-            timeouts.Add(t);
-            return new HttpClient { Timeout = t };
-        }, TimeSpan.FromMinutes(17));
+
+        var clients = ClientFactory.Create(new FakeEnvironment([]),
+            NullLogger.Instance,
+            t =>
+            {
+                timeouts.Add(t);
+                return new HttpClient { Timeout = t };
+            },
+            TimeSpan.FromMinutes(17));
 
         clients.Should().ContainKey("ollama");
         timeouts.Should().Contain(TimeSpan.FromMinutes(17));
@@ -70,7 +79,10 @@ public sealed class RunSupportTests
     public void Cli_ParsesRunCommand()
     {
         var result = CliOptions.Parse(
-            ["run", "--condition", "with-library", "--runs", "3", "--models", "a,b", "--tasks", "01-x,02-y", "--output", "/tmp/o", "--ollama-timeout-minutes", "20"]);
+        [
+            "run", "--condition", "with-library", "--runs", "3", "--models", "a,b", "--tasks", "01-x,02-y", "--output", "/tmp/o", "--ollama-timeout-minutes",
+            "20"
+        ]);
 
         result.Error.Should().BeNull();
         var o = result.Options!;

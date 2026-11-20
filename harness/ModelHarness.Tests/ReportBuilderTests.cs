@@ -1,7 +1,6 @@
 namespace ModelHarness.Tests;
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -38,11 +37,29 @@ public sealed class ReportBuilderTests
         var usage = extract != "extractFailed" && transport is null && !truncated
             ? new UsageFacts(declared ?? [], [], methods ?? [], entry, 0, 0, 0, 0, idioms ?? [])
             : null;
+
         return new RunRecord(
-            "2026-11-19T10:00:00Z", "r", "baseline", family, family + "-m", task, 1, "h", "raw", extract, compiled, [],
+            "2026-11-19T10:00:00Z",
+            "r",
+            "baseline",
+            family,
+            family + "-m",
+            task,
+            1,
+            "h",
+            "raw",
+            extract,
+            compiled,
+            [],
             transport is null ? usage : null,
             compiled && withProbe && probe is { } p ? new ProbeResult(p, p == ProbeOutcome.Threw ? "System.Exception" : null, null, 5) : null,
-            1, 1, 1, stop, truncated, transport, notes);
+            1,
+            1,
+            1,
+            stop,
+            truncated,
+            transport,
+            notes);
     }
 
     private static RunLog Log(params RunRecord[] records) => new(records, 0);
@@ -61,10 +78,14 @@ public sealed class ReportBuilderTests
     public void ComputesCompileRatePerFamily()
     {
         var log = Log(
-            Rec("anthropic", "01-a"), Rec("anthropic", "01-a"), Rec("anthropic", "02-b"), Rec("anthropic", "02-b", compiled: false, extract: "extractFailed"),
+            Rec("anthropic", "01-a"),
+            Rec("anthropic", "01-a"),
+            Rec("anthropic", "02-b"),
+            Rec("anthropic", "02-b", compiled: false, extract: "extractFailed"),
             Rec("anthropic", "02-b", compiled: false, truncated: true, stop: "max_tokens"),
             Rec("anthropic", "02-b", compiled: false, transport: "HTTP 500", stop: null),
-            Rec("gemini", "01-a"), Rec("gemini", "01-a", compiled: false, extract: "extractFailed"));
+            Rec("gemini", "01-a"),
+            Rec("gemini", "01-a", compiled: false, extract: "extractFailed"));
 
         var section = Section(Build(log), "## 1. Compile rate");
 
@@ -78,7 +99,10 @@ public sealed class ReportBuilderTests
     public void ProbeRates_UseCompiledProbedRecordsOnly()
     {
         var log = Log(
-            Rec(probe: ProbeOutcome.Returned), Rec(probe: ProbeOutcome.Threw), Rec(probe: ProbeOutcome.Timeout), Rec(probe: ProbeOutcome.Crashed),
+            Rec(probe: ProbeOutcome.Returned),
+            Rec(probe: ProbeOutcome.Threw),
+            Rec(probe: ProbeOutcome.Timeout),
+            Rec(probe: ProbeOutcome.Crashed),
             Rec(compiled: false, extract: "extractFailed"));
 
         var section = Section(Build(log), "## 2. Probe outcome rates");
@@ -90,6 +114,7 @@ public sealed class ReportBuilderTests
     public void RanksMethodNames()
     {
         var common = new[] { "Result.Map", "Add", "Option.Some", "List.Add" };
+
         var log = Log(
             Rec(methods: [.. common, "Result.Bind"]),
             Rec(methods: ["Result.Map", "Result.Bind", "Option.Some", "Result.Ok"]),
@@ -122,13 +147,26 @@ public sealed class ReportBuilderTests
     public void CompareFlagsRegression()
     {
         var current = Log(
-            Rec("anthropic", "01-a", compiled: true), Rec("anthropic", "01-a", compiled: true), Rec("anthropic", "01-a", compiled: false, extract: "extractFailed"), Rec("anthropic", "01-a", compiled: false, extract: "extractFailed"),
-            Rec("anthropic", "02-b", probe: ProbeOutcome.Threw), Rec("anthropic", "02-b", probe: ProbeOutcome.Threw), Rec("anthropic", "02-b", probe: ProbeOutcome.Returned),
-            Rec("anthropic", "03-c", compiled: false, extract: "extractFailed"), Rec("anthropic", "03-c", compiled: false, extract: "extractFailed"));
+            Rec("anthropic", "01-a", compiled: true),
+            Rec("anthropic", "01-a", compiled: true),
+            Rec("anthropic", "01-a", compiled: false, extract: "extractFailed"),
+            Rec("anthropic", "01-a", compiled: false, extract: "extractFailed"),
+            Rec("anthropic", "02-b", probe: ProbeOutcome.Threw),
+            Rec("anthropic", "02-b", probe: ProbeOutcome.Threw),
+            Rec("anthropic", "02-b", probe: ProbeOutcome.Returned),
+            Rec("anthropic", "03-c", compiled: false, extract: "extractFailed"),
+            Rec("anthropic", "03-c", compiled: false, extract: "extractFailed"));
+
         var baseline = Log(
-            Rec("anthropic", "01-a"), Rec("anthropic", "01-a"), Rec("anthropic", "01-a"), Rec("anthropic", "01-a"),
-            Rec("anthropic", "02-b", probe: ProbeOutcome.Returned), Rec("anthropic", "02-b", probe: ProbeOutcome.Returned), Rec("anthropic", "02-b", probe: ProbeOutcome.Returned),
-            Rec("anthropic", "03-c"), Rec("anthropic", "03-c"));
+            Rec("anthropic", "01-a"),
+            Rec("anthropic", "01-a"),
+            Rec("anthropic", "01-a"),
+            Rec("anthropic", "01-a"),
+            Rec("anthropic", "02-b", probe: ProbeOutcome.Returned),
+            Rec("anthropic", "02-b", probe: ProbeOutcome.Returned),
+            Rec("anthropic", "02-b", probe: ProbeOutcome.Returned),
+            Rec("anthropic", "03-c"),
+            Rec("anthropic", "03-c"));
 
         var section = Section(Build(current, baseline), "## 7. Per-task notes");
 
@@ -278,6 +316,7 @@ public sealed class ReportBuilderTests
     {
         var dir = Path.Combine(Path.GetTempPath(), "report-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
+
         try
         {
             var input = Path.Combine(dir, "in.jsonl");
@@ -335,6 +374,7 @@ public sealed class ReportBuilderTests
             .Replace("\"Result.Map\"", "null", StringComparison.Ordinal)
             .Replace("\"Foo\"", "null", StringComparison.Ordinal)
             .Replace("\"exception\"", "null", StringComparison.Ordinal);
+
         line.Should().Contain("null");
 
         var log = RunLog.Parse([line]);

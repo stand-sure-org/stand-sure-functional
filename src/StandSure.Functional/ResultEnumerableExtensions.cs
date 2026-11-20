@@ -13,21 +13,24 @@ namespace StandSure.Functional;
 /// </remarks>
 public static class ResultEnumerableExtensions
 {
-    /// <summary>Turns a sequence of results into one result holding every value, or every failure.</summary>
-    /// <typeparam name="T">The value type.</typeparam>
     /// <param name="source">The results. A <see langword="null"/> value gives a <c>result.null_source</c> failure.</param>
-    /// <returns>A success with the values in order (empty for an empty sequence), or a validation failure with code
-    /// <c>result.combine_failed</c>, message "<c>n</c> of <c>m</c> failed" and <b>all</b> failures in
-    /// <see cref="Error.Errors"/>.</returns>
-    public static Result<IReadOnlyList<T>> Combine<T>(this IEnumerable<Result<T>> source)
+    /// <typeparam name="T">The value type.</typeparam>
+    extension<T>(IEnumerable<Result<T>>? source)
     {
-        if (source is null)
+        /// <summary>Turns a sequence of results into one result holding every value, or every failure.</summary>
+        /// <returns>A success with the values in order (empty for an empty sequence), or a validation failure with code
+        /// <c>result.combine_failed</c>, message "<c>n</c> of <c>m</c> failed" and <b>all</b> failures in
+        /// <see cref="Error.Errors"/>.</returns>
+        public Result<IReadOnlyList<T>> Combine()
         {
-            return new Result<IReadOnlyList<T>>(ResultErrors.NullSource(nameof(source)));
-        }
+            if (source is null)
+            {
+                return new Result<IReadOnlyList<T>>(ResultErrors.NullSource(nameof(source)));
+            }
 
-        var (successes, failures, total) = Split(source);
-        return Build(successes, failures, total);
+            var (successes, failures, total) = Split(source);
+            return Build(successes, failures, total);
+        }
     }
 
     /// <summary>Maps every element to a result, then combines them as <see cref="Combine{T}"/> does.</summary>
@@ -39,8 +42,8 @@ public static class ResultEnumerableExtensions
     /// happen for all elements.</param>
     /// <returns>A success with every mapped value in order, or a validation failure holding all failures.</returns>
     public static Result<IReadOnlyList<TOut>> Traverse<T, TOut>(
-        this IEnumerable<T> source,
-        Func<T, Result<TOut>> map)
+        this IEnumerable<T>? source,
+        Func<T, Result<TOut>>? map)
     {
         if (source is null)
         {
@@ -55,6 +58,7 @@ public static class ResultEnumerableExtensions
         var values = new List<TOut>();
         var errors = new List<Error>();
         var total = 0;
+
         foreach (var item in source)
         {
             total++;
@@ -69,7 +73,7 @@ public static class ResultEnumerableExtensions
     /// <param name="source">The results. A <see langword="null"/> value gives two empty lists.</param>
     /// <returns>The success values, then the failure errors.</returns>
     public static (IReadOnlyList<T> Successes, IReadOnlyList<Error> Failures) Partition<T>(
-        this IEnumerable<Result<T>> source)
+        this IEnumerable<Result<T>>? source)
     {
         if (source is null)
         {
@@ -86,6 +90,7 @@ public static class ResultEnumerableExtensions
         var successes = new List<T>();
         var failures = new List<Error>();
         var total = 0;
+
         foreach (var result in source)
         {
             total++;

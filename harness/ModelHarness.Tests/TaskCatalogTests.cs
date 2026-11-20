@@ -26,6 +26,7 @@ public sealed class TaskCatalogTests
     public static TheoryData<string> TaskIds()
     {
         var data = new TheoryData<string>();
+
         foreach (var task in TaskCatalog.Load(TasksRoot))
         {
             data.Add(task.Id);
@@ -82,22 +83,23 @@ public sealed class TaskCatalogTests
         var methodParameters = Regex.Match(task.Prompt, "`" + task.EntryMethod + @"\((?<p>[^)]*)\)`").Groups["p"].Value;
         ctorParameters.Should().NotBeEmpty(id);
         methodParameters.Should().NotBeEmpty(id);
+
         var stub = $$"""
-            using System;
-            using System.Collections.Generic;
-            using System.Threading;
+                     using System;
+                     using System.Collections.Generic;
+                     using System.Threading;
 
-            namespace Anywhere;
+                     namespace Anywhere;
 
-            public sealed class Solution
-            {
-                public Solution({{ctorParameters}})
-                {
-                }
+                     public sealed class Solution
+                     {
+                         public Solution({{ctorParameters}})
+                         {
+                         }
 
-                public object? {{task.EntryMethod}}({{methodParameters}}) => null;
-            }
-            """;
+                         public object? {{task.EntryMethod}}({{methodParameters}}) => null;
+                     }
+                     """;
 
         var assembly = Emit(id, task.FixtureSource, task.ProbeSource, stub);
 
@@ -116,18 +118,19 @@ public sealed class TaskCatalogTests
         // Positive control for Task 11: the shared + ASP.NET Core reference set resolves
         // and a handler using Microsoft.AspNetCore.Http compiles beside a task fixture.
         var task = TaskCatalog.Load(TasksRoot).Single(t => t.Id.StartsWith("07-", StringComparison.Ordinal));
-        const string handler = """
-            using Microsoft.AspNetCore.Http;
 
-            public sealed class Solution(IOrderQueries orders)
-            {
-                public IResult GetOrder(int id)
-                {
-                    var order = orders.FindById(id);
-                    return order is null ? Results.NotFound() : Results.Ok(order);
-                }
-            }
-            """;
+        const string handler = """
+                               using Microsoft.AspNetCore.Http;
+
+                               public sealed class Solution(IOrderQueries orders)
+                               {
+                                   public IResult GetOrder(int id)
+                                   {
+                                       var order = orders.FindById(id);
+                                       return order is null ? Results.NotFound() : Results.Ok(order);
+                                   }
+                               }
+                               """;
 
         var diagnostics = Compile("handler", task.FixtureSource, task.ProbeSource, handler);
 
@@ -211,10 +214,12 @@ public sealed class TaskCatalogTests
             {
                 source.Should().NotContain("StandSure", task.Id);
 
-                var declared = CSharpSyntaxTree.ParseText(source, cancellationToken: TestContext.Current.CancellationToken).GetRoot(TestContext.Current.CancellationToken)
+                var declared = CSharpSyntaxTree.ParseText(source, cancellationToken: TestContext.Current.CancellationToken)
+                    .GetRoot(TestContext.Current.CancellationToken)
                     .DescendantNodes()
                     .OfType<Microsoft.CodeAnalysis.CSharp.Syntax.BaseTypeDeclarationSyntax>()
                     .Select(t => t.Identifier.ValueText);
+
                 declared.Should().NotContain(LibraryTypeNames, task.Id);
             }
         }
@@ -257,6 +262,7 @@ public sealed class TaskCatalogTests
     private static CSharpCompilation CreateCompilation(string name, string[] sources)
     {
         var parseOptions = new CSharpParseOptions(LanguageVersion.Preview);
+
         return CSharpCompilation.Create(
             "Fixture_" + name.Replace('-', '_'),
             sources.Select(s => CSharpSyntaxTree.ParseText(s, parseOptions, cancellationToken: TestContext.Current.CancellationToken)),

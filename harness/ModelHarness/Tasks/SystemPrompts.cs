@@ -21,6 +21,7 @@ public static class SystemPrompts
     {
         ArgumentNullException.ThrowIfNull(template);
         ArgumentNullException.ThrowIfNull(apiSummary);
+
         if (!template.Contains(ApiSummaryMarker, StringComparison.Ordinal))
         {
             throw new ArgumentException($"Template has no {ApiSummaryMarker} marker.", nameof(template));

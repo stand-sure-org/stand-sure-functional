@@ -28,10 +28,12 @@ public sealed class OptionJsonConverter<T> : JsonConverter<Option<T>>
         }
 
         var result = default(Option<T>);
+
         while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
         {
             var isValue = reader.ValueTextEquals("value"u8);
             reader.Read();
+
             if (isValue && reader.TokenType != JsonTokenType.Null)
             {
                 var value = JsonSerializer.Deserialize(ref reader, (JsonTypeInfo<T>)options.GetTypeInfo(typeof(T)));
@@ -50,6 +52,7 @@ public sealed class OptionJsonConverter<T> : JsonConverter<Option<T>>
     public override void Write(Utf8JsonWriter writer, Option<T> option, JsonSerializerOptions options)
     {
         writer.WriteStartObject();
+
         if (option.TryGetValue(out T? value))
         {
             writer.WritePropertyName("value"u8);

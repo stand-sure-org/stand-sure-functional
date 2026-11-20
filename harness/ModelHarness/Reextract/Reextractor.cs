@@ -31,6 +31,7 @@ public static class Reextractor
 
         var byId = tasks.ToDictionary(t => t.Id, StringComparer.Ordinal);
         int total = 0, rewritten = 0, passed = 0, malformed = 0, drift = 0;
+
         foreach (var line in lines)
         {
             if (string.IsNullOrWhiteSpace(line))
@@ -40,6 +41,7 @@ public static class Reextractor
 
             total++;
             var record = TryParse(line);
+
             if (record is null)
             {
                 malformed++;
@@ -58,6 +60,7 @@ public static class Reextractor
             }
 
             var (usage, compiled) = Recompute(record, task);
+
             if (compiled is { } success && success != record.CompileSuccess)
             {
                 drift++;
@@ -74,6 +77,7 @@ public static class Reextractor
     private static (UsageFacts? Usage, bool? CompileSuccess) Recompute(RunRecord record, HarnessTask task)
     {
         var extract = CodeExtractor.Extract(record.RawOutput);
+
         if (extract.Code is null)
         {
             return (null, null);

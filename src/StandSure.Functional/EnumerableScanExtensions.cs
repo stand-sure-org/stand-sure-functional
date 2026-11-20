@@ -18,9 +18,9 @@ public static class EnumerableScanExtensions
     /// enumerated once. A <see langword="null"/> source or accumulator records <c>result.null_source</c> or
     /// <c>result.null_delegate</c> in telemetry; it never throws.</returns>
     public static IEnumerable<TAcc> Scan<T, TAcc>(
-        this IEnumerable<T> source,
+        this IEnumerable<T>? source,
         TAcc seed,
-        Func<TAcc, T, TAcc> accumulator)
+        Func<TAcc, T, TAcc>? accumulator)
     {
         if (source is null)
         {
@@ -39,6 +39,7 @@ public static class EnumerableScanExtensions
         static IEnumerable<TAcc> Iterate(IEnumerable<T> source, TAcc seed, Func<TAcc, T, TAcc> accumulator)
         {
             var running = seed;
+
             foreach (var item in source)
             {
                 running = accumulator(running, item);

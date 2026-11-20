@@ -2,8 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
+
 using AwesomeAssertions;
+
 using StandSure.Functional.Json;
+
 using Xunit;
 
 namespace StandSure.Functional.Tests;
@@ -51,7 +54,9 @@ public sealed class JsonTests
         var error = inner.Wrap("outer.2", "outer two");
 
         var json = Ser(Result.Failure<int>(error));
-        json.Should().StartWith("""{"error":{"kind":"NotFound","code":"outer.2","message":"outer two","metadata":{},"errors":[],"inner":{"kind":"NotFound","code":"db.row""");
+
+        json.Should().StartWith(
+            """{"error":{"kind":"NotFound","code":"outer.2","message":"outer two","metadata":{},"errors":[],"inner":{"kind":"NotFound","code":"db.row""");
 
         var back = De<Result<int>>(json);
         back.TryGetValue(out Error? e).Should().BeTrue();
@@ -70,7 +75,8 @@ public sealed class JsonTests
     [Fact]
     public void Deserialized_Error_CollectionsAreReadOnlySnapshots()
     {
-        const string json = """{"error":{"kind":"Validation","code":"p","message":"m","metadata":{"k":"v"},"errors":[{"kind":"Validation","code":"c","message":"c","metadata":{"ck":"cv"}}]}}""";
+        const string json =
+            """{"error":{"kind":"Validation","code":"p","message":"m","metadata":{"k":"v"},"errors":[{"kind":"Validation","code":"c","message":"c","metadata":{"ck":"cv"}}]}}""";
 
         var back = De<Result<int>>(json);
 
@@ -219,6 +225,7 @@ public sealed class JsonTests
         const string Code = "json.no.record.unique";
         var count = 0;
         using var listener = new System.Diagnostics.Metrics.MeterListener();
+
         listener.InstrumentPublished = (i, l) =>
         {
             if (i.Meter.Name == "StandSure.Functional" && i.Name == "functional.failures")
@@ -226,6 +233,7 @@ public sealed class JsonTests
                 l.EnableMeasurementEvents(i);
             }
         };
+
         listener.SetMeasurementEventCallback<long>((_, _, tags, _) =>
         {
             foreach (var tag in tags)
@@ -236,6 +244,7 @@ public sealed class JsonTests
                 }
             }
         });
+
         listener.Start();
 
         _ = Error.NotFound(Code, "control");

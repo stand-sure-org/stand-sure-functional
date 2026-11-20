@@ -31,11 +31,13 @@ public static class Try
     /// <typeparam name="T">The result type.</typeparam>
     /// <param name="fn">The function to run. A <see langword="null"/> value returns a <c>result.null_delegate</c> failure.</param>
     /// <returns>The function's value as a success, or the captured exception as a failure.</returns>
-    public static Result<T> Run<T>(Func<T> fn)
+    public static Result<T?> Run<T>(Func<T?>? fn)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (fn is null)
         {
-            return Result.Failure<T>(ResultErrors.NullDelegate(nameof(fn)));
+            return Result.Failure<T?>(ResultErrors.NullDelegate(nameof(fn)));
         }
 
         try
@@ -49,15 +51,17 @@ public static class Try
         }
         catch (Exception ex) when (IsCapturable(ex))
         {
-            return Result.Failure<T>(Error.FromException(ex));
+            return Result.Failure<T?>(Error.FromException(ex));
         }
     }
 
     /// <summary>Runs an action and captures a thrown exception as a failure.</summary>
     /// <param name="action">The action to run. A <see langword="null"/> value returns a <c>result.null_delegate</c> failure.</param>
     /// <returns>A success holding <see cref="Unit.Value"/>, or the captured exception as a failure.</returns>
-    public static Result<Unit> Run(Action action)
+    public static Result<Unit> Run(Action? action)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (action is null)
         {
             return Result.Failure<Unit>(ResultErrors.NullDelegate(nameof(action)));
@@ -104,10 +108,14 @@ public static class Try
     /// <returns>The task's value as a success, or the captured exception as a failure. An exception thrown
     /// synchronously by <paramref name="fn"/> is captured the same way as one thrown inside the task. A
     /// <see langword="null"/> task returns a <c>result.null_task</c> failure.</returns>
-    [SuppressMessage("ApiDesign", "RS0026:Do not add multiple overloads with optional parameters", Justification = "Specified API: the overloads differ by delegate type and are new, so there is no backcompat risk.")]
-    [SuppressMessage("ApiDesign", "RS0027:API with optional parameter(s) should have the most parameters amongst its public overloads", Justification = "Specified API.")]
+    [SuppressMessage("ApiDesign",
+        "RS0026:Do not add multiple overloads with optional parameters",
+        Justification = "Specified API: the overloads differ by delegate type and are new, so there is no backcompat risk.")]
+    [SuppressMessage("ApiDesign",
+        "RS0027:API with optional parameter(s) should have the most parameters amongst its public overloads",
+        Justification = "Specified API.")]
     public static async Task<Result<T>> RunAsync<T>(
-        Func<CancellationToken, Task<T>> fn,
+        Func<CancellationToken, Task<T>?>? fn,
         CancellationToken cancellationToken = default)
     {
         if (fn is null)
@@ -118,6 +126,7 @@ public static class Try
         try
         {
             var task = fn(cancellationToken);
+
             if (task is null)
             {
                 return Result.Failure<T>(ResultErrors.NullTask(nameof(fn)));
@@ -142,10 +151,14 @@ public static class Try
     /// A <see langword="null"/> value returns a <c>result.null_delegate</c> failure.</param>
     /// <param name="cancellationToken">Passed to <paramref name="fn"/>.</param>
     /// <returns>A success holding <see cref="Unit.Value"/>, or the captured exception as a failure.</returns>
-    [SuppressMessage("ApiDesign", "RS0026:Do not add multiple overloads with optional parameters", Justification = "Specified API: the overloads differ by delegate type and are new, so there is no backcompat risk.")]
-    [SuppressMessage("ApiDesign", "RS0027:API with optional parameter(s) should have the most parameters amongst its public overloads", Justification = "Specified API.")]
+    [SuppressMessage("ApiDesign",
+        "RS0026:Do not add multiple overloads with optional parameters",
+        Justification = "Specified API: the overloads differ by delegate type and are new, so there is no backcompat risk.")]
+    [SuppressMessage("ApiDesign",
+        "RS0027:API with optional parameter(s) should have the most parameters amongst its public overloads",
+        Justification = "Specified API.")]
     public static async Task<Result<Unit>> RunAsync(
-        Func<CancellationToken, Task> fn,
+        Func<CancellationToken, Task?>? fn,
         CancellationToken cancellationToken = default)
     {
         if (fn is null)
@@ -156,6 +169,7 @@ public static class Try
         try
         {
             var task = fn(cancellationToken);
+
             if (task is null)
             {
                 return Result.Failure<Unit>(ResultErrors.NullTask(nameof(fn)));
@@ -184,6 +198,7 @@ public static class Try
     private static bool AllCancellation(AggregateException ae)
     {
         IReadOnlyList<Exception> inner = ae.Flatten().InnerExceptions;
+
         if (inner.Count == 0)
         {
             return false;

@@ -1,4 +1,5 @@
 using System;
+
 using BenchmarkDotNet.Attributes;
 
 namespace StandSure.Functional.Benchmarks;
@@ -14,29 +15,29 @@ public class OptionBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        _number = Environment.TickCount | 1;
-        _someInt = Option.Some(_number);
-        _noneInt = Option.None<int>();
+        this._number = Environment.TickCount | 1;
+        this._someInt = Option.Some(this._number);
+        this._noneInt = Option.None<int>();
     }
 
     [Benchmark]
-    public Option<int> CreateSome() => Option.Some(_number);
+    public Option<int> CreateSome() => Option.Some(this._number);
 
     [Benchmark]
     public Option<int> CreateNone() => Option.None<int>();
 
     [Benchmark]
-    public int SwitchSome() => Describe(_someInt);
+    public int SwitchSome() => Describe(this._someInt);
 
     [Benchmark]
-    public int SwitchNone() => Describe(_noneInt);
+    public int SwitchNone() => Describe(this._noneInt);
 
     // Option<T> has no Deconstruct; TryGetValue is its destructuring equivalent.
     [Benchmark]
-    public int TryGetValueSome() => _someInt.TryGetValue(out int value) ? value : -1;
+    public int TryGetValueSome() => this._someInt.TryGetValue(out int value) ? value : -1;
 
     [Benchmark]
-    public int TryGetValueNone() => _noneInt.TryGetValue(out int value) ? value : -1;
+    public int TryGetValueNone() => this._noneInt.TryGetValue(out int value) ? value : -1;
 
     private static int Describe(Option<int> option) => option switch
     {

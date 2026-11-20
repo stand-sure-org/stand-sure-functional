@@ -22,6 +22,7 @@ public sealed record CliOptions(
     public static CliParseResult Parse(string[] args)
     {
         ArgumentNullException.ThrowIfNull(args);
+
         if (args.Length == 0 || !string.Equals(args[0], "run", StringComparison.Ordinal))
         {
             return Fail("expected the 'run' or 'report' command");
@@ -37,12 +38,14 @@ public sealed record CliOptions(
         for (var i = 1; i < args.Length; i += 2)
         {
             var name = args[i];
+
             if (i + 1 >= args.Length)
             {
                 return Fail($"option {name} needs a value");
             }
 
             var value = args[i + 1];
+
             switch (name)
             {
                 case "--condition":

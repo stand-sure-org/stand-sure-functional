@@ -35,13 +35,13 @@ public sealed record Error
         IReadOnlyList<Error>? errors,
         Exception? exception)
     {
-        Kind = kind;
-        Code = code;
-        Message = message;
-        Metadata = metadata ?? EmptyMetadata;
-        Inner = inner;
-        Errors = errors ?? EmptyErrors;
-        Exception = exception;
+        this.Kind = kind;
+        this.Code = code;
+        this.Message = message;
+        this.Metadata = metadata ?? EmptyMetadata;
+        this.Inner = inner;
+        this.Errors = errors ?? EmptyErrors;
+        this.Exception = exception;
     }
 
     // The wire-format constructor: no exception parameter, so the source generator never needs Exception metadata,
@@ -113,8 +113,8 @@ public sealed record Error
     /// <param name="message">The message.</param>
     /// <param name="errors">The child errors.</param>
     /// <returns>The error.</returns>
-    public static Error Validation(string code, string message, IEnumerable<Error> errors) =>
-        Create(ErrorKind.Validation, code, message, null, null, errors is null ? null : errors.ToArray());
+    public static Error Validation(string code, string message, IEnumerable<Error>? errors) =>
+        Create(ErrorKind.Validation, code, message, null, null, errors?.ToArray());
 
     /// <summary>Creates a <see cref="ErrorKind.NotFound"/> error.</summary>
     /// <param name="code">The error code.</param>
@@ -167,28 +167,28 @@ public sealed record Error
     /// <summary>Creates an <see cref="ErrorKind.Unexpected"/> error from an exception.</summary>
     /// <param name="exception">The exception; kept in <see cref="Exception"/>.</param>
     /// <returns>The error, with code <c>exception.unhandled</c>.</returns>
-    public static Error FromException(Exception exception) =>
+    public static Error FromException(Exception? exception) =>
         exception is null
             ? Create(ErrorKind.Unexpected, "exception.unhandled", "The exception was null.", null)
             : Create(
-            ErrorKind.Unexpected,
-            "exception.unhandled",
-            exception.Message,
-            new Dictionary<string, string>
-            {
-                ["exception.type"] = exception.GetType().FullName ?? exception.GetType().Name,
-                ["exception.message"] = exception.Message,
-            },
-            null,
-            null,
-            exception);
+                ErrorKind.Unexpected,
+                "exception.unhandled",
+                exception.Message,
+                new Dictionary<string, string>
+                {
+                    ["exception.type"] = exception.GetType().FullName ?? exception.GetType().Name,
+                    ["exception.message"] = exception.Message,
+                },
+                null,
+                null,
+                exception);
 
     /// <summary>Wraps this error in a new one of the same <see cref="Kind"/>.</summary>
     /// <param name="code">The new error code.</param>
     /// <param name="message">The new message.</param>
     /// <returns>A new error whose <see cref="Inner"/> is this error.</returns>
     public Error Wrap(string code, string message) =>
-        Create(Kind, code, message, null, this);
+        Create(this.Kind, code, message, null, this);
 
     /// <summary>Determines whether this error or any error in its <see cref="Inner"/> chain has the given code.</summary>
     /// <param name="code">The code to look for.</param>
@@ -216,6 +216,7 @@ public sealed record Error
         Exception? exception = null)
     {
         var error = new Error(kind, code, message, Snapshot(metadata), inner, errors, exception);
+
         if (inner is not null)
         {
             FunctionalDiagnostics.RecordWrap(error);
@@ -236,5 +237,5 @@ public sealed record Error
     private static IReadOnlyDictionary<string, string>? Snapshot(IReadOnlyDictionary<string, string>? metadata) =>
         metadata is null or { Count: 0 }
             ? null
-            : new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(metadata.ToArray()));
+            : new ReadOnlyDictionary<string, string>(new Dictionary<string, string>([.. metadata]));
 }

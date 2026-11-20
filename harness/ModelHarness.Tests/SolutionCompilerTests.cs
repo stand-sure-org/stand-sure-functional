@@ -21,12 +21,12 @@ public sealed class SolutionCompilerTests
     public void CompilesValidSolution()
     {
         const string code = """
-            using System;
-            public sealed class Solution(IUserStore users)
-            {
-                public User? CreateUser(string email, string name) => users.EmailExists(email) ? null : users.Add(email, name);
-            }
-            """;
+                            using System;
+                            public sealed class Solution(IUserStore users)
+                            {
+                                public User? CreateUser(string email, string name) => users.EmailExists(email) ? null : users.Add(email, name);
+                            }
+                            """;
 
         var result = SolutionCompiler.Compile(Task("01-"), code, withLibrary: false);
 
@@ -51,12 +51,12 @@ public sealed class SolutionCompilerTests
     public void WithLibrary_ResolvesResultType()
     {
         const string code = """
-            using StandSure.Functional;
-            public sealed class Solution(IUserStore users)
-            {
-                public Result<User> CreateUser(string email, string name) => users.Add(email, name);
-            }
-            """;
+                            using StandSure.Functional;
+                            public sealed class Solution(IUserStore users)
+                            {
+                                public Result<User> CreateUser(string email, string name) => users.Add(email, name);
+                            }
+                            """;
 
         SolutionCompiler.Compile(Task("01-"), code, withLibrary: true).Success.Should().BeTrue();
         var without = SolutionCompiler.Compile(Task("01-"), code, withLibrary: false);
@@ -79,18 +79,18 @@ public sealed class SolutionCompilerTests
     public void RedeclaredFixtureType_IsStripped_AndRecorded()
     {
         const string code = """
-            using System;
-            public sealed record User(Guid Id, string Email, string DisplayName);
-            public interface IUserStore
-            {
-                bool EmailExists(string email);
-                User Add(string email, string displayName);
-            }
-            public sealed class Solution(IUserStore users)
-            {
-                public User Make() => users.Add("a@b.c", "A");
-            }
-            """;
+                            using System;
+                            public sealed record User(Guid Id, string Email, string DisplayName);
+                            public interface IUserStore
+                            {
+                                bool EmailExists(string email);
+                                User Add(string email, string displayName);
+                            }
+                            public sealed class Solution(IUserStore users)
+                            {
+                                public User Make() => users.Add("a@b.c", "A");
+                            }
+                            """;
 
         var result = SolutionCompiler.Compile(Task("01-"), code, withLibrary: false);
 
@@ -102,10 +102,10 @@ public sealed class SolutionCompilerTests
     public void RedeclaredFixtureType_InsideNamespace_IsStripped()
     {
         const string code = """
-            namespace My.App;
-            public sealed record User(System.Guid Id, string Email, string DisplayName);
-            public sealed class Solution(IUserStore users) { public bool Has(string e) => users.EmailExists(e); }
-            """;
+                            namespace My.App;
+                            public sealed record User(System.Guid Id, string Email, string DisplayName);
+                            public sealed class Solution(IUserStore users) { public bool Has(string e) => users.EmailExists(e); }
+                            """;
 
         var result = SolutionCompiler.Compile(Task("01-"), code, withLibrary: false);
 
@@ -138,6 +138,7 @@ public sealed class SolutionCompilerTests
         var result = SolutionCompiler.Compile(Task("01-"), code, withLibrary: false);
 
         result.Success.Should().BeTrue(string.Join("\n", result.Diagnostics));
+
         result.Compilation.GetDiagnostics(TestContext.Current.CancellationToken)
             .Should().Contain(d => d.Id == "CS8602" && d.Severity == DiagnosticSeverity.Warning);
     }
@@ -154,7 +155,9 @@ public sealed class SolutionCompilerTests
     [Fact]
     public void ConcatenatedFences_WithRepeatedUsings_Compile()
     {
-        var text = "```csharp\nusing System;\npublic sealed class Solution(IUserStore u) { public Guid G() => Guid.NewGuid(); }\n```\n```csharp\nusing System;\npublic sealed class Helper { }\n```";
+        var text =
+            "```csharp\nusing System;\npublic sealed class Solution(IUserStore u) { public Guid G() => Guid.NewGuid(); }\n```\n```csharp\nusing System;\npublic sealed class Helper { }\n```";
+
         var extracted = CodeExtractor.Extract(text);
 
         var result = SolutionCompiler.Compile(Task("01-"), extracted.Code!, withLibrary: false);

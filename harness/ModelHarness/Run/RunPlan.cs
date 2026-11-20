@@ -23,5 +23,5 @@ public sealed record RunPlan(
 
     public const string WithLibrary = "with-library";
 
-    public bool IsWithLibrary => string.Equals(Condition, WithLibrary, StringComparison.Ordinal);
+    public bool IsWithLibrary => string.Equals(this.Condition, WithLibrary, StringComparison.Ordinal);
 }

@@ -15,4 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\StandSure.Functional\StandSure.Functional.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" />
+  </ItemGroup>
 </Project>

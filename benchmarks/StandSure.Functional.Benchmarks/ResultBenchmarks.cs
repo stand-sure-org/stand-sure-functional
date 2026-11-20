@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+
 using BenchmarkDotNet.Attributes;
 
 namespace StandSure.Functional.Benchmarks;
@@ -21,61 +22,61 @@ public class ResultBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        _number = Environment.TickCount | 1;
-        _text = "value" + _number.ToString(CultureInfo.InvariantCulture);
-        _error = Failure;
-        _okInt = Result.Success(_number);
-        _failedInt = Result.Failure<int>(_error);
-        _okString = Result.Success(_text);
-        _failedString = Result.Failure<string>(_error);
+        this._number = Environment.TickCount | 1;
+        this._text = "value" + this._number.ToString(CultureInfo.InvariantCulture);
+        this._error = Failure;
+        this._okInt = Result.Success(this._number);
+        this._failedInt = Result.Failure<int>(this._error);
+        this._okString = Result.Success(this._text);
+        this._failedString = Result.Failure<string>(this._error);
     }
 
     [Benchmark]
-    public Result<int> CreateInt() => Result.Success(_number);
+    public Result<int> CreateInt() => Result.Success(this._number);
 
     [Benchmark]
-    public Result<int> CreateIntFailure() => Result.Failure<int>(_error);
+    public Result<int> CreateIntFailure() => Result.Failure<int>(this._error);
 
     [Benchmark]
-    public int SwitchIntOk() => Describe(_okInt);
+    public int SwitchIntOk() => Describe(this._okInt);
 
     [Benchmark]
-    public int SwitchIntFailure() => Describe(_failedInt);
+    public int SwitchIntFailure() => Describe(this._failedInt);
 
     [Benchmark]
     public int DeconstructIntOk()
     {
-        var (value, error) = _okInt;
+        var (value, error) = this._okInt;
         return error is null ? value : -1;
     }
 
     [Benchmark]
     public int DeconstructIntFailure()
     {
-        var (value, error) = _failedInt;
+        var (value, error) = this._failedInt;
         return error is null ? value : -1;
     }
 
     [Benchmark]
-    public Result<string> CreateString() => Result.Success(_text);
+    public Result<string> CreateString() => Result.Success(this._text);
 
     [Benchmark]
-    public int SwitchStringOk() => Describe(_okString);
+    public int SwitchStringOk() => Describe(this._okString);
 
     [Benchmark]
-    public int SwitchStringFailure() => Describe(_failedString);
+    public int SwitchStringFailure() => Describe(this._failedString);
 
     [Benchmark]
     public int DeconstructStringOk()
     {
-        var (value, error) = _okString;
+        var (value, error) = this._okString;
         return error is null ? value!.Length : -1;
     }
 
     [Benchmark]
     public int DeconstructStringFailure()
     {
-        var (value, error) = _failedString;
+        var (value, error) = this._failedString;
         return error is null ? value!.Length : -1;
     }
 
@@ -83,11 +84,13 @@ public class ResultBenchmarks
     {
         Error e => e.Code.Length,
         int value => value,
+        null => 0,
     };
 
     private static int Describe(Result<string> result) => result switch
     {
         Error e => e.Code.Length,
         string value => value.Length,
+        null => 0,
     };
 }
