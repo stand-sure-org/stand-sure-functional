@@ -216,8 +216,8 @@ telemetry do not depend on naming and can be built (TDD) while the baseline runs
 
 ### `Result<T>` (`[Union] readonly struct`, cases `Error` | `T`)
 
-- Construction: implicit from `T` and from `Error`; `Result.Ok(value)`,
-  `Result.Fail<T>(error)`, `Result.Ok()` → `Result<Unit>`. No non-generic `Result`
+- Construction: implicit from `T` and from `Error`; `Result.Success(value)`,
+  `Result.Failure<T>(error)`, `Result.Success()` → `Result<Unit>`. No non-generic `Result`
   struct; `Result<Unit>` is the "void" form **[builder's call]**.
 - `default(Result<T>)` is a failure holding `Error.Uninitialized`.
 - `bool IsSuccess`, `bool IsFailure`.

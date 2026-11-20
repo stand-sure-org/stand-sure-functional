@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsAotCompatible>true</IsAotCompatible>
+    <RootNamespace>$(FunctionalRootName)</RootNamespace>
+    <AssemblyName>$(FunctionalRootName)</AssemblyName>
+    <PackageId>$(FunctionalRootName)</PackageId>
+    <!-- Pre-1.0: the hidden Ok/Fail aliases and other names may still change before a stable release. -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Authors>C. J. Anderson</Authors>
+    <Company>Stand Sure, LLC</Company>
+    <Copyright>Copyright (c) 2026 C. J. Anderson, Stand Sure, LLC</Copyright>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Allocation-conscious Result, Option and Error types for C#.</Description>
+    <!-- Pack on every build so tests/StandSure.Functional.PackageTests always consumes the current package. -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageOutputPath>$(FunctionalPackageOutputPath)</PackageOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Global using for consumers; tests/StandSure.Functional.PackageTests checks it against the packed .nupkg. -->
+    <None Include="buildTransitive/StandSure.Functional.props" Pack="true" PackagePath="buildTransitive/" />
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <None Include="../../LICENSE" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>

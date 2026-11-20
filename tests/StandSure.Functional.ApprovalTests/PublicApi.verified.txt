@@ -1,0 +1,219 @@
+[assembly: System.Reflection.AssemblyMetadata("IsAotCompatible", "True")]
+[assembly: System.Reflection.AssemblyMetadata("IsTrimmable", "True")]
+[assembly: System.Runtime.Versioning.TargetFramework(".NETCoreApp,Version=v11.0", FrameworkDisplayName=".NET 11.0")]
+namespace StandSure.Functional
+{
+    public static class EnumerablePairwiseExtensions
+    {
+        [return: System.Runtime.CompilerServices.TupleElementNames(new string[] {
+                "Previous",
+                "Current"})]
+        public static System.Collections.Generic.IEnumerable<System.ValueTuple<T, T>> Pairwise<T>(this System.Collections.Generic.IEnumerable<T> source) { }
+    }
+    public static class EnumerableScanExtensions
+    {
+        public static System.Collections.Generic.IEnumerable<TAcc> Scan<T, TAcc>(this System.Collections.Generic.IEnumerable<T> source, TAcc seed, System.Func<TAcc, T, TAcc> accumulator) { }
+    }
+    public sealed class Error : System.IEquatable<StandSure.Functional.Error>
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("code")]
+        public string Code { get; }
+        [System.Text.Json.Serialization.JsonPropertyName("errors")]
+        [System.Text.Json.Serialization.JsonPropertyOrder(1)]
+        public System.Collections.Generic.IReadOnlyList<StandSure.Functional.Error> Errors { get; }
+        [System.Text.Json.Serialization.JsonIgnore]
+        public System.Exception? Exception { get; }
+        [System.Text.Json.Serialization.JsonPropertyName("inner")]
+        [System.Text.Json.Serialization.JsonPropertyOrder(2)]
+        public StandSure.Functional.Error? Inner { get; }
+        [System.Text.Json.Serialization.JsonPropertyName("kind")]
+        public StandSure.Functional.ErrorKind Kind { get; }
+        [System.Text.Json.Serialization.JsonPropertyName("message")]
+        public string Message { get; }
+        [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+        public System.Collections.Generic.IReadOnlyDictionary<string, string> Metadata { get; }
+        public static StandSure.Functional.Error Uninitialized { get; }
+        public bool Is(string code) { }
+        public StandSure.Functional.Error Wrap(string code, string message) { }
+        public static StandSure.Functional.Error Conflict(string code, string message, System.Collections.Generic.IReadOnlyDictionary<string, string>? metadata = null) { }
+        public static StandSure.Functional.Error Forbidden(string code, string message, System.Collections.Generic.IReadOnlyDictionary<string, string>? metadata = null) { }
+        public static StandSure.Functional.Error FromException(System.Exception exception) { }
+        public static StandSure.Functional.Error NotFound(string code, string message, System.Collections.Generic.IReadOnlyDictionary<string, string>? metadata = null) { }
+        public static StandSure.Functional.Error Unauthorized(string code, string message, System.Collections.Generic.IReadOnlyDictionary<string, string>? metadata = null) { }
+        public static StandSure.Functional.Error Unavailable(string code, string message, System.Collections.Generic.IReadOnlyDictionary<string, string>? metadata = null) { }
+        public static StandSure.Functional.Error Unexpected(string code, string message, System.Collections.Generic.IReadOnlyDictionary<string, string>? metadata = null) { }
+        public static StandSure.Functional.Error Validation(string code, string message, System.Collections.Generic.IEnumerable<StandSure.Functional.Error> errors) { }
+        public static StandSure.Functional.Error Validation(string code, string message, System.Collections.Generic.IReadOnlyDictionary<string, string>? metadata = null) { }
+    }
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter<StandSure.Functional.ErrorKind>))]
+    public enum ErrorKind
+    {
+        Validation = 0,
+        NotFound = 1,
+        Conflict = 2,
+        Unauthorized = 3,
+        Forbidden = 4,
+        Unavailable = 5,
+        Unexpected = 6,
+    }
+    public sealed class None
+    {
+        public static readonly StandSure.Functional.None Instance;
+        public override string ToString() { }
+    }
+    public static class Option
+    {
+        public static StandSure.Functional.Option<T> None<T>() { }
+        public static StandSure.Functional.Option<T> Some<T>([System.Diagnostics.CodeAnalysis.AllowNull] T value) { }
+    }
+    public static class OptionEnumerableExtensions
+    {
+        public static System.Collections.Generic.IEnumerable<T> Choose<T>(this System.Collections.Generic.IEnumerable<StandSure.Functional.Option<T>> source) { }
+    }
+    [System.Diagnostics.DebuggerDisplay("{DebugView,nq}")]
+    [System.Diagnostics.StackTraceHidden]
+    [System.Runtime.CompilerServices.Union]
+    [System.Text.Json.Serialization.JsonConverter(typeof(StandSure.Functional.Json.OptionJsonConverterFactory))]
+    public readonly struct Option<T> : System.Runtime.CompilerServices.IUnion
+    {
+        public Option(StandSure.Functional.None none) { }
+        public Option([System.Diagnostics.CodeAnalysis.AllowNull] T value) { }
+        public bool HasValue { get; }
+        public bool IsNone { get; }
+        public bool IsSome { get; }
+        public object? Value { get; }
+        public static StandSure.Functional.Option<T> None { get; }
+        public StandSure.Functional.Option<TOut> Bind<TOut>(System.Func<T, StandSure.Functional.Option<TOut>> bind) { }
+        public StandSure.Functional.Option<T> Filter(System.Func<T, bool> predicate) { }
+        public T GetValueOrDefault(T fallback) { }
+        public StandSure.Functional.Option<TOut> Map<TOut>(System.Func<T, TOut> map) { }
+        public TOut Match<TOut>(System.Func<TOut> onNone, System.Func<T, TOut> onSome) { }
+        public StandSure.Functional.Result<T> ToResult(StandSure.Functional.Error ifNone) { }
+        [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
+        public StandSure.Functional.Result<T> ToResult(System.Func<StandSure.Functional.Error> ifNone) { }
+        public bool TryGetValue([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out StandSure.Functional.None? none) { }
+        public bool TryGetValue([System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out T value) { }
+    }
+    public static class Result
+    {
+        public static StandSure.Functional.Result<T> Fail<T>(StandSure.Functional.Error error) { }
+        public static StandSure.Functional.Result<T> Failure<T>(StandSure.Functional.Error error) { }
+        public static StandSure.Functional.Result<StandSure.Functional.Unit> Ok() { }
+        public static StandSure.Functional.Result<T> Ok<T>(T value) { }
+        public static StandSure.Functional.Result<StandSure.Functional.Unit> Success() { }
+        public static StandSure.Functional.Result<T> Success<T>(T value) { }
+    }
+    public static class ResultEnumerableExtensions
+    {
+        public static StandSure.Functional.Result<System.Collections.Generic.IReadOnlyList<T>> Combine<T>(this System.Collections.Generic.IEnumerable<StandSure.Functional.Result<T>> source) { }
+        [return: System.Runtime.CompilerServices.TupleElementNames(new string?[]?[] {
+                "Successes",
+                "Failures"})]
+        public static System.ValueTuple<System.Collections.Generic.IReadOnlyList<T>, System.Collections.Generic.IReadOnlyList<StandSure.Functional.Error>> Partition<T>(this System.Collections.Generic.IEnumerable<StandSure.Functional.Result<T>> source) { }
+        public static StandSure.Functional.Result<System.Collections.Generic.IReadOnlyList<TOut>> Traverse<T, TOut>(this System.Collections.Generic.IEnumerable<T> source, System.Func<T, StandSure.Functional.Result<TOut>> map) { }
+    }
+    [System.Diagnostics.StackTraceHidden]
+    public static class ResultTaskExtensions
+    {
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> BindAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, StandSure.Functional.Result<TOut>> bind) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> BindAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>>> bind) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<bool>> predicate, StandSure.Functional.Error error) { }
+        [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<bool>> predicate, System.Func<T, StandSure.Functional.Error> error) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, bool> predicate, StandSure.Functional.Error error) { }
+        [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, bool> predicate, System.Func<T, StandSure.Functional.Error> error) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> MapAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<TOut>> map) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> MapAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, TOut> map) { }
+        public static System.Threading.Tasks.Task<TOut> MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<StandSure.Functional.Error, System.Threading.Tasks.Task<TOut>> onFailure, System.Func<T, System.Threading.Tasks.Task<TOut>> onSuccess) { }
+        public static System.Threading.Tasks.Task<TOut> MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<StandSure.Functional.Error, TOut> onFailure, System.Func<T, TOut> onSuccess) { }
+    }
+    [System.Diagnostics.DebuggerDisplay("{DebugView,nq}")]
+    [System.Diagnostics.StackTraceHidden]
+    [System.Runtime.CompilerServices.Union]
+    [System.Text.Json.Serialization.JsonConverter(typeof(StandSure.Functional.Json.ResultJsonConverterFactory))]
+    public readonly struct Result<T> : System.Runtime.CompilerServices.IUnion
+    {
+        public Result(StandSure.Functional.Error error) { }
+        public Result(T value) { }
+        public bool HasValue { get; }
+        public bool IsFailure { get; }
+        public bool IsSuccess { get; }
+        public object? Value { get; }
+        public StandSure.Functional.Result<TOut> Bind<TOut>(System.Func<T, StandSure.Functional.Result<TOut>> bind) { }
+        public void Deconstruct(out T? value, out StandSure.Functional.Error? error) { }
+        public StandSure.Functional.Result<T> Ensure(System.Func<T, bool> predicate, StandSure.Functional.Error error) { }
+        [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
+        public StandSure.Functional.Result<T> Ensure(System.Func<T, bool> predicate, System.Func<T, StandSure.Functional.Error> error) { }
+        [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
+        public StandSure.Functional.Result<T> Ensure(System.Func<T, bool> predicate, [System.Runtime.CompilerServices.CallerArgumentExpression("predicate")] string? expression = null) { }
+        public T GetValueOrDefault(T fallback) { }
+        public StandSure.Functional.Result<TOut> Map<TOut>(System.Func<T, TOut> map) { }
+        public StandSure.Functional.Result<T> MapError(System.Func<StandSure.Functional.Error, StandSure.Functional.Error> map) { }
+        public TOut Match<TOut>(System.Func<StandSure.Functional.Error, TOut> onFailure, System.Func<T, TOut> onSuccess) { }
+        public StandSure.Functional.Result<T> Tap(System.Action<T> action) { }
+        public bool TryGetValue([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out StandSure.Functional.Error? error) { }
+        public bool TryGetValue([System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out T value) { }
+    }
+    public static class Try
+    {
+        public static StandSure.Functional.Result<StandSure.Functional.Unit> Run(System.Action action) { }
+        [System.Obsolete("Use Try.RunAsync(ct => ..., ct) for asynchronous work.", true)]
+        public static StandSure.Functional.Result<StandSure.Functional.Unit> Run(System.Func<System.Threading.Tasks.Task> fn) { }
+        [System.Obsolete("Use Try.RunAsync(ct => ..., ct) for asynchronous work.", true)]
+        public static StandSure.Functional.Result<T> Run<T>(System.Func<System.Threading.Tasks.Task<T>> fn) { }
+        public static StandSure.Functional.Result<T> Run<T>(System.Func<T> fn) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<StandSure.Functional.Unit>> RunAsync(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task> fn, System.Threading.CancellationToken cancellationToken = default) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> RunAsync<T>(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<T>> fn, System.Threading.CancellationToken cancellationToken = default) { }
+    }
+    public readonly struct Unit : System.IComparable<StandSure.Functional.Unit>, System.IEquatable<StandSure.Functional.Unit>
+    {
+        public static readonly StandSure.Functional.Unit Value;
+        public int CompareTo(StandSure.Functional.Unit other) { }
+        public bool Equals(StandSure.Functional.Unit other) { }
+        public override bool Equals(object? obj) { }
+        public override int GetHashCode() { }
+        public override string ToString() { }
+        public static bool operator !=(StandSure.Functional.Unit left, StandSure.Functional.Unit right) { }
+        public static bool operator ==(StandSure.Functional.Unit left, StandSure.Functional.Unit right) { }
+    }
+}
+namespace StandSure.Functional.Json
+{
+    public static class FunctionalJsonOptionsExtensions
+    {
+        public static System.Text.Json.JsonSerializerOptions AddFunctional(this System.Text.Json.JsonSerializerOptions options) { }
+    }
+    public sealed class OptionJsonConverterFactory : System.Text.Json.Serialization.JsonConverterFactory
+    {
+        public OptionJsonConverterFactory() { }
+        public override bool CanConvert(System.Type typeToConvert) { }
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("AOT", "IL2055", Justification="JIT convenience only. Native AOT callers register OptionJsonConverter<T> explicit" +
+            "ly; see its remarks.")]
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("AOT", "IL3050", Justification="JIT convenience only. Native AOT callers register OptionJsonConverter<T> explicit" +
+            "ly; see its remarks.")]
+        public override System.Text.Json.Serialization.JsonConverter? CreateConverter(System.Type typeToConvert, System.Text.Json.JsonSerializerOptions options) { }
+    }
+    public sealed class OptionJsonConverter<T> : System.Text.Json.Serialization.JsonConverter<StandSure.Functional.Option<T>>
+    {
+        public OptionJsonConverter() { }
+        public override StandSure.Functional.Option<T> Read(ref System.Text.Json.Utf8JsonReader reader, System.Type typeToConvert, System.Text.Json.JsonSerializerOptions options) { }
+        public override void Write(System.Text.Json.Utf8JsonWriter writer, StandSure.Functional.Option<T> option, System.Text.Json.JsonSerializerOptions options) { }
+    }
+    public sealed class ResultJsonConverterFactory : System.Text.Json.Serialization.JsonConverterFactory
+    {
+        public ResultJsonConverterFactory() { }
+        public override bool CanConvert(System.Type typeToConvert) { }
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("AOT", "IL2055", Justification="JIT convenience only. Native AOT callers register ResultJsonConverter<T> explicit" +
+            "ly; see its remarks.")]
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("AOT", "IL3050", Justification="JIT convenience only. Native AOT callers register ResultJsonConverter<T> explicit" +
+            "ly; see its remarks.")]
+        public override System.Text.Json.Serialization.JsonConverter? CreateConverter(System.Type typeToConvert, System.Text.Json.JsonSerializerOptions options) { }
+    }
+    public sealed class ResultJsonConverter<T> : System.Text.Json.Serialization.JsonConverter<StandSure.Functional.Result<T>>
+    {
+        public ResultJsonConverter() { }
+        public override StandSure.Functional.Result<T> Read(ref System.Text.Json.Utf8JsonReader reader, System.Type typeToConvert, System.Text.Json.JsonSerializerOptions options) { }
+        public override void Write(System.Text.Json.Utf8JsonWriter writer, StandSure.Functional.Result<T> result, System.Text.Json.JsonSerializerOptions options) { }
+    }
+}

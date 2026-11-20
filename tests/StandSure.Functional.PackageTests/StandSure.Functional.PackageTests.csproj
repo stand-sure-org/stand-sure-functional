@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Consumes the packed StandSure.Functional .nupkg the way a NuGet consumer does.
+    The library packs itself on every build (GeneratePackageOnBuild) into artifacts/packages/. The ProjectReference below
+    is for build order only, so the package exists before these tests run. The tests restore and build a throwaway consumer
+    project in a temp directory from that local feed, with an isolated package cache (the version is always the same, so a
+    shared ~/.nuget/packages copy would be stale). No PackageReference to the library here, so restore has no
+    chicken-and-egg problem and the project can live in the solution.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>$(FunctionalRootName).PackageTests</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="AwesomeAssertions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\StandSure.Functional\StandSure.Functional.csproj" ReferenceOutputAssembly="false" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="PackageFeed" Value="$(FunctionalPackageOutputPath)" />
+    <AssemblyMetadata Include="PackageId" Value="$(FunctionalRootName)" />
+    <AssemblyMetadata Include="RepoRoot" Value="$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', '..'))" />
+  </ItemGroup>
+</Project>

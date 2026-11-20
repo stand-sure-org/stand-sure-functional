@@ -1,0 +1,143 @@
+#nullable enable
+StandSure.Functional.Error
+StandSure.Functional.Error.<Clone>$() -> StandSure.Functional.Error!
+StandSure.Functional.Error.Code.get -> string!
+StandSure.Functional.Error.Equals(StandSure.Functional.Error? other) -> bool
+StandSure.Functional.Error.Errors.get -> System.Collections.Generic.IReadOnlyList<StandSure.Functional.Error!>!
+StandSure.Functional.Error.Exception.get -> System.Exception?
+StandSure.Functional.Error.Inner.get -> StandSure.Functional.Error?
+StandSure.Functional.Error.Is(string! code) -> bool
+StandSure.Functional.Error.Kind.get -> StandSure.Functional.ErrorKind
+StandSure.Functional.Error.Message.get -> string!
+StandSure.Functional.Error.Metadata.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+StandSure.Functional.Error.Wrap(string! code, string! message) -> StandSure.Functional.Error!
+StandSure.Functional.ErrorKind
+StandSure.Functional.ErrorKind.Conflict = 2 -> StandSure.Functional.ErrorKind
+StandSure.Functional.ErrorKind.Forbidden = 4 -> StandSure.Functional.ErrorKind
+StandSure.Functional.ErrorKind.NotFound = 1 -> StandSure.Functional.ErrorKind
+StandSure.Functional.ErrorKind.Unauthorized = 3 -> StandSure.Functional.ErrorKind
+StandSure.Functional.ErrorKind.Unavailable = 5 -> StandSure.Functional.ErrorKind
+StandSure.Functional.ErrorKind.Unexpected = 6 -> StandSure.Functional.ErrorKind
+StandSure.Functional.ErrorKind.Validation = 0 -> StandSure.Functional.ErrorKind
+StandSure.Functional.Result
+StandSure.Functional.Result<T>
+StandSure.Functional.Result<T>.Deconstruct(out T? value, out StandSure.Functional.Error? error) -> void
+StandSure.Functional.Result<T>.HasValue.get -> bool
+StandSure.Functional.Result<T>.IsFailure.get -> bool
+StandSure.Functional.Result<T>.IsSuccess.get -> bool
+StandSure.Functional.Result<T>.Result() -> void
+StandSure.Functional.Result<T>.Result(StandSure.Functional.Error! error) -> void
+StandSure.Functional.Result<T>.Result(T value) -> void
+StandSure.Functional.Result<T>.TryGetValue(out StandSure.Functional.Error? error) -> bool
+StandSure.Functional.Result<T>.TryGetValue(out T value) -> bool
+StandSure.Functional.Result<T>.Value.get -> object?
+StandSure.Functional.Unit
+StandSure.Functional.Unit.CompareTo(StandSure.Functional.Unit other) -> int
+StandSure.Functional.Unit.Equals(StandSure.Functional.Unit other) -> bool
+StandSure.Functional.Unit.Unit() -> void
+override StandSure.Functional.Error.Equals(object? obj) -> bool
+override StandSure.Functional.Error.GetHashCode() -> int
+override StandSure.Functional.Error.ToString() -> string!
+override StandSure.Functional.Unit.Equals(object? obj) -> bool
+override StandSure.Functional.Unit.GetHashCode() -> int
+override StandSure.Functional.Unit.ToString() -> string!
+static StandSure.Functional.Error.Conflict(string! code, string! message, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? metadata = null) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.Forbidden(string! code, string! message, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? metadata = null) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.FromException(System.Exception! exception) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.NotFound(string! code, string! message, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? metadata = null) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.Unauthorized(string! code, string! message, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? metadata = null) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.Unavailable(string! code, string! message, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? metadata = null) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.Unexpected(string! code, string! message, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? metadata = null) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.Uninitialized.get -> StandSure.Functional.Error!
+static StandSure.Functional.Error.Validation(string! code, string! message, System.Collections.Generic.IEnumerable<StandSure.Functional.Error!>! errors) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.Validation(string! code, string! message, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? metadata = null) -> StandSure.Functional.Error!
+static StandSure.Functional.Error.operator !=(StandSure.Functional.Error? left, StandSure.Functional.Error? right) -> bool
+static StandSure.Functional.Error.operator ==(StandSure.Functional.Error? left, StandSure.Functional.Error? right) -> bool
+static StandSure.Functional.Result.Failure<T>(StandSure.Functional.Error! error) -> StandSure.Functional.Result<T>
+static StandSure.Functional.Result.Success() -> StandSure.Functional.Result<StandSure.Functional.Unit>
+static StandSure.Functional.Result.Success<T>(T value) -> StandSure.Functional.Result<T>
+static StandSure.Functional.Unit.operator !=(StandSure.Functional.Unit left, StandSure.Functional.Unit right) -> bool
+static StandSure.Functional.Unit.operator ==(StandSure.Functional.Unit left, StandSure.Functional.Unit right) -> bool
+static readonly StandSure.Functional.Unit.Value -> StandSure.Functional.Unit
+StandSure.Functional.None
+override StandSure.Functional.None.ToString() -> string!
+static readonly StandSure.Functional.None.Instance -> StandSure.Functional.None!
+StandSure.Functional.Option
+static StandSure.Functional.Option.None<T>() -> StandSure.Functional.Option<T>
+static StandSure.Functional.Option.Some<T>(T value) -> StandSure.Functional.Option<T>
+StandSure.Functional.Option<T>
+StandSure.Functional.Option<T>.HasValue.get -> bool
+StandSure.Functional.Option<T>.IsNone.get -> bool
+StandSure.Functional.Option<T>.IsSome.get -> bool
+StandSure.Functional.Option<T>.Option() -> void
+StandSure.Functional.Option<T>.Option(StandSure.Functional.None! none) -> void
+StandSure.Functional.Option<T>.Option(T value) -> void
+static StandSure.Functional.Option<T>.None.get -> StandSure.Functional.Option<T>
+StandSure.Functional.Option<T>.TryGetValue(out StandSure.Functional.None? none) -> bool
+StandSure.Functional.Option<T>.TryGetValue(out T value) -> bool
+StandSure.Functional.Option<T>.Value.get -> object?
+StandSure.Functional.Try
+static StandSure.Functional.Try.Run(System.Action! action) -> StandSure.Functional.Result<StandSure.Functional.Unit>
+static StandSure.Functional.Try.Run<T>(System.Func<T>! fn) -> StandSure.Functional.Result<T>
+static StandSure.Functional.Try.Run(System.Func<System.Threading.Tasks.Task!>! fn) -> StandSure.Functional.Result<StandSure.Functional.Unit>
+static StandSure.Functional.Try.Run<T>(System.Func<System.Threading.Tasks.Task<T>!>! fn) -> StandSure.Functional.Result<T>
+static StandSure.Functional.Try.RunAsync(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task!>! fn, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<StandSure.Functional.Result<StandSure.Functional.Unit>>!
+static StandSure.Functional.Try.RunAsync<T>(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<T>!>! fn, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<StandSure.Functional.Result<T>>!
+StandSure.Functional.Json.FunctionalJsonOptionsExtensions
+static StandSure.Functional.Json.FunctionalJsonOptionsExtensions.AddFunctional(this System.Text.Json.JsonSerializerOptions! options) -> System.Text.Json.JsonSerializerOptions!
+StandSure.Functional.Json.ResultJsonConverterFactory
+StandSure.Functional.Json.ResultJsonConverterFactory.ResultJsonConverterFactory() -> void
+override StandSure.Functional.Json.ResultJsonConverterFactory.CanConvert(System.Type! typeToConvert) -> bool
+override StandSure.Functional.Json.ResultJsonConverterFactory.CreateConverter(System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> System.Text.Json.Serialization.JsonConverter?
+StandSure.Functional.Json.OptionJsonConverterFactory
+StandSure.Functional.Json.OptionJsonConverterFactory.OptionJsonConverterFactory() -> void
+override StandSure.Functional.Json.OptionJsonConverterFactory.CanConvert(System.Type! typeToConvert) -> bool
+override StandSure.Functional.Json.OptionJsonConverterFactory.CreateConverter(System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> System.Text.Json.Serialization.JsonConverter?
+StandSure.Functional.Json.ResultJsonConverter<T>
+StandSure.Functional.Json.ResultJsonConverter<T>.ResultJsonConverter() -> void
+override StandSure.Functional.Json.ResultJsonConverter<T>.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> StandSure.Functional.Result<T>
+override StandSure.Functional.Json.ResultJsonConverter<T>.Write(System.Text.Json.Utf8JsonWriter! writer, StandSure.Functional.Result<T> result, System.Text.Json.JsonSerializerOptions! options) -> void
+StandSure.Functional.Json.OptionJsonConverter<T>
+StandSure.Functional.Json.OptionJsonConverter<T>.OptionJsonConverter() -> void
+override StandSure.Functional.Json.OptionJsonConverter<T>.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> StandSure.Functional.Option<T>
+override StandSure.Functional.Json.OptionJsonConverter<T>.Write(System.Text.Json.Utf8JsonWriter! writer, StandSure.Functional.Option<T> option, System.Text.Json.JsonSerializerOptions! options) -> void
+static StandSure.Functional.Result.Fail<T>(StandSure.Functional.Error! error) -> StandSure.Functional.Result<T>
+static StandSure.Functional.Result.Ok() -> StandSure.Functional.Result<StandSure.Functional.Unit>
+static StandSure.Functional.Result.Ok<T>(T value) -> StandSure.Functional.Result<T>
+StandSure.Functional.Result<T>.Bind<TOut>(System.Func<T, StandSure.Functional.Result<TOut>>! bind) -> StandSure.Functional.Result<TOut>
+StandSure.Functional.Result<T>.Ensure(System.Func<T, bool>! predicate, StandSure.Functional.Error! error) -> StandSure.Functional.Result<T>
+StandSure.Functional.Result<T>.Ensure(System.Func<T, bool>! predicate, string? expression = null) -> StandSure.Functional.Result<T>
+StandSure.Functional.Result<T>.GetValueOrDefault(T fallback) -> T
+StandSure.Functional.Result<T>.Map<TOut>(System.Func<T, TOut>! map) -> StandSure.Functional.Result<TOut>
+StandSure.Functional.Result<T>.MapError(System.Func<StandSure.Functional.Error!, StandSure.Functional.Error!>! map) -> StandSure.Functional.Result<T>
+StandSure.Functional.Result<T>.Match<TOut>(System.Func<StandSure.Functional.Error!, TOut>! onFailure, System.Func<T, TOut>! onSuccess) -> TOut
+StandSure.Functional.Result<T>.Tap(System.Action<T>! action) -> StandSure.Functional.Result<T>
+StandSure.Functional.ResultTaskExtensions
+static StandSure.Functional.ResultTaskExtensions.BindAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<T, StandSure.Functional.Result<TOut>>! bind) -> System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>>!
+static StandSure.Functional.ResultTaskExtensions.BindAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<T, System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>>!>! bind) -> System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>>!
+static StandSure.Functional.ResultTaskExtensions.EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<T, bool>! predicate, StandSure.Functional.Error! error) -> System.Threading.Tasks.Task<StandSure.Functional.Result<T>>!
+static StandSure.Functional.ResultTaskExtensions.EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<T, System.Threading.Tasks.Task<bool>!>! predicate, StandSure.Functional.Error! error) -> System.Threading.Tasks.Task<StandSure.Functional.Result<T>>!
+static StandSure.Functional.ResultTaskExtensions.MapAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<T, System.Threading.Tasks.Task<TOut>!>! map) -> System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>>!
+static StandSure.Functional.ResultTaskExtensions.MapAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<T, TOut>! map) -> System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>>!
+static StandSure.Functional.ResultTaskExtensions.MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<StandSure.Functional.Error!, System.Threading.Tasks.Task<TOut>!>! onFailure, System.Func<T, System.Threading.Tasks.Task<TOut>!>! onSuccess) -> System.Threading.Tasks.Task<TOut>!
+static StandSure.Functional.ResultTaskExtensions.MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<StandSure.Functional.Error!, TOut>! onFailure, System.Func<T, TOut>! onSuccess) -> System.Threading.Tasks.Task<TOut>!
+StandSure.Functional.Option<T>.Bind<TOut>(System.Func<T, StandSure.Functional.Option<TOut>>! bind) -> StandSure.Functional.Option<TOut>
+StandSure.Functional.Option<T>.Filter(System.Func<T, bool>! predicate) -> StandSure.Functional.Option<T>
+StandSure.Functional.Option<T>.GetValueOrDefault(T fallback) -> T
+StandSure.Functional.Option<T>.Map<TOut>(System.Func<T, TOut>! map) -> StandSure.Functional.Option<TOut>
+StandSure.Functional.Option<T>.Match<TOut>(System.Func<TOut>! onNone, System.Func<T, TOut>! onSome) -> TOut
+StandSure.Functional.Option<T>.ToResult(StandSure.Functional.Error! ifNone) -> StandSure.Functional.Result<T>
+StandSure.Functional.EnumerablePairwiseExtensions
+StandSure.Functional.EnumerableScanExtensions
+StandSure.Functional.OptionEnumerableExtensions
+StandSure.Functional.ResultEnumerableExtensions
+static StandSure.Functional.EnumerablePairwiseExtensions.Pairwise<T>(this System.Collections.Generic.IEnumerable<T>! source) -> System.Collections.Generic.IEnumerable<(T Previous, T Current)>!
+static StandSure.Functional.EnumerableScanExtensions.Scan<T, TAcc>(this System.Collections.Generic.IEnumerable<T>! source, TAcc seed, System.Func<TAcc, T, TAcc>! accumulator) -> System.Collections.Generic.IEnumerable<TAcc>!
+static StandSure.Functional.OptionEnumerableExtensions.Choose<T>(this System.Collections.Generic.IEnumerable<StandSure.Functional.Option<T>>! source) -> System.Collections.Generic.IEnumerable<T>!
+static StandSure.Functional.ResultEnumerableExtensions.Combine<T>(this System.Collections.Generic.IEnumerable<StandSure.Functional.Result<T>>! source) -> StandSure.Functional.Result<System.Collections.Generic.IReadOnlyList<T>!>
+static StandSure.Functional.ResultEnumerableExtensions.Partition<T>(this System.Collections.Generic.IEnumerable<StandSure.Functional.Result<T>>! source) -> (System.Collections.Generic.IReadOnlyList<T>! Successes, System.Collections.Generic.IReadOnlyList<StandSure.Functional.Error!>! Failures)
+static StandSure.Functional.ResultEnumerableExtensions.Traverse<T, TOut>(this System.Collections.Generic.IEnumerable<T>! source, System.Func<T, StandSure.Functional.Result<TOut>>! map) -> StandSure.Functional.Result<System.Collections.Generic.IReadOnlyList<TOut>!>
+StandSure.Functional.Option<T>.ToResult(System.Func<StandSure.Functional.Error!>! ifNone) -> StandSure.Functional.Result<T>
+StandSure.Functional.Result<T>.Ensure(System.Func<T, bool>! predicate, System.Func<T, StandSure.Functional.Error!>! error) -> StandSure.Functional.Result<T>
+static StandSure.Functional.ResultTaskExtensions.EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<T, bool>! predicate, System.Func<T, StandSure.Functional.Error!>! error) -> System.Threading.Tasks.Task<StandSure.Functional.Result<T>>!
+static StandSure.Functional.ResultTaskExtensions.EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>>! source, System.Func<T, System.Threading.Tasks.Task<bool>!>! predicate, System.Func<T, StandSure.Functional.Error!>! error) -> System.Threading.Tasks.Task<StandSure.Functional.Result<T>>!

@@ -1,0 +1,10 @@
+<Project>
+  <!--
+    Imported by NuGet into every project that references StandSure.Functional, directly or transitively.
+    Adds `global using StandSure.Functional;` so consumers never type the namespace.
+    Opt out in the consuming project with: <ItemGroup><Using Remove="StandSure.Functional" /></ItemGroup>
+  -->
+  <ItemGroup>
+    <Using Include="StandSure.Functional" />
+  </ItemGroup>
+</Project>

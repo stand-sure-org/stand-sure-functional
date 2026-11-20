@@ -1,0 +1,11 @@
+{
+  "models": [
+    { "family": "anthropic", "id": "claude-opus-5-5", "enabled": true },
+    { "family": "anthropic", "id": "claude-sonnet-5-5", "enabled": true },
+    { "family": "anthropic", "id": "claude-haiku-5-5", "enabled": true },
+    { "family": "gemini", "id": "gemini-3.1-pro-preview", "enabled": true },
+    { "family": "gemini", "id": "gemini-3.8-flash", "enabled": true },
+    { "family": "ollama", "id": "qwen3-coder:30b", "enabled": true },
+    { "family": "ollama", "id": "devstral-small-2:24b", "enabled": true }
+  ]
+}
