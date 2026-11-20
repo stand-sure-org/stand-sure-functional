@@ -385,9 +385,11 @@ docs/llm-api-summary.md               one page, the with-library prompt
     updated to look on the span and to say so, rather than being silenced.
 - Sample apps (`samples/`, v1.3): small console apps that fail in realistic ways
   (third-party call throws, validation chain fails, async chain with an upstream
-  failure). Fully offline: an in-process `ActivityListener` or the OpenTelemetry console
-  exporter, never OTLP or other network export. Output through `ILogger` (the `Console`
-  ban applies). Their output is how the "known consequence" above gets judged.
+  failure). They export over OTLP to the local `otelcol-contrib` collector
+  (`localhost:4317`, or `OTEL_EXPORTER_OTLP_ENDPOINT`), never to a remote service, and
+  are not run by `dotnet test`. Output through `ILogger` (the `Console` ban applies).
+  Their output is how the "known consequence" above gets judged; see
+  `reviews/spans-traces-2026-11-20.md`.
 - JSON round-trip tests for `Error` and `Result<T>`.
 - `Try` tests: exceptions become `Unexpected`; `OperationCanceledException` propagates.
 
