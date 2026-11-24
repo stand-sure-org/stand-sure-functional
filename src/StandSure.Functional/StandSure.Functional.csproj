@@ -15,8 +15,20 @@
     <!-- Pack on every build so tests/StandSure.Functional.PackageTests always consumes the current package. -->
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageOutputPath>$(FunctionalPackageOutputPath)</PackageOutputPath>
+    <DefaultDocumentationGeneratedAccessModifiers>Public,Protected,ProtectedInternal</DefaultDocumentationGeneratedAccessModifiers>
+    <DefaultDocumentationFolder>docs</DefaultDocumentationFolder>
+    <DefaultDocumentationFileNameFactory>DirectoryName</DefaultDocumentationFileNameFactory>
+
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)' != 'Debug' ">
+    <DisableDefaultDocumentation>true</DisableDefaultDocumentation>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(CI)' == 'true' ">
+    <DisableDefaultDocumentation>true</DisableDefaultDocumentation>
+  </PropertyGroup>
+  
   <ItemGroup>
     <!-- Global using for consumers; tests/StandSure.Functional.PackageTests checks it against the packed .nupkg. -->
     <None Include="buildTransitive/StandSure.Functional.props" Pack="true" PackagePath="buildTransitive/" />
@@ -25,4 +37,9 @@
     <None Include="../../docs/llm-api-summary.md" Pack="true" PackagePath="docs/" />
     <None Include="../../LICENSE" Pack="true" PackagePath="/" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DefaultDocumentation" PrivateAssets="all" ExcludeAssets="runtime" />
+  </ItemGroup>
+
 </Project>

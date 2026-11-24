@@ -66,7 +66,7 @@ Always name the `Match` arguments: failure comes first, and most other libraries
 
 - [`docs/llm-api-summary.md`](docs/llm-api-summary.md): the whole API on one page, with an example per common task and
   the known traps. It is also the page given to language models in the with-library harness condition.
-- XML documentation ships with the package; every public member is documented.
+- XML documentation ships with the package; every public member is documented. See [API Docs in GitHub](https://github.com/stand-sure-org/stand-sure-functional/tree/main/src/StandSure.Functional/docs/index.md)
 
 ## Using it from coding agents
 
