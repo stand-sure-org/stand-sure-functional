@@ -1,6 +1,6 @@
 # StandSure.Functional: API summary
 
-Namespace `StandSure.Functional`: write `using StandSure.Functional;` (implicit usings may be off). No library method throws for an expected failure (malformed JSON still throws `JsonException`).
+Namespace `StandSure.Functional`: the package adds `global using StandSure.Functional;` to every referencing project (even with `ImplicitUsings` off), so no `using` is needed; an explicit one is harmless. No library method throws for an expected failure (malformed JSON still throws `JsonException`).
 Expected failures are values: `Result<T>` holds an `Error` or a `T`; `Option<T>` holds `None` or a `T`.
 
 - `Result<T>`: `IsSuccess`, `IsFailure`, `Match`, `Map`, `Bind`, `MapError`, `Ensure(predicate, v => error)`, `Tap`, `GetValueOrDefault(fallback)`, `Deconstruct`, `TryGetValue`.
