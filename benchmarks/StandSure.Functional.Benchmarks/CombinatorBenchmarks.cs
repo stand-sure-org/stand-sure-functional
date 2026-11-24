@@ -8,7 +8,7 @@ namespace StandSure.Functional.Benchmarks;
 /// <summary>
 /// Cost of the combinators that run caller code, which are the methods that start an Activity span.
 /// <see cref="Listening"/> false is the production default (no listener: StartActivity returns null);
-/// true attaches a listener that records every span, the worst case.
+/// true attaches a listener that samples every span as AllDataAndRecorded (created and populated, never exported), the worst case.
 /// </summary>
 [MemoryDiagnoser]
 public class CombinatorBenchmarks
@@ -17,6 +17,7 @@ public class CombinatorBenchmarks
     private static readonly Func<int, int> Double = static x => x * 2;
     private static readonly Func<int, Result<int>> Half = static x => Result.Success(x / 2);
     private static readonly Func<int, bool> Positive = static x => x > 0;
+    private static readonly Func<int, bool> Never = static _ => false;
     private static readonly Func<Error, int> OnFailure = static _ => -1;
     private static readonly Func<int, int> OnSuccess = static x => x + 1;
 
@@ -63,6 +64,9 @@ public class CombinatorBenchmarks
 
     [Benchmark]
     public Result<int> EnsureOk() => this._ok.Ensure(Positive, Failure);
+
+    [Benchmark]
+    public Result<int> EnsureFailed() => this._ok.Ensure(Never, Failure);
 
     [Benchmark]
     public int ChainOk() => this._ok.Map(Double).Bind(Half).Ensure(Positive, Failure).Match(OnFailure, OnSuccess);
