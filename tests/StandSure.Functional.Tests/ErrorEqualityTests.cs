@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 
 using AwesomeAssertions;
+
+using StandSure.Functional.Json;
 
 using Xunit;
 
@@ -110,4 +113,56 @@ public sealed class ErrorEqualityTests
         (a == null).Should().BeFalse();
         (null == a).Should().BeFalse();
     }
+
+    [Fact]
+    public void NullCodeOrMessage_HashesAndComparesWithoutThrowing()
+    {
+        // Nullable annotations do not stop a null at runtime (nullable-off callers, an exception whose Message is null).
+        var a = Error.NotFound(null!, null!);
+        var b = Error.NotFound(null!, null!);
+
+        var hashing = () => a.GetHashCode();
+
+        hashing.Should().NotThrow();
+        a.Should().Be(b);
+        a.GetHashCode().Should().Be(b.GetHashCode());
+        a.Should().NotBe(Error.NotFound("eq.null", "m"));
+    }
+
+    [Fact]
+    public void ExceptionWithNullMessage_HashesWithoutThrowing()
+    {
+        var error = Error.FromException(new NullMessageException());
+
+        var hashing = () => error.GetHashCode();
+
+        hashing.Should().NotThrow();
+    }
+
+    [Fact]
+    public void JsonRoundTrip_IsEqualToTheOriginal()
+    {
+        var original = Error
+            .Validation("eq.json.parent", "p", [Error.NotFound("eq.json.a", "a", Md(("id", "1"))), Error.Conflict("eq.json.b", "b")])
+            .Wrap("eq.json.outer", "o");
+
+        var back = JsonSerializer.Deserialize<Error>(JsonSerializer.Serialize(original, JsonOptions), JsonOptions);
+
+        back.Should().Be(original);
+        back!.GetHashCode().Should().Be(original.GetHashCode());
+    }
+
+    [Fact]
+    public void Uninitialized_EqualsADefaultResultsError_AndAnErrorBuiltWithTheSameContents()
+    {
+        default(Result<int>).TryGetValue(out Error? fromDefault).Should().BeTrue();
+
+        fromDefault.Should().Be(Error.Uninitialized);
+
+        // Equality is by value now, so a hand-built error with the same contents is the same failure.
+        Error.Unexpected("result.uninitialized", "The result was never initialized (default value).")
+            .Should().Be(Error.Uninitialized);
+    }
+
+    private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions().AddFunctional();
 }

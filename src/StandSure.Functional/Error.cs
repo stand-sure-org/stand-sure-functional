@@ -276,14 +276,10 @@ public sealed record Error
 
     /// <summary>Gets a hash code that agrees with <see cref="Equals(Error)"/>.</summary>
     /// <returns>The hash code.</returns>
+    // HashCode.Combine hashes through EqualityComparer<T>.Default: ordinal for strings and null-safe, which matters
+    // because nullable annotations do not stop a null Code or Message at runtime.
     public override int GetHashCode() =>
-        HashCode.Combine(
-            this.Kind,
-            StringComparer.Ordinal.GetHashCode(this.Code),
-            StringComparer.Ordinal.GetHashCode(this.Message),
-            this.Metadata.Count,
-            this.Errors.Count,
-            this.Inner?.GetHashCode() ?? 0);
+        HashCode.Combine(this.Kind, this.Code, this.Message, this.Metadata.Count, this.Errors.Count, this.Inner);
 
     private static bool SameMetadata(IReadOnlyDictionary<string, string> left, IReadOnlyDictionary<string, string> right)
     {
