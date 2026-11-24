@@ -13,7 +13,7 @@ permissions:
 jobs:
   pull_request:
     if: github.ref != 'refs/heads/main'
-    uses: stand-sure-org/Oui-DELIVER/.github/workflows/auto-pr.yml@feat/dotnet11-standalone
+    uses: stand-sure-org/Oui-DELIVER/.github/workflows/auto-pr.yml@main
     secrets:
       # A PR opened with GITHUB_TOKEN does not trigger pull_request workflows,
       # so the GitHub App key (bot identity) is the intended path.
