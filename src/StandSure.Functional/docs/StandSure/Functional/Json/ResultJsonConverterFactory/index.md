@@ -13,7 +13,9 @@ Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system
 
 ### Remarks
 Wire format: `{"value":T}` or `{"error":{...}}`\. Reading: a non\-null `error` wins; otherwise a
-present `value` is a success \(`{"value":null}` is a success holding `default`\); an empty object, or
+present `value` is a success \(a `null` value is read by the caller's options for `T`, so it throws
+[System\.Text\.Json\.JsonException](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.jsonexception 'System\.Text\.Json\.JsonException') for a non\-nullable value type and is a success holding `null` for a nullable or
+reference type; nullable annotations on `T` are not enforced\); an empty object, or
 `value` and `error` both null, is the [Uninitialized](../../Error/Uninitialized.md 'StandSure\.Functional\.Error\.Uninitialized') failure\. Unknown properties are
 skipped\. A JSON token that is not an object throws [System\.Text\.Json\.JsonException](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.jsonexception 'System\.Text\.Json\.JsonException'), as for any converter\.
 
