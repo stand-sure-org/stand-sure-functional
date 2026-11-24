@@ -21,6 +21,8 @@
     <!-- Global using for consumers; tests/StandSure.Functional.PackageTests checks it against the packed .nupkg. -->
     <None Include="buildTransitive/StandSure.Functional.props" Pack="true" PackagePath="buildTransitive/" />
     <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <!-- The one-page API summary, so a consuming repository (or its template) can copy it next to its CLAUDE.md. -->
+    <None Include="../../docs/llm-api-summary.md" Pack="true" PackagePath="docs/" />
     <None Include="../../LICENSE" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>

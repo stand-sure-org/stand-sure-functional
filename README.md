@@ -68,6 +68,14 @@ Always name the `Match` arguments: failure comes first, and most other libraries
   the known traps. It is also the page given to language models in the with-library harness condition.
 - XML documentation ships with the package; every public member is documented.
 
+## Using it from coding agents
+
+Agents do not read package internals, and the global using means no source file names the namespace, so a
+`PackageReference` alone is invisible to them. Add the block in [`docs/agents/consumer-CLAUDE.md`](docs/agents/consumer-CLAUDE.md)
+to the consuming repository's `CLAUDE.md` and copy the API summary next to it (it ships in the package under `docs/`).
+In a small test, that took agents from 0 of 4 to 4 of 4 using the library
+([`harness/results/agentic-adoption-2026-11-24.md`](harness/results/agentic-adoption-2026-11-24.md)).
+
 ## Building
 
 ```bash
