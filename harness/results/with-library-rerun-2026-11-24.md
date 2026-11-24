@@ -74,3 +74,46 @@ compile, none that compiled breaks. Rows of the table above that change:
 
 Records' stored `compileSuccess` is unchanged (re-extraction never rewrites results); the next run scores with
 the new extractor.
+
+## Run 2: example fixed, new extractor
+
+Same 7 tasks × 7 models × 5 runs, after #34 (the first summary example writes its BCL `using`) and #37 (revised-block
+extractor). promptHash `223602ef…`, raw records `raw/20261124T210716Z-with-library.jsonl` (local). All 245 records
+extracted as `single`. Baseline and run 1 below are re-scored with the #37 extractor.
+
+| family | task | issue | baseline | run 1 | run 2 | run 2 regresses |
+|---|---|---|---|---|---|---|
+| anthropic | 01-create-user |  | 14/15 (93%) | 15/15 (100%) | 15/15 (100%) | no |
+| anthropic | 03-config-timeout |  | 12/15 (80%) | 15/15 (100%) | 15/15 (100%) | no |
+| anthropic | 04-charge-card |  | 14/15 (93%) | 15/15 (100%) | 14/15 (93%) | no |
+| anthropic | 07-order-endpoint |  | 7/15 (47%) | 15/15 (100%) | 13/15 (87%) | no |
+| anthropic | 08-user-settings |  | 15/15 (100%) | 15/15 (100%) | 15/15 (100%) | no |
+| anthropic | 10-import-contacts |  | 15/15 (100%) | 14/15 (93%) | 14/15 (93%) | no |
+| anthropic | 11-invoice-layers |  | 12/15 (80%) | 14/15 (93%) | 15/15 (100%) | no |
+| gemini | 01-create-user |  | 8/10 (80%) | 10/10 (100%) | 10/10 (100%) | no |
+| gemini | 03-config-timeout |  | 10/10 (100%) | 10/10 (100%) | 10/10 (100%) | no |
+| gemini | 04-charge-card |  | 10/10 (100%) | 10/10 (100%) | 10/10 (100%) | no |
+| gemini | 07-order-endpoint |  | 10/10 (100%) | 10/10 (100%) | 10/10 (100%) | no |
+| gemini | 08-user-settings |  | 10/10 (100%) | 10/10 (100%) | 10/10 (100%) | no |
+| gemini | 10-import-contacts | #8 | 10/10 (100%) | 7/10 (70%) | 7/10 (70%) | yes |
+| gemini | 11-invoice-layers |  | 6/10 (60%) | 10/10 (100%) | 10/10 (100%) | no |
+| ollama | 01-create-user | #9 | 9/10 (90%) | 4/10 (40%) | 5/10 (50%) | yes |
+| ollama | 03-config-timeout | #10 | 10/10 (100%) | 5/10 (50%) | 10/10 (100%) | no |
+| ollama | 04-charge-card | #11 | 6/10 (60%) | 2/10 (20%) | 1/10 (10%) | yes |
+| ollama | 07-order-endpoint | #12 | 3/10 (30%) | 2/10 (20%) | 0/10 (0%) | yes |
+| ollama | 08-user-settings |  | 10/10 (100%) | 10/10 (100%) | 10/10 (100%) | no |
+| ollama | 10-import-contacts | #13 | 9/10 (90%) | 3/10 (30%) | 0/10 (0%) | yes |
+| ollama | 11-invoice-layers | #14 | 7/10 (70%) | 4/10 (40%) | 6/10 (60%) | no, on the threshold |
+| **all** | | | 207/245 (84%) | 200/245 (82%) | 200/245 (82%) | |
+
+**The `using` fix worked:** failures on a missing BCL type or LINQ method went 12 (baseline) / 20 (run 1) / **8**
+(run 2); `using System;` in 215/245 (baseline 216/245). Anthropic and Gemini are at or above baseline everywhere
+except gemini/10 (#8).
+
+**Ollama is noisy at n=10:** ollama/03 went 50% → 100% and ollama/10 30% → 0% between two runs on near-identical
+prompts. What is left in its failures (run 2, tasks 01/04/07/10):
+- `Error` treated as an exception: matched against `PaymentDeclinedException` (CS8121 x14), passed where an
+  `Exception` is expected (CS1503 x11). Task 04.
+- Missing `Microsoft.AspNetCore.Http` using: `IResult` / `Results` (CS0246/CS0103). Task 07.
+- Guessed members: `error.Match(...)` (CS1061 x7), `Unit.Default` (CS0117 x5).
+- Type inference on `Bind`/`Match` (CS0411 x5), the same friction as #8 / #13.
