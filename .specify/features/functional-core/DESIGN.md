@@ -409,7 +409,8 @@ Methods that only return a task they were given, without awaiting, get no span.
   `[StackTraceHidden]`, `[DebuggerStepThrough]`, `[DebuggerDisplay]`.
 - `[OverloadResolutionPriority]` where an overload pair is unavoidable, to steer
   both the compiler and models toward the preferred one.
-- `[CallerArgumentExpression]` on `Ensure` to auto-fill error messages.
+- `[CallerArgumentExpression]` on `Ensure` to auto-fill error messages. Kept, but hidden from IntelliSense
+  (`[EditorBrowsable(Never)]`, 2026-11-24 review): the message is source code and can reach users.
 - Nullable annotations everywhere (`[NotNullWhen]`, `[MaybeNull]`).
 - Benchmarks (BenchmarkDotNet, `benchmarks/` project) asserting 0 allocations for
   value-type create/match/map with no listener.

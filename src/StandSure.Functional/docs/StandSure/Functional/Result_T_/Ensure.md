@@ -73,6 +73,11 @@ Filled in by the compiler with the source text of [predicate](index.md#StandSure
 This result if it is a failure or the predicate holds; otherwise a [Validation](../ErrorKind/index.md#StandSure.Functional.ErrorKind.Validation 'StandSure\.Functional\.ErrorKind\.Validation')
             failure with code `result.ensure_failed` and [expression](index.md#StandSure.Functional.Result_T_.Ensure(System.Func_T,bool_,string).expression 'StandSure\.Functional\.Result\<T\>\.Ensure\(System\.Func\<T,bool\>, string\)\.expression') as its message\.
 
+### Remarks
+Hidden from IntelliSense: the message is source code \(`"u => u.Age >= 13"`\), and an HTTP mapping can
+show it to users\. Prefer [Ensure\(Func&lt;T,bool&gt;, Func&lt;T,Error&gt;\)](Ensure.md#StandSure.Functional.Result_T_.Ensure(System.Func_T,bool_,System.Func_T,StandSure.Functional.Error_) 'StandSure\.Functional\.Result\<T\>\.Ensure\(System\.Func\<T,bool\>, System\.Func\<T,StandSure\.Functional\.Error\>\)') with an error that has a stable
+code and a human message\.
+
 <a name='StandSure.Functional.Result_T_.Ensure(System.Func_T,bool_,System.Func_T,StandSure.Functional.Error_)'></a>
 
 ## Result\<T\>\.Ensure\(Func\<T,bool\>, Func\<T,Error\>\) Method
