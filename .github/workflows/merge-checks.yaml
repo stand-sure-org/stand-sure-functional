@@ -1,0 +1,21 @@
+name: Merge Checks
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  merge-checks:
+    if: github.ref != 'refs/heads/main'
+    # Pinned to the stand-sure-org branch that adds .NET 11 support; switch to @main once that branch merges.
+    uses: stand-sure-org/Oui-DELIVER/.github/workflows/merge-checks.yml@feat/dotnet11-standalone
+    secrets:
+      githubToken: ${{ secrets.GITHUB_TOKEN }}
+    with:
+      allowed_licenses_path: './.github/actions/check-licenses-action/allowed-licenses.json'
+      ignored_packages_path: './.github/actions/check-licenses-action/ignored-packages.json'

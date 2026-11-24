@@ -1,0 +1,6 @@
+[
+  "System.*",
+  "Microsoft*",
+  "NETStandard.Library",
+  "AwesomeAssertions"
+]
