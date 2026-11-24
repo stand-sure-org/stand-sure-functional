@@ -87,4 +87,30 @@ public sealed class ResultEquatableTests
         seen.Contains(Result.Failure<int>(Error.NotFound("eq.result", "m"))).Should().BeTrue();
         seen.Contains(Result.Success(2)).Should().BeFalse();
     }
+
+    [Fact]
+    public void SuccessHoldingAnError_IsNotEqualToAFailureWithThatError()
+    {
+        var e = Error.NotFound("eq.result", "m");
+
+        (Result.Success(e) == Result.Failure<Error>(e)).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Failures_WithErrorsDifferingOnlyInKind_AreNotEqual()
+    {
+        (Result.Failure<int>(Error.NotFound("eq.kind", "m")) == Result.Failure<int>(Error.Conflict("eq.kind", "m")))
+            .Should().BeFalse();
+    }
+
+    [Fact]
+    public void Failures_ComparedByErrorContent_NotReference()
+    {
+        var a = Result.Failure<int>(Error.NotFound("eq.md", "m", new Dictionary<string, string> { ["id"] = "1" }));
+        var same = Result.Failure<int>(Error.NotFound("eq.md", "m", new Dictionary<string, string> { ["id"] = "1" }));
+        var other = Result.Failure<int>(Error.NotFound("eq.md", "m", new Dictionary<string, string> { ["id"] = "2" }));
+
+        (a == same).Should().BeTrue();
+        (a == other).Should().BeFalse();
+    }
 }

@@ -282,6 +282,9 @@ telemetry do not depend on naming and can be built (TDD) while the baseline runs
 - `None` is a singleton marker type so `switch { None => …, T x => … }` works.
 - Equality (2026-11-24 review): `IEquatable<Option<T>>`, `==`/`!=`. Every None equals every None;
   Somes compare values with `EqualityComparer<T>.Default`.
+- Comparing either union with a raw case value converts it first (`Some(5) == 5` and
+  `Success(5) == 5` are true), while `Equals((object)5)` is false: it sees a boxed `int`.
+  `== null` does not compile (CS0037); both unions are non-nullable structs.
 - Implicit from `T` (null → None); `Option.Some(x)`, `Option<T>.None`.
 - `default` is None.
 - `Match(onNone, onSome)`, `Map`, `Bind`, `Filter`, `GetValueOrDefault`,
@@ -364,6 +367,9 @@ using var activity = FunctionalDiagnostics.Source.StartActivity();
   also make every span above it in the call tree read as failed.
 - **Error recording is unchanged.** `FunctionalDiagnostics` and the `functional.failure*`
   events and counter are not modified.
+- **No span on equality.** `Equals`, `GetHashCode`, `==` and `!=` on `Result<T>`, `Option<T>`
+  and `Error` call `T`'s equality, but they run on every `HashSet`/`Dictionary` probe, so
+  they start no span (review on PR #30, 2026-11-24).
 - **One span per call (owner, 2026-11-24; trace review option 3).** The sync-delegate
   `MapAsync`, `BindAsync`, `MatchAsync` and both `EnsureAsync` overloads run the
   combinator's logic through an internal core (`MapCore`, `BindCore`, `MatchCore`,
