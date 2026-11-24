@@ -70,10 +70,19 @@ public sealed class ResultJsonConverter<T> : JsonConverter<Result<T>>
 
         if (hasValue && !(valueIsNull && hasError))
         {
-            return Result.Success(value!);
+            return Result.Success(valueIsNull ? ReadNull(options) : value!);
         }
 
         return Result.Failure<T>(Error.Uninitialized);
+    }
+
+    // A null value is read through the caller's metadata for T, once error has had its chance to win:
+    // their converters and resolver decide what null means (int throws, int? is null).
+    private static T ReadNull(JsonSerializerOptions options)
+    {
+        var reader = new Utf8JsonReader("null"u8);
+        reader.Read();
+        return JsonSerializer.Deserialize(ref reader, (JsonTypeInfo<T>)options.GetTypeInfo(typeof(T)))!;
     }
 
     /// <inheritdoc />

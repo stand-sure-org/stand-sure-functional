@@ -254,7 +254,11 @@ telemetry do not depend on naming and can be built (TDD) while the baseline runs
     JSON readable by non-.NET services: `{"value": …}` or `{"error": {…}}`;
     Option: `{"value": …}` or `{}`. The converter delegates `T` to the caller's options/
     context, so AOT callers register `Result<TheirType>` in their own context. The later
-    generators emit those registrations.
+    generators emit those registrations. A `null` value is read through that metadata too, after
+    `error` has had its chance to win (2026-11-24 review #9): `Result<int>` from `{"value":null}`
+    throws `JsonException` like plain STJ, `Result<int?>` is `Success(null)`. Reference types get
+    `Success(null)` either way, since generic arguments carry no runtime nullability. Option keeps
+    `{"value":null}` as None.
 
 ### `Result<T>` (`[Union] readonly struct`, cases `Error` | `T`)
 
