@@ -13,7 +13,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 /// <remarks>
 /// Fences labelled <c>csharp</c>, <c>cs</c>, <c>c#</c> (case-insensitive, only the first word of the info string counts)
 /// or unlabelled are taken; fences with any other label are skipped. An unterminated final fence runs to the end of the text.
-/// Several fences are concatenated in order. Because C# requires <c>using</c> directives before members, top-level
+/// A fence that redeclares a non-partial type declared by an earlier fence supersedes that earlier fence (models often
+/// answer, then post a revised version); partial types across fences are a planned split and are kept.
+/// The remaining fences are concatenated in order. Because C# requires <c>using</c> directives before members, top-level
 /// <c>using</c> directives of a concatenation are hoisted to the top, de-duplicated by text; everything else (duplicate
 /// types included) is left to the compiler. With no fence at all, the raw text counts only when it parses with no syntax errors.
 /// </remarks>
@@ -36,9 +38,66 @@ public static class CodeExtractor
                 : new ExtractResult(modelText, ExtractStatus.Single);
         }
 
-        return fences.Count == 1
-            ? new ExtractResult(fences[0], ExtractStatus.Single)
-            : new ExtractResult(Concatenate(fences), ExtractStatus.Concatenated);
+        if (fences.Count == 1)
+        {
+            return new ExtractResult(fences[0], ExtractStatus.Single);
+        }
+
+        var kept = DropSuperseded(fences);
+        var revised = kept.Count < fences.Count;
+
+        if (kept.Count == 1)
+        {
+            return new ExtractResult(kept[0], ExtractStatus.Revised);
+        }
+
+        return new ExtractResult(Concatenate(kept), revised ? ExtractStatus.Revised : ExtractStatus.Concatenated);
+    }
+
+    // A later fence that redeclares a type an earlier fence declared replaces that whole earlier fence.
+    private static List<string> DropSuperseded(List<string> fences)
+    {
+        var kept = new List<(string Fence, HashSet<string> Types)>();
+
+        foreach (var fence in fences)
+        {
+            var types = DeclaredTypes(fence);
+            kept.RemoveAll(k => k.Types.Overlaps(types));
+            kept.Add((fence, types));
+        }
+
+        return [.. kept.Select(k => k.Fence)];
+    }
+
+    // Non-partial types declared at the top level or directly in a namespace, keyed by namespace, name and arity.
+    private static HashSet<string> DeclaredTypes(string fence)
+    {
+        var root = CSharpSyntaxTree.ParseText(fence).GetCompilationUnitRoot();
+        var names = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var member in root.DescendantNodes().OfType<MemberDeclarationSyntax>())
+        {
+            if (member.Parent is not (CompilationUnitSyntax or BaseNamespaceDeclarationSyntax)
+                || member.Modifiers.Any(SyntaxKind.PartialKeyword))
+            {
+                continue;
+            }
+
+            var name = member switch
+            {
+                BaseTypeDeclarationSyntax type => $"{type.Identifier.ValueText}`{(type as TypeDeclarationSyntax)?.Arity ?? 0}",
+                DelegateDeclarationSyntax d => $"{d.Identifier.ValueText}`{d.Arity}",
+                _ => null,
+            };
+
+            if (name is not null)
+            {
+                var ns = string.Join('.', member.Ancestors().OfType<BaseNamespaceDeclarationSyntax>().Reverse().Select(n => n.Name.ToString()));
+                names.Add($"{ns}:{name}");
+            }
+        }
+
+        return names;
     }
 
     private static bool ParsesCleanly(string text)

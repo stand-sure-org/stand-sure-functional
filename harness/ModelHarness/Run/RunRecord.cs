@@ -9,7 +9,7 @@ using ModelHarness.Probe;
 /// <param name="Ts">ISO-8601 UTC completion time.</param>
 /// <param name="RunId">Shared by every record of one CLI invocation.</param>
 /// <param name="PromptHash">SHA-256 hex of system prompt, <c>\n---\n</c>, user prompt.</param>
-/// <param name="ExtractStatus"><c>single</c>, <c>concatenated</c> or <c>extractFailed</c>; null when no model output was obtained.</param>
+/// <param name="ExtractStatus"><c>single</c>, <c>concatenated</c>, <c>revised</c> or <c>extractFailed</c>; null when no model output was obtained.</param>
 /// <param name="Usage">Null on transport error or when nothing was extracted.</param>
 /// <param name="Probe">Null unless the solution compiled.</param>
 /// <param name="StopReason">Provider stop/finish reason.</param>

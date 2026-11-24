@@ -133,8 +133,8 @@ public static class ReportBuilder
             "Read this first. Records with a transport error, a truncated model answer or a runner error (a failure of the harness itself after the model answered) are counted here but are EXCLUDED from the compile-rate and probe-rate denominators below. ");
 
         sb.Append("`Compile failed` and `Probe crashed` count eligible (non-excluded) records only; `extractFailed` is one cause of a compile failure.\n\n");
-        sb.Append("| Family | Records | Transport errors | Truncated | Runner errors | Extract failed | Concatenated | Compile failed | Probe crashed |\n");
-        sb.Append("|---|---|---|---|---|---|---|---|---|\n");
+        sb.Append("| Family | Records | Transport errors | Truncated | Runner errors | Extract failed | Concatenated | Revised | Compile failed | Probe crashed |\n");
+        sb.Append("|---|---|---|---|---|---|---|---|---|---|\n");
 
         foreach (var s in scopes)
         {
@@ -158,6 +158,7 @@ public static class ReportBuilder
                 N(s.Records.Count(IsRunnerError)),
                 N(s.Records.Count(r => r.ExtractStatus == "extractFailed")),
                 N(s.Records.Count(r => r.ExtractStatus == "concatenated")),
+                N(s.Records.Count(r => r.ExtractStatus == "revised")),
                 N(Eligible(s.Records).Count(r => !r.CompileSuccess)),
                 N(Eligible(s.Records).Count(r => r.Probe?.Outcome == ProbeOutcome.Crashed)));
         }

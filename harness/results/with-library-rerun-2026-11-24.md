@@ -59,3 +59,18 @@ Regression rule as in DESIGN §6: more than 10 points worse than baseline, n >= 
   property (deliberately absent). Not library-related: missing `Microsoft.AspNetCore.Http` using
   (`IResult`/`Results`), matching an `Error` against an exception type (CS8121), `string.Equals(a, b, 1)`
   (CS1503).
+
+## Re-scored with the revised-block extractor (#36)
+
+The extractor now drops a fence that a later fence supersedes (same non-partial type redeclared), status `revised`.
+Re-extracting and recompiling every `concatenated` record of the three runs changes 9 records: 8 failures now
+compile, none that compiled breaks. Rows of the table above that change:
+
+| family | task | baseline | with-lib 11-19 | with-lib today | regresses today |
+|---|---|---|---|---|---|
+| anthropic | 07-order-endpoint | 5/15 → 7/15 (47%) | 8/15 | 14/15 → 15/15 (100%) | no |
+| anthropic | 08-user-settings | 15/15 | 13/15 → 14/15 | 15/15 | no |
+| anthropic | 11-invoice-layers | 12/15 | 14/15 | 10/15 → 14/15 (93%) | no (was yes) |
+
+Records' stored `compileSuccess` is unchanged (re-extraction never rewrites results); the next run scores with
+the new extractor.

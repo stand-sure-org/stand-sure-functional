@@ -80,6 +80,69 @@ public sealed class CodeExtractorTests
     }
 
     [Fact]
+    public void LaterFenceRedeclaringAType_SupersedesTheEarlierFence()
+    {
+        var text = "```csharp\nusing System;\npublic sealed class Solution { public int V1() => 1; }\n```\n"
+                   + "Actually, a cleaner version:\n"
+                   + "```csharp\nusing System.Linq;\npublic sealed class Solution { public int V2() => 2; }\n```";
+
+        var result = CodeExtractor.Extract(text);
+
+        result.Status.Should().Be(ExtractStatus.Revised);
+        result.Code.Should().Contain("V2").And.NotContain("V1");
+        result.Code.Should().Contain("using System.Linq;").And.NotContain("using System;\n");
+    }
+
+    [Fact]
+    public void Revision_KeepsUnrelatedFences()
+    {
+        var text = "```csharp\npublic record Order(int Id);\n```\n"
+                   + "```csharp\npublic class Solution { public int A() => 1; }\n```\n"
+                   + "```csharp\npublic class Solution { public int B() => 2; }\n```";
+
+        var result = CodeExtractor.Extract(text);
+
+        result.Status.Should().Be(ExtractStatus.Revised);
+        result.Code.Should().Contain("record Order").And.Contain("B()").And.NotContain("A()");
+    }
+
+    [Fact]
+    public void Revision_DropsEveryTypeOfTheSupersededFence()
+    {
+        var text = "```csharp\npublic class Helper { }\npublic class Solution { public int A() => 1; }\n```\n"
+                   + "```csharp\npublic class Helper { }\npublic class Solution { public int B() => 2; }\n```";
+
+        var result = CodeExtractor.Extract(text);
+
+        result.Code!.Split("class Helper").Should().HaveCount(2);
+        result.Code.Should().NotContain("A()");
+    }
+
+    [Fact]
+    public void Revision_MatchesTypesInsideNamespaces()
+    {
+        var text = "```csharp\nnamespace App;\npublic class Solution { public int A() => 1; }\n```\n"
+                   + "```csharp\nnamespace App;\npublic class Solution { public int B() => 2; }\n```";
+
+        var result = CodeExtractor.Extract(text);
+
+        result.Status.Should().Be(ExtractStatus.Revised);
+        result.Code.Should().NotContain("A()");
+    }
+
+    [Fact]
+    public void PartialTypesAcrossFences_AreAPlannedSplit_NotARevision()
+    {
+        var text = "```csharp\npublic partial class Solution { public int A() => 1; }\n```\n"
+                   + "```csharp\npublic partial class Solution { public int B() => 2; }\n```";
+
+        var result = CodeExtractor.Extract(text);
+
+        result.Status.Should().Be(ExtractStatus.Concatenated);
+        result.Code.Should().Contain("A()").And.Contain("B()");
+    }
+
+    [Fact]
     public void Concatenated_HoistsUsingsAndDeduplicates()
     {
         var text = "```csharp\nusing System;\npublic class A { }\n```\n```csharp\nusing System;\nusing System.Linq;\npublic class B { }\n```";
