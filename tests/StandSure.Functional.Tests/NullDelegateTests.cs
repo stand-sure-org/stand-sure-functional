@@ -26,6 +26,20 @@ public sealed class NullDelegateTests
     [InlineData("new[] { 1 }.Traverse<int, int>(null)")]
     [InlineData("Try.Run((System.Func<int>?)null)")]
     [InlineData("Task.FromResult(Result.Success(1)).MapAsync((System.Func<int, Task<int>?>?)null)")]
+    [InlineData("Result.Success(1).MapError(null)")]
+    [InlineData("Result.Success(1).Ensure(x => x > 0, (System.Func<int, Error>?)null)")]
+    [InlineData("Result.Success(1).Ensure((System.Func<int, bool>?)null)")]
+    [InlineData("Option.Some(1).Map<int>(null)")]
+    [InlineData("Option.Some(1).Bind<int>(null)")]
+    [InlineData("Option.Some(1).Match<int>(null, v => v)")]
+    [InlineData("Try.Run((System.Action?)null)")]
+    [InlineData("Try.RunAsync((System.Func<System.Threading.CancellationToken, Task<int>?>?)null)")]
+    [InlineData("Try.RunAsync((System.Func<System.Threading.CancellationToken, Task?>?)null)")]
+    [InlineData("Task.FromResult(Result.Success(1)).BindAsync((System.Func<int, Task<Result<int>>?>?)null)")]
+    [InlineData("Task.FromResult(Result.Success(1)).EnsureAsync((System.Func<int, Task<bool>?>?)null, Error.Validation(\"c\", \"m\"))")]
+    [InlineData("Task.FromResult(Result.Success(1)).EnsureAsync(x => Task.FromResult(x > 0), (System.Func<int, Error>?)null)")]
+    [InlineData("Task.FromResult(Result.Success(1)).MatchAsync((System.Func<Error, Task<int>>?)null, v => Task.FromResult(v))")]
+    [InlineData("new[] { 1 }.Scan(0, (System.Func<int, int, int>?)null)")]
     public void PassingNull_IsACompilerWarning(string call)
     {
         var source = $$"""
