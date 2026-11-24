@@ -18,6 +18,7 @@ Expected failures are values: `Result<T>` holds an `Error` or a `T`; `Option<T>`
 ## Return a value or an error
 
 ```csharp
+using System.Collections.Generic;
 using StandSure.Functional;
 
 public Result<Book> AddBook(string title, string author)

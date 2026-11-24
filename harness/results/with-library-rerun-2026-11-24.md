@@ -5,9 +5,17 @@ checks which regressions still hold.
 
 **What changed in the prompt:** `docs/llm-api-summary.md` line 3 now asks for a `using` for every namespace
 used (`System`, `System.Collections.Generic`, `System.Linq`, `System.Threading`, `System.Threading.Tasks`),
-not only `using StandSure.Functional;`. In the 11-19 run, with-library answers wrote `using System;` in
-293/420 records against 379/420 in the baseline, and failed on a missing BCL type or LINQ method 31 times
-against 14. Today: 202/245.
+not only `using StandSure.Functional;`. Same 7 tasks, all three runs:
+
+| run | answers with `using System;` | failed on a missing BCL type or LINQ method |
+|---|---|---|
+| baseline | 216/245 | 12 |
+| with-lib 11-19 | 178/245 | 26 |
+| with-lib today | 202/245 | 20 |
+
+Better, not fixed. After this run, the first example in the summary also gained `using
+System.Collections.Generic;` (it uses `List<Error>`; models copy examples over prose), so the current
+promptHash no longer matches `d9b36074…`. The next run measures that.
 
 **Run:** `run --condition with-library --runs 5 --tasks 01,03,04,07,08,10,11` (7 tasks x 7 models x 5 = 245
 records, promptHash `d9b36074…`), raw records `raw/20261124T202040Z-with-library.jsonl` (local, gitignored).
@@ -34,7 +42,7 @@ Regression rule as in DESIGN §6: more than 10 points worse than baseline, n >= 
 | ollama | 01-create-user | #9 | 9/10 (90%) | 2/10 (20%) | 4/10 (40%) | yes |
 | ollama | 03-config-timeout | #10 | 10/10 (100%) | 5/10 (50%) | 5/10 (50%) | yes |
 | ollama | 04-charge-card | #11 | 6/10 (60%) | 4/10 (40%) | 2/10 (20%) | yes |
-| ollama | 07-order-endpoint | #12 | 3/10 (30%) | 0/10 (0%) | 2/10 (20%) | no (10 points, not more) |
+| ollama | 07-order-endpoint | #12 | 3/10 (30%) | 0/10 (0%) | 2/10 (20%) | no, on the threshold (1/10 would regress); #12 kept open |
 | ollama | 08-user-settings |  | 10/10 (100%) | 10/10 (100%) | 10/10 (100%) | no |
 | ollama | 10-import-contacts | #13 | 9/10 (90%) | 0/10 (0%) | 3/10 (30%) | yes |
 | ollama | 11-invoice-layers | #14 | 7/10 (70%) | 4/10 (40%) | 4/10 (40%) | yes |
@@ -45,7 +53,7 @@ Regression rule as in DESIGN §6: more than 10 points worse than baseline, n >= 
 - **anthropic / 11-invoice-layers:** 4 of 5 failures are claude-sonnet-5-5 answering twice (a first version,
   then a revised one in a second code block). The extractor concatenates the blocks (`extractStatus:
   concatenated`), so `Solution` is defined two or three times (CS0101/CS0111/CS0229). Harness extraction,
-  not the library. The fifth (opus) is CS0411 on `Bind`.
+  not the library (#36). The fifth (opus) is CS0411 on `Bind`.
 - **gemini / 10 (#8):** CS0411, `Match<TOut>` type inference. Real API friction.
 - **ollama:** a mix. Library-related: CS0411 on `Bind`/`Match` inference, CS1061 reaching for a `.Error`
   property (deliberately absent). Not library-related: missing `Microsoft.AspNetCore.Http` using
