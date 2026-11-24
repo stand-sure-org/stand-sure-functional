@@ -100,11 +100,13 @@ internal static class FunctionalDiagnostics
         activity.AddEvent(new ActivityEvent("functional.failure.grouped", tags: tags));
     }
 
-    // Read on every record (not cached) so the switch can be toggled at runtime and in tests; the lookup is cheap
-    // and only reached when an activity is current.
+    // Read on every call (not cached) so the switch can be toggled at runtime and in tests; the lookup is cheap
+    // and only reached when an activity is current, or when an Error is turned into text.
+    internal static bool DetailsEnabled => AppContext.TryGetSwitch(EmitErrorDetailsSwitch, out var enabled) && enabled;
+
     private static void AddDetails(ActivityTagsCollection tags, Error error)
     {
-        if (!AppContext.TryGetSwitch(EmitErrorDetailsSwitch, out var enabled) || !enabled)
+        if (!DetailsEnabled)
         {
             return;
         }

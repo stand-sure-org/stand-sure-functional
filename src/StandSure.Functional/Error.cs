@@ -3,6 +3,7 @@ using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text;
 using System.Text.Json.Serialization;
 
 namespace StandSure.Functional;
@@ -243,4 +244,107 @@ public sealed record Error
         metadata is null or { Count: 0 }
             ? null
             : new ReadOnlyDictionary<string, string>(new Dictionary<string, string>([.. metadata]));
+
+    /// <summary>Compares two errors by their contents.</summary>
+    /// <remarks>
+    /// <see cref="Kind"/>, <see cref="Code"/> and <see cref="Message"/> (ordinal); <see cref="Metadata"/> as a set of
+    /// key/value pairs, in any order; <see cref="Inner"/> recursively; <see cref="Errors"/> in order; and
+    /// <see cref="Exception"/> by reference.
+    /// </remarks>
+    /// <param name="other">The error to compare with.</param>
+    /// <returns><see langword="true"/> when both describe the same failure.</returns>
+    public bool Equals(Error? other)
+    {
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
+        if (other is null)
+        {
+            return false;
+        }
+
+        return this.Kind == other.Kind
+               && string.Equals(this.Code, other.Code, StringComparison.Ordinal)
+               && string.Equals(this.Message, other.Message, StringComparison.Ordinal)
+               && ReferenceEquals(this.Exception, other.Exception)
+               && SameMetadata(this.Metadata, other.Metadata)
+               && (this.Inner is null ? other.Inner is null : this.Inner.Equals(other.Inner))
+               && this.Errors.SequenceEqual(other.Errors);
+    }
+
+    /// <summary>Gets a hash code that agrees with <see cref="Equals(Error)"/>.</summary>
+    /// <returns>The hash code.</returns>
+    // HashCode.Combine hashes through EqualityComparer<T>.Default: ordinal for strings and null-safe, which matters
+    // because nullable annotations do not stop a null Code or Message at runtime.
+    public override int GetHashCode() =>
+        HashCode.Combine(this.Kind, this.Code, this.Message, this.Metadata.Count, this.Errors.Count, this.Inner);
+
+    private static bool SameMetadata(IReadOnlyDictionary<string, string> left, IReadOnlyDictionary<string, string> right)
+    {
+        if (ReferenceEquals(left, right))
+        {
+            return true;
+        }
+
+        if (left.Count != right.Count)
+        {
+            return false;
+        }
+
+        foreach (var (key, value) in left)
+        {
+            if (!right.TryGetValue(key, out var other) || !string.Equals(value, other, StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // ToString() is "Error { <members> }". The message and metadata values follow the EmitErrorDetails switch, as
+    // telemetry does: a logged {error} leaves the process just as an exported span does. The exception's type is
+    // printed, never the exception itself (its message and stack).
+    private bool PrintMembers(StringBuilder builder)
+    {
+        var details = FunctionalDiagnostics.DetailsEnabled;
+
+        builder.Append("Kind = ").Append(this.Kind);
+        builder.Append(", Code = ").Append(this.Code);
+
+        if (details)
+        {
+            builder.Append(", Message = ").Append(this.Message);
+        }
+
+        builder.Append(", Metadata = [");
+        var first = true;
+        foreach (var key in this.Metadata.Keys.Order(StringComparer.Ordinal))
+        {
+            builder.Append(first ? string.Empty : ", ").Append(key);
+            if (details)
+            {
+                builder.Append('=').Append(this.Metadata[key]);
+            }
+
+            first = false;
+        }
+
+        builder.Append(']');
+        builder.Append(", Errors = ").Append(this.Errors.Count);
+
+        if (this.Inner is not null)
+        {
+            builder.Append(", Inner = ").Append(this.Inner);
+        }
+
+        if (this.Exception is not null)
+        {
+            builder.Append(", Exception = ").Append(this.Exception.GetType().FullName);
+        }
+
+        return true;
+    }
 }
