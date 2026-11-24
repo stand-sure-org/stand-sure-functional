@@ -198,7 +198,8 @@ telemetry do not depend on naming and can be built (TDD) while the baseline runs
   warnings-as-errors. The nullable annotations had switched that help off.
 - The runtime guard stays for callers with nullable off: a null delegate becomes a
   `result.null_delegate` `Unexpected` failure whose message names the parameter and the method
-  ("The delegate 'map' passed to Map was null."). `Option` combinators give None and `Match` gives
+  ("The delegate 'map' passed to Map was null."; the sync-delegate `*Async` overloads name
+  themselves, see §Spans "One span per call"). `Option` combinators give None and `Match` gives
   `default`, as before; building the error records the usual `functional.failure` event, on the
   method's span.
 - Guards are written `ResultErrors.IsMissing(x)`, not `x is null`. Nullable flow analysis (and
@@ -359,6 +360,12 @@ using var activity = FunctionalDiagnostics.Source.StartActivity();
   also make every span above it in the call tree read as failed.
 - **Error recording is unchanged.** `FunctionalDiagnostics` and the `functional.failure*`
   events and counter are not modified.
+- **One span per call (owner, 2026-11-24; trace review option 3).** The sync-delegate
+  `MapAsync`, `BindAsync`, `MatchAsync` and both `EnsureAsync` overloads run the
+  combinator's logic through an internal core (`MapCore`, `BindCore`, `MatchCore`,
+  `EnsureCore`, `EnsureLazyCore`) that starts no span, so they no longer nest `Map`
+  inside `MapAsync`. The core takes the public method's name, so a null delegate's
+  message names the method the caller wrote.
 
 **Invariant.** With nothing subscribed to `StandSure.Functional`, behaviour is the same
 as v1.2, and all allocation guarantees hold.

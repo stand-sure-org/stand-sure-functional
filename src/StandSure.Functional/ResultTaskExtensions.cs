@@ -46,7 +46,7 @@ public static class ResultTaskExtensions
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
         var result = await Resolve(source).ConfigureAwait(false);
-        return result.Map(map);
+        return result.MapCore(map, nameof(MapAsync));
     }
 
     /// <summary>Transforms the success value of an awaited result with an asynchronous function.</summary>
@@ -86,7 +86,7 @@ public static class ResultTaskExtensions
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
         var result = await Resolve(source).ConfigureAwait(false);
-        return result.Bind(bind);
+        return result.BindCore(bind, nameof(BindAsync));
     }
 
     /// <summary>Chains an asynchronous result-returning step onto an awaited result.</summary>
@@ -136,7 +136,7 @@ public static class ResultTaskExtensions
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
         var result = await Resolve(source).ConfigureAwait(false);
-        return result.Match(onFailure, onSuccess);
+        return result.MatchCore(onFailure, onSuccess, nameof(MatchAsync));
     }
 
     /// <summary>Runs one of two asynchronous functions on an awaited result. The failure function comes first.</summary>
@@ -200,7 +200,7 @@ public static class ResultTaskExtensions
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
         var result = await Resolve(source).ConfigureAwait(false);
-        return result.Ensure(predicate, error);
+        return result.EnsureCore(predicate, error, nameof(EnsureAsync));
     }
 
     /// <summary>Turns an awaited success into the given failure when the asynchronous predicate is false.</summary>
@@ -252,7 +252,7 @@ public static class ResultTaskExtensions
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
         var result = await Resolve(source).ConfigureAwait(false);
-        return result.Ensure(predicate, error);
+        return result.EnsureLazyCore(predicate, error, nameof(EnsureAsync));
     }
 
     /// <summary>Turns an awaited success into a failure built by <paramref name="error"/> when the asynchronous predicate is false.</summary>

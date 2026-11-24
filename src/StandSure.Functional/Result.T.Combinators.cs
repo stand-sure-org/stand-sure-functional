@@ -45,16 +45,23 @@ public readonly partial struct Result<T>
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
+        return this.MatchCore(onFailure, onSuccess, nameof(this.Match));
+    }
+
+    // Match's logic without a span, so the sync-delegate MatchAsync overload runs it inside its own span
+    // and a null delegate names the public method the caller wrote.
+    internal TOut MatchCore<TOut>(Func<Error, TOut> onFailure, Func<T, TOut> onSuccess, string member)
+    {
         if (this.tag == TagOk)
         {
-            return ResultErrors.IsMissing(onSuccess) ? NullBranch<TOut>(nameof(onSuccess)) : onSuccess(this.resultValue);
+            return ResultErrors.IsMissing(onSuccess) ? NullBranch<TOut>(nameof(onSuccess), member) : onSuccess(this.resultValue);
         }
 
-        return ResultErrors.IsMissing(onFailure) ? NullBranch<TOut>(nameof(onFailure)) : onFailure(this.FailureError);
+        return ResultErrors.IsMissing(onFailure) ? NullBranch<TOut>(nameof(onFailure), member) : onFailure(this.FailureError);
     }
 
     // A null active branch still counts as a failure in telemetry (building the error records it), then yields default.
-    private static TOut NullBranch<TOut>(string parameterName, [CallerMemberName] string member = "")
+    private static TOut NullBranch<TOut>(string parameterName, string member)
     {
         _ = ResultErrors.NullDelegate(parameterName, member);
         return default!;
@@ -69,12 +76,19 @@ public readonly partial struct Result<T>
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
+        return this.MapCore(map, nameof(this.Map));
+    }
+
+    // Map's logic without a span, so the sync-delegate MapAsync overload runs it inside its own span
+    // and a null delegate names the public method the caller wrote.
+    internal Result<TOut> MapCore<TOut>(Func<T, TOut> map, string member)
+    {
         if (this.tag != TagOk)
         {
             return new Result<TOut>(this.FailureError);
         }
 
-        return ResultErrors.IsMissing(map) ? new Result<TOut>(ResultErrors.NullDelegate(nameof(map))) : new Result<TOut>(map(this.resultValue));
+        return ResultErrors.IsMissing(map) ? new Result<TOut>(ResultErrors.NullDelegate(nameof(map), member)) : new Result<TOut>(map(this.resultValue));
     }
 
     /// <summary>Chains an operation that itself returns a <see cref="Result{T}"/>; a failure short-circuits.</summary>
@@ -86,12 +100,19 @@ public readonly partial struct Result<T>
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
+        return this.BindCore(bind, nameof(this.Bind));
+    }
+
+    // Bind's logic without a span, so the sync-delegate BindAsync overload runs it inside its own span
+    // and a null delegate names the public method the caller wrote.
+    internal Result<TOut> BindCore<TOut>(Func<T, Result<TOut>> bind, string member)
+    {
         if (this.tag != TagOk)
         {
             return new Result<TOut>(this.FailureError);
         }
 
-        return ResultErrors.IsMissing(bind) ? new Result<TOut>(ResultErrors.NullDelegate(nameof(bind))) : bind(this.resultValue);
+        return ResultErrors.IsMissing(bind) ? new Result<TOut>(ResultErrors.NullDelegate(nameof(bind), member)) : bind(this.resultValue);
     }
 
     /// <summary>Transforms the error of a failure; a success passes through unchanged.</summary>
@@ -123,6 +144,13 @@ public readonly partial struct Result<T>
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
+        return this.EnsureCore(predicate, error, nameof(this.Ensure));
+    }
+
+    // Ensure's logic without a span, so the sync-delegate EnsureAsync overload runs it inside its own span
+    // and a null delegate names the public method the caller wrote.
+    internal Result<T> EnsureCore(Func<T, bool> predicate, Error error, string member)
+    {
         if (this.tag != TagOk)
         {
             return this;
@@ -130,7 +158,7 @@ public readonly partial struct Result<T>
 
         if (ResultErrors.IsMissing(predicate))
         {
-            return new Result<T>(ResultErrors.NullDelegate(nameof(predicate)));
+            return new Result<T>(ResultErrors.NullDelegate(nameof(predicate), member));
         }
 
         return predicate(this.resultValue) ? this : new Result<T>(error);
@@ -151,6 +179,13 @@ public readonly partial struct Result<T>
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
+        return this.EnsureLazyCore(predicate, error, nameof(this.Ensure));
+    }
+
+    // Ensure's logic without a span, so the sync-delegate EnsureAsync overload runs it inside its own span
+    // and a null delegate names the public method the caller wrote.
+    internal Result<T> EnsureLazyCore(Func<T, bool> predicate, Func<T, Error> error, string member)
+    {
         if (this.tag != TagOk)
         {
             return this;
@@ -158,7 +193,7 @@ public readonly partial struct Result<T>
 
         if (ResultErrors.IsMissing(predicate))
         {
-            return new Result<T>(ResultErrors.NullDelegate(nameof(predicate)));
+            return new Result<T>(ResultErrors.NullDelegate(nameof(predicate), member));
         }
 
         if (predicate(this.resultValue))
@@ -166,7 +201,7 @@ public readonly partial struct Result<T>
             return this;
         }
 
-        return ResultErrors.IsMissing(error) ? new Result<T>(ResultErrors.NullDelegate(nameof(error))) : new Result<T>(error(this.resultValue));
+        return ResultErrors.IsMissing(error) ? new Result<T>(ResultErrors.NullDelegate(nameof(error), member)) : new Result<T>(error(this.resultValue));
     }
 #pragma warning restore RS0027
 
