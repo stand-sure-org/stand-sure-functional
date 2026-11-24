@@ -7,7 +7,7 @@ The outcome of an operation that can fail: either a success holding a [T](index.
 or a failure holding an [Error](../Error/index.md 'StandSure\.Functional\.Error')\.
 
 ```csharp
-public readonly struct Result<T> : System.Runtime.CompilerServices.IUnion
+public readonly struct Result<T> : System.Runtime.CompilerServices.IUnion, System.IEquatable<StandSure.Functional.Result<T>>
 ```
 #### Type parameters
 
@@ -17,7 +17,7 @@ public readonly struct Result<T> : System.Runtime.CompilerServices.IUnion
 
 The success value type\.
 
-Implements [System\.Runtime\.CompilerServices\.IUnion](https://learn.microsoft.com/en-us/dotnet/api/system.runtime.compilerservices.iunion 'System\.Runtime\.CompilerServices\.IUnion')
+Implements [System\.Runtime\.CompilerServices\.IUnion](https://learn.microsoft.com/en-us/dotnet/api/system.runtime.compilerservices.iunion 'System\.Runtime\.CompilerServices\.IUnion'), [System\.IEquatable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.iequatable-1 'System\.IEquatable\`1')[StandSure\.Functional\.Result&lt;](index.md 'StandSure\.Functional\.Result\<T\>')[T](index.md#StandSure.Functional.Result_T_.T 'StandSure\.Functional\.Result\<T\>\.T')[&gt;](index.md 'StandSure\.Functional\.Result\<T\>')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.iequatable-1 'System\.IEquatable\`1')
 
 ### Remarks
 
@@ -50,6 +50,9 @@ branch does not use may be [null](https://docs.microsoft.com/en-us/dotnet/csharp
 | [Ensure\(Func&lt;T,bool&gt;, Error\)](Ensure.md#StandSure.Functional.Result_T_.Ensure(System.Func_T,bool_,StandSure.Functional.Error) 'StandSure\.Functional\.Result\<T\>\.Ensure\(System\.Func\<T,bool\>, StandSure\.Functional\.Error\)') | Turns a success into the given failure when the predicate is false\. |
 | [Ensure\(Func&lt;T,bool&gt;, string\)](Ensure.md#StandSure.Functional.Result_T_.Ensure(System.Func_T,bool_,string) 'StandSure\.Functional\.Result\<T\>\.Ensure\(System\.Func\<T,bool\>, string\)') | Turns a success into a validation failure when the predicate is false, describing it with the             source text of the predicate\. |
 | [Ensure\(Func&lt;T,bool&gt;, Func&lt;T,Error&gt;\)](Ensure.md#StandSure.Functional.Result_T_.Ensure(System.Func_T,bool_,System.Func_T,StandSure.Functional.Error_) 'StandSure\.Functional\.Result\<T\>\.Ensure\(System\.Func\<T,bool\>, System\.Func\<T,StandSure\.Functional\.Error\>\)') | Turns a success into a failure built by [error](index.md#StandSure.Functional.Result_T_.Ensure(System.Func_T,bool_,System.Func_T,StandSure.Functional.Error_).error 'StandSure\.Functional\.Result\<T\>\.Ensure\(System\.Func\<T,bool\>, System\.Func\<T,StandSure\.Functional\.Error\>\)\.error') when the predicate is false\. |
+| [Equals\(object\)](Equals.md#StandSure.Functional.Result_T_.Equals(object) 'StandSure\.Functional\.Result\<T\>\.Equals\(object\)') | Compares this result with an object\. |
+| [Equals\(Result&lt;T&gt;\)](Equals.md#StandSure.Functional.Result_T_.Equals(StandSure.Functional.Result_T_) 'StandSure\.Functional\.Result\<T\>\.Equals\(StandSure\.Functional\.Result\<T\>\)') | Compares this result with another by their contents\. |
+| [GetHashCode\(\)](GetHashCode().md 'StandSure\.Functional\.Result\<T\>\.GetHashCode\(\)') | Gets a hash code that agrees with [Equals\(Result&lt;T&gt;\)](Equals.md#StandSure.Functional.Result_T_.Equals(StandSure.Functional.Result_T_) 'StandSure\.Functional\.Result\<T\>\.Equals\(StandSure\.Functional\.Result\<T\>\)')\. |
 | [GetValueOrDefault\(T\)](GetValueOrDefault(T).md 'StandSure\.Functional\.Result\<T\>\.GetValueOrDefault\(T\)') | Gets the success value, or a fallback for a failure \(including `default`\)\. |
 | [Map&lt;TOut&gt;\(Func&lt;T,TOut&gt;\)](Map_TOut_(Func_T,TOut_).md 'StandSure\.Functional\.Result\<T\>\.Map\<TOut\>\(System\.Func\<T,TOut\>\)') | Transforms the success value; a failure passes through unchanged\. |
 | [MapError\(Func&lt;Error,Error&gt;\)](MapError(Func_Error,Error_).md 'StandSure\.Functional\.Result\<T\>\.MapError\(System\.Func\<StandSure\.Functional\.Error,StandSure\.Functional\.Error\>\)') | Transforms the error of a failure; a success passes through unchanged\. |
@@ -57,3 +60,8 @@ branch does not use may be [null](https://docs.microsoft.com/en-us/dotnet/csharp
 | [Tap\(Action&lt;T&gt;\)](Tap(Action_T_).md 'StandSure\.Functional\.Result\<T\>\.Tap\(System\.Action\<T\>\)') | Runs a side effect on the success value and returns this result unchanged\. |
 | [TryGetValue\(Error\)](TryGetValue.md#StandSure.Functional.Result_T_.TryGetValue(StandSure.Functional.Error) 'StandSure\.Functional\.Result\<T\>\.TryGetValue\(StandSure\.Functional\.Error\)') | Gets the error if this result is a failure\. |
 | [TryGetValue\(T\)](TryGetValue.md#StandSure.Functional.Result_T_.TryGetValue(T) 'StandSure\.Functional\.Result\<T\>\.TryGetValue\(T\)') | Gets the success value if this result is a success\. |
+
+| Operators | |
+| :--- | :--- |
+| [operator ==\(Result&lt;T&gt;, Result&lt;T&gt;\)](operator(Result_T_,Result_T_).md 'StandSure\.Functional\.Result\<T\>\.op\_Equality\(StandSure\.Functional\.Result\<T\>, StandSure\.Functional\.Result\<T\>\)') | Compares two results by their contents\. |
+| [operator \!=\(Result&lt;T&gt;, Result&lt;T&gt;\)](operator!(Result_T_,Result_T_).md 'StandSure\.Functional\.Result\<T\>\.op\_Inequality\(StandSure\.Functional\.Result\<T\>, StandSure\.Functional\.Result\<T\>\)') | Compares two results by their contents\. |

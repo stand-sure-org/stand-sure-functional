@@ -3,6 +3,7 @@ using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -119,6 +120,9 @@ public sealed record Error
     /// <param name="message">The message.</param>
     /// <param name="errors">The child errors.</param>
     /// <returns>The error.</returns>
+    // Priority -1: a null third argument binds to the metadata overload instead of being ambiguous (CS0121). Both give
+    // the same plain validation error; an actual sequence of errors still binds here.
+    [OverloadResolutionPriority(-1)]
     public static Error Validation(string code, string message, IEnumerable<Error>? errors) =>
         Create(ErrorKind.Validation, code, message, null, null, errors?.ToArray());
 
