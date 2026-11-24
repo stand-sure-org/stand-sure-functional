@@ -22,6 +22,8 @@ This library makes them values you return, chain and match, so the compiler show
   `EnsureAsync(..., v => error)` and `ToResult(() => error)`: an `Error` passed directly is built, and recorded, even
   when the check passes.
   Messages and metadata are emitted only when the `AppContext` switch `StandSure.Functional.EmitErrorDetails` is on.
+- `error.code` is a metric tag, so keep codes constant (`user.not_found`, not `$"user.{id}.not_found"`): every distinct
+  code becomes its own counter series. Put ids and values in `Metadata`, which is emitted only with `EmitErrorDetails` on.
 - Every method that runs your delegate (`Map`, `Bind`, `Match`, `Ensure`, `Tap`, `Traverse`, `Try.Run`, the `*Async`
   forms, and the `Option` equivalents) starts a span on the `StandSure.Functional` source, named after the method. The
   spans carry no status and no tags. Subscribe with `AddSource("StandSure.Functional")`; with no subscriber they cost
