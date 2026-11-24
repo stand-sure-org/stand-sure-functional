@@ -17,18 +17,18 @@ public sealed class LazyErrorOverloadBindingTests
 {
     [Theory]
     [InlineData("Result.Success(1).Ensure(x => x > 0, x => Error.Validation(\"c\", $\"{x}\"))",
-        "(System.Func<int, bool>?, System.Func<int, StandSure.Functional.Error>?)")]
-    [InlineData("Result.Success(1).Ensure(IsPositive, MakeError)", "(System.Func<int, bool>?, System.Func<int, StandSure.Functional.Error>?)")]
-    [InlineData("Result.Success(1).Ensure(x => x > 0, Error.Validation(\"c\", \"m\"))", "(System.Func<int, bool>?, StandSure.Functional.Error)")]
-    [InlineData("Result.Success(1).Ensure(x => x > 0, null!)", "(System.Func<int, bool>?, StandSure.Functional.Error)")]
-    [InlineData("Result.Success(1).Ensure(x => x > 0)", "(System.Func<int, bool>?, string?)")]
-    [InlineData("Option.Some(1).ToResult(() => Error.NotFound(\"c\", \"m\"))", "(System.Func<StandSure.Functional.Error>?)")]
+        "(System.Func<int, bool>, System.Func<int, StandSure.Functional.Error>)")]
+    [InlineData("Result.Success(1).Ensure(IsPositive, MakeError)", "(System.Func<int, bool>, System.Func<int, StandSure.Functional.Error>)")]
+    [InlineData("Result.Success(1).Ensure(x => x > 0, Error.Validation(\"c\", \"m\"))", "(System.Func<int, bool>, StandSure.Functional.Error)")]
+    [InlineData("Result.Success(1).Ensure(x => x > 0, null!)", "(System.Func<int, bool>, StandSure.Functional.Error)")]
+    [InlineData("Result.Success(1).Ensure(x => x > 0)", "(System.Func<int, bool>, string?)")]
+    [InlineData("Option.Some(1).ToResult(() => Error.NotFound(\"c\", \"m\"))", "(System.Func<StandSure.Functional.Error>)")]
     [InlineData("Option.Some(1).ToResult(Error.NotFound(\"c\", \"m\"))", "(StandSure.Functional.Error)")]
     [InlineData("Option.Some(1).ToResult(null!)", "(StandSure.Functional.Error)")]
     [InlineData("Task.FromResult(Result.Success(1)).EnsureAsync(x => x > 0, x => Error.Validation(\"c\", \"m\"))",
         "(System.Threading.Tasks.Task<StandSure.Functional.Result<int>>, System.Func<int, bool>, System.Func<int, StandSure.Functional.Error>)")]
     [InlineData("Task.FromResult(Result.Success(1)).EnsureAsync(async x => { await Task.Yield(); return x > 0; }, x => Error.Validation(\"c\", \"m\"))",
-        "(System.Threading.Tasks.Task<StandSure.Functional.Result<int>>, System.Func<int, System.Threading.Tasks.Task<bool>?>?, System.Func<int, StandSure.Functional.Error>?)")]
+        "(System.Threading.Tasks.Task<StandSure.Functional.Result<int>>, System.Func<int, System.Threading.Tasks.Task<bool>?>, System.Func<int, StandSure.Functional.Error>)")]
     [InlineData("Task.FromResult(Result.Success(1)).EnsureAsync(IsPositive, MakeError)",
         "(System.Threading.Tasks.Task<StandSure.Functional.Result<int>>, System.Func<int, bool>, System.Func<int, StandSure.Functional.Error>)")]
     [InlineData("Task.FromResult(Result.Success(1)).EnsureAsync(x => x > 0, null!)",

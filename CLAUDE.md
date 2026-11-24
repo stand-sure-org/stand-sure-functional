@@ -35,6 +35,7 @@ Build config: `Directory.Build.props` (all projects), `src/Directory.Build.props
 - Ban `System.Console` via `BannedSymbols.txt`. Use ILogger with LoggerMessage source generator where logging is needed (harness only).
 - C# style: braces always, early returns and guard clauses, one top-level type per file, file-scoped namespaces.
 - The library never throws from its own APIs. `Try` never catches `OperationCanceledException` (including subclasses) or `OutOfMemoryException`.
+- Delegate parameters are non-nullable; guard them with `ResultErrors.IsMissing(x)` (not `x is null`) and return a `result.null_delegate` failure. See DESIGN §"Null delegates".
 - Failure/absence comes first in every two-branch signature: `Match(onFailure, onSuccess)`, `Match(onNone, onSome)`.
 - No throwing `.Value` or `.Error` accessors on `Result<T>`.
 - Telemetry source and meter name: `StandSure.Functional`. Event names `functional.failure`, `functional.failure.wrapped` and `functional.failure.grouped`; counter `functional.failures`; tags `error.kind` and `error.code`. Messages and metadata are emitted only when the `AppContext` switch `StandSure.Functional.EmitErrorDetails` is on.

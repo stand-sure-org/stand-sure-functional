@@ -41,22 +41,22 @@ public readonly partial struct Result<T>
     /// <param name="onSuccess">Runs on a success with the value.
     /// A <see langword="null"/> value makes a success return <c>default(TOut)</c>.</param>
     /// <returns>The result of the function that ran.</returns>
-    public TOut Match<TOut>(Func<Error, TOut>? onFailure, Func<T, TOut>? onSuccess)
+    public TOut Match<TOut>(Func<Error, TOut> onFailure, Func<T, TOut> onSuccess)
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
         if (this.tag == TagOk)
         {
-            return onSuccess is null ? NullBranch<TOut>(nameof(onSuccess)) : onSuccess(this.resultValue);
+            return ResultErrors.IsMissing(onSuccess) ? NullBranch<TOut>(nameof(onSuccess)) : onSuccess(this.resultValue);
         }
 
-        return onFailure is null ? NullBranch<TOut>(nameof(onFailure)) : onFailure(this.FailureError);
+        return ResultErrors.IsMissing(onFailure) ? NullBranch<TOut>(nameof(onFailure)) : onFailure(this.FailureError);
     }
 
     // A null active branch still counts as a failure in telemetry (building the error records it), then yields default.
-    private static TOut NullBranch<TOut>(string parameterName)
+    private static TOut NullBranch<TOut>(string parameterName, [CallerMemberName] string member = "")
     {
-        _ = ResultErrors.NullDelegate(parameterName);
+        _ = ResultErrors.NullDelegate(parameterName, member);
         return default!;
     }
 
@@ -65,7 +65,7 @@ public readonly partial struct Result<T>
     /// <param name="map">The transformation. A <see langword="null"/> value turns a success into a
     /// <c>result.null_delegate</c> failure.</param>
     /// <returns>A success holding the mapped value, or the original failure.</returns>
-    public Result<TOut> Map<TOut>(Func<T, TOut>? map)
+    public Result<TOut> Map<TOut>(Func<T, TOut> map)
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
@@ -74,7 +74,7 @@ public readonly partial struct Result<T>
             return new Result<TOut>(this.FailureError);
         }
 
-        return map is null ? new Result<TOut>(ResultErrors.NullDelegate(nameof(map))) : new Result<TOut>(map(this.resultValue));
+        return ResultErrors.IsMissing(map) ? new Result<TOut>(ResultErrors.NullDelegate(nameof(map))) : new Result<TOut>(map(this.resultValue));
     }
 
     /// <summary>Chains an operation that itself returns a <see cref="Result{T}"/>; a failure short-circuits.</summary>
@@ -82,7 +82,7 @@ public readonly partial struct Result<T>
     /// <param name="bind">The next step. A <see langword="null"/> value turns a success into a
     /// <c>result.null_delegate</c> failure.</param>
     /// <returns>The result of <paramref name="bind"/>, or the original failure without calling it.</returns>
-    public Result<TOut> Bind<TOut>(Func<T, Result<TOut>>? bind)
+    public Result<TOut> Bind<TOut>(Func<T, Result<TOut>> bind)
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
@@ -91,7 +91,7 @@ public readonly partial struct Result<T>
             return new Result<TOut>(this.FailureError);
         }
 
-        return bind?.Invoke(this.resultValue) ?? new Result<TOut>(ResultErrors.NullDelegate(nameof(bind)));
+        return ResultErrors.IsMissing(bind) ? new Result<TOut>(ResultErrors.NullDelegate(nameof(bind))) : bind(this.resultValue);
     }
 
     /// <summary>Transforms the error of a failure; a success passes through unchanged.</summary>
@@ -99,7 +99,7 @@ public readonly partial struct Result<T>
     /// A <see langword="null"/> return becomes <see cref="Error.Uninitialized"/>. A <see langword="null"/> delegate
     /// turns a failure into a <c>result.null_delegate</c> failure.</param>
     /// <returns>The original success, or a failure with the mapped error.</returns>
-    public Result<T> MapError(Func<Error, Error>? map)
+    public Result<T> MapError(Func<Error, Error> map)
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
@@ -108,7 +108,7 @@ public readonly partial struct Result<T>
             return this;
         }
 
-        return map is null ? new Result<T>(ResultErrors.NullDelegate(nameof(map))) : new Result<T>(map(this.FailureError));
+        return ResultErrors.IsMissing(map) ? new Result<T>(ResultErrors.NullDelegate(nameof(map))) : new Result<T>(map(this.FailureError));
     }
 
     /// <summary>Turns a success into the given failure when the predicate is false.</summary>
@@ -119,7 +119,7 @@ public readonly partial struct Result<T>
     /// <returns>This result if it is a failure or the predicate holds; otherwise a failure with <paramref name="error"/>.</returns>
     /// <remarks>The <see cref="Error"/> is built before the call and is recorded in telemetry when built, even if the
     /// predicate holds; prefer the factory overload <see cref="Ensure(Func{T, bool}, Func{T, Error})"/>.</remarks>
-    public Result<T> Ensure(Func<T, bool>? predicate, Error error)
+    public Result<T> Ensure(Func<T, bool> predicate, Error error)
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
@@ -128,7 +128,7 @@ public readonly partial struct Result<T>
             return this;
         }
 
-        if (predicate is null)
+        if (ResultErrors.IsMissing(predicate))
         {
             return new Result<T>(ResultErrors.NullDelegate(nameof(predicate)));
         }
@@ -147,7 +147,7 @@ public readonly partial struct Result<T>
     // literal binding to the Error overload; lambdas and method groups still reach this one.
 #pragma warning disable RS0027
     [OverloadResolutionPriority(-1)]
-    public Result<T> Ensure(Func<T, bool>? predicate, Func<T, Error>? error)
+    public Result<T> Ensure(Func<T, bool> predicate, Func<T, Error> error)
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
@@ -156,7 +156,7 @@ public readonly partial struct Result<T>
             return this;
         }
 
-        if (predicate is null)
+        if (ResultErrors.IsMissing(predicate))
         {
             return new Result<T>(ResultErrors.NullDelegate(nameof(predicate)));
         }
@@ -166,7 +166,7 @@ public readonly partial struct Result<T>
             return this;
         }
 
-        return error is null ? new Result<T>(ResultErrors.NullDelegate(nameof(error))) : new Result<T>(error(this.resultValue));
+        return ResultErrors.IsMissing(error) ? new Result<T>(ResultErrors.NullDelegate(nameof(error))) : new Result<T>(error(this.resultValue));
     }
 #pragma warning restore RS0027
 
@@ -181,7 +181,7 @@ public readonly partial struct Result<T>
     // RS0027: the (predicate, Error) overload is a distinct type-based overload, not a later optional-parameter addition.
 #pragma warning disable RS0027
     [OverloadResolutionPriority(-1)]
-    public Result<T> Ensure(Func<T, bool>? predicate, [CallerArgumentExpression(nameof(predicate))] string? expression = null)
+    public Result<T> Ensure(Func<T, bool> predicate, [CallerArgumentExpression(nameof(predicate))] string? expression = null)
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
@@ -190,7 +190,7 @@ public readonly partial struct Result<T>
             return this;
         }
 
-        if (predicate is null)
+        if (ResultErrors.IsMissing(predicate))
         {
             return new Result<T>(ResultErrors.NullDelegate(nameof(predicate)));
         }
@@ -205,7 +205,7 @@ public readonly partial struct Result<T>
     /// <param name="action">The side effect. A <see langword="null"/> value turns a success into a
     /// <c>result.null_delegate</c> failure.</param>
     /// <returns>This result.</returns>
-    public Result<T> Tap(Action<T>? action)
+    public Result<T> Tap(Action<T> action)
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
@@ -214,7 +214,7 @@ public readonly partial struct Result<T>
             return this;
         }
 
-        if (action is null)
+        if (ResultErrors.IsMissing(action))
         {
             return new Result<T>(ResultErrors.NullDelegate(nameof(action)));
         }

@@ -20,7 +20,7 @@ public static class EnumerableScanExtensions
     public static IEnumerable<TAcc> Scan<T, TAcc>(
         this IEnumerable<T>? source,
         TAcc seed,
-        Func<TAcc, T, TAcc>? accumulator)
+        Func<TAcc, T, TAcc> accumulator)
     {
         if (source is null)
         {
@@ -28,7 +28,7 @@ public static class EnumerableScanExtensions
             return [];
         }
 
-        if (accumulator is null)
+        if (ResultErrors.IsMissing(accumulator))
         {
             _ = ResultErrors.NullDelegate(nameof(accumulator));
             return [];

@@ -12,7 +12,7 @@ namespace StandSure.Functional
     }
     public static class EnumerableScanExtensions
     {
-        public static System.Collections.Generic.IEnumerable<TAcc> Scan<T, TAcc>(this System.Collections.Generic.IEnumerable<T>? source, TAcc seed, System.Func<TAcc, T, TAcc>? accumulator) { }
+        public static System.Collections.Generic.IEnumerable<TAcc> Scan<T, TAcc>(this System.Collections.Generic.IEnumerable<T>? source, TAcc seed, System.Func<TAcc, T, TAcc> accumulator) { }
     }
     public sealed class Error : System.IEquatable<StandSure.Functional.Error>
     {
@@ -85,14 +85,14 @@ namespace StandSure.Functional
         public bool IsSome { get; }
         public object? Value { get; }
         public static StandSure.Functional.Option<T> None { get; }
-        public StandSure.Functional.Option<TOut> Bind<TOut>(System.Func<T, StandSure.Functional.Option<TOut>>? bind) { }
-        public StandSure.Functional.Option<T> Filter(System.Func<T, bool>? predicate) { }
+        public StandSure.Functional.Option<TOut> Bind<TOut>(System.Func<T, StandSure.Functional.Option<TOut>> bind) { }
+        public StandSure.Functional.Option<T> Filter(System.Func<T, bool> predicate) { }
         public T GetValueOrDefault(T fallback) { }
-        public StandSure.Functional.Option<TOut> Map<TOut>(System.Func<T, TOut>? map) { }
-        public TOut Match<TOut>(System.Func<TOut>? onNone, System.Func<T, TOut>? onSome) { }
+        public StandSure.Functional.Option<TOut> Map<TOut>(System.Func<T, TOut> map) { }
+        public TOut Match<TOut>(System.Func<TOut> onNone, System.Func<T, TOut> onSome) { }
         public StandSure.Functional.Result<T> ToResult(StandSure.Functional.Error ifNone) { }
         [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
-        public StandSure.Functional.Result<T> ToResult(System.Func<StandSure.Functional.Error>? ifNone) { }
+        public StandSure.Functional.Result<T> ToResult(System.Func<StandSure.Functional.Error> ifNone) { }
         public bool TryGetValue([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out StandSure.Functional.None? none) { }
         public bool TryGetValue([System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out T value) { }
     }
@@ -111,7 +111,7 @@ namespace StandSure.Functional
                 "Successes",
                 "Failures"})]
         public static System.ValueTuple<System.Collections.Generic.IReadOnlyList<T>, System.Collections.Generic.IReadOnlyList<StandSure.Functional.Error>> Partition<T>(this System.Collections.Generic.IEnumerable<StandSure.Functional.Result<T>>? source) { }
-        public static StandSure.Functional.Result<System.Collections.Generic.IReadOnlyList<TOut>> Traverse<T, TOut>(this System.Collections.Generic.IEnumerable<T>? source, System.Func<T, StandSure.Functional.Result<TOut>>? map) { }
+        public static StandSure.Functional.Result<System.Collections.Generic.IReadOnlyList<TOut>> Traverse<T, TOut>(this System.Collections.Generic.IEnumerable<T>? source, System.Func<T, StandSure.Functional.Result<TOut>> map) { }
         extension<Result`1>(System.Collections.Generic.IEnumerable<StandSure.Functional.Result<T?>?>? source)
         {
             public StandSure.Functional.Result<System.Collections.Generic.IReadOnlyList<Result`1>> Combine() { }
@@ -121,17 +121,17 @@ namespace StandSure.Functional
     public static class ResultTaskExtensions
     {
         public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> BindAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, StandSure.Functional.Result<TOut>> bind) { }
-        public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> BindAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>>?>? bind) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> BindAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>>?> bind) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<bool>?> predicate, StandSure.Functional.Error error) { }
+        [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<bool>?> predicate, System.Func<T, StandSure.Functional.Error> error) { }
         public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, bool> predicate, StandSure.Functional.Error error) { }
         [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
         public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, bool> predicate, System.Func<T, StandSure.Functional.Error> error) { }
-        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<bool>?>? predicate, StandSure.Functional.Error error) { }
-        [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
-        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<bool>?>? predicate, System.Func<T, StandSure.Functional.Error>? error) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> MapAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<TOut>?> map) { }
         public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> MapAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, TOut> map) { }
-        public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> MapAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<TOut>?>? map) { }
+        public static System.Threading.Tasks.Task<TOut> MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<StandSure.Functional.Error, System.Threading.Tasks.Task<TOut>> onFailure, System.Func<T, System.Threading.Tasks.Task<TOut>?> onSuccess) { }
         public static System.Threading.Tasks.Task<TOut> MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<StandSure.Functional.Error, TOut> onFailure, System.Func<T, TOut> onSuccess) { }
-        public static System.Threading.Tasks.Task<TOut> MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<StandSure.Functional.Error, System.Threading.Tasks.Task<TOut>>? onFailure, System.Func<T, System.Threading.Tasks.Task<TOut>?>? onSuccess) { }
     }
     [System.Diagnostics.DebuggerDisplay("{DebugView,nq}")]
     [System.Diagnostics.StackTraceHidden]
@@ -145,31 +145,31 @@ namespace StandSure.Functional
         public bool IsFailure { get; }
         public bool IsSuccess { get; }
         public object? Value { get; }
-        public StandSure.Functional.Result<TOut> Bind<TOut>(System.Func<T, StandSure.Functional.Result<TOut>>? bind) { }
+        public StandSure.Functional.Result<TOut> Bind<TOut>(System.Func<T, StandSure.Functional.Result<TOut>> bind) { }
         public void Deconstruct(out T? value, out StandSure.Functional.Error? error) { }
-        public StandSure.Functional.Result<T> Ensure(System.Func<T, bool>? predicate, StandSure.Functional.Error error) { }
+        public StandSure.Functional.Result<T> Ensure(System.Func<T, bool> predicate, StandSure.Functional.Error error) { }
         [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
-        public StandSure.Functional.Result<T> Ensure(System.Func<T, bool>? predicate, System.Func<T, StandSure.Functional.Error>? error) { }
+        public StandSure.Functional.Result<T> Ensure(System.Func<T, bool> predicate, System.Func<T, StandSure.Functional.Error> error) { }
         [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
-        public StandSure.Functional.Result<T> Ensure(System.Func<T, bool>? predicate, [System.Runtime.CompilerServices.CallerArgumentExpression("predicate")] string? expression = null) { }
+        public StandSure.Functional.Result<T> Ensure(System.Func<T, bool> predicate, [System.Runtime.CompilerServices.CallerArgumentExpression("predicate")] string? expression = null) { }
         public T GetValueOrDefault(T fallback) { }
-        public StandSure.Functional.Result<TOut> Map<TOut>(System.Func<T, TOut>? map) { }
-        public StandSure.Functional.Result<T> MapError(System.Func<StandSure.Functional.Error, StandSure.Functional.Error>? map) { }
-        public TOut Match<TOut>(System.Func<StandSure.Functional.Error, TOut>? onFailure, System.Func<T, TOut>? onSuccess) { }
-        public StandSure.Functional.Result<T> Tap(System.Action<T>? action) { }
+        public StandSure.Functional.Result<TOut> Map<TOut>(System.Func<T, TOut> map) { }
+        public StandSure.Functional.Result<T> MapError(System.Func<StandSure.Functional.Error, StandSure.Functional.Error> map) { }
+        public TOut Match<TOut>(System.Func<StandSure.Functional.Error, TOut> onFailure, System.Func<T, TOut> onSuccess) { }
+        public StandSure.Functional.Result<T> Tap(System.Action<T> action) { }
         public bool TryGetValue([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out StandSure.Functional.Error? error) { }
         public bool TryGetValue([System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out T value) { }
     }
     public static class Try
     {
-        public static StandSure.Functional.Result<StandSure.Functional.Unit> Run(System.Action? action) { }
+        public static StandSure.Functional.Result<StandSure.Functional.Unit> Run(System.Action action) { }
         [System.Obsolete("Use Try.RunAsync(ct => ..., ct) for asynchronous work.", true)]
         public static StandSure.Functional.Result<StandSure.Functional.Unit> Run(System.Func<System.Threading.Tasks.Task> fn) { }
         [System.Obsolete("Use Try.RunAsync(ct => ..., ct) for asynchronous work.", true)]
         public static StandSure.Functional.Result<T> Run<T>(System.Func<System.Threading.Tasks.Task<T>> fn) { }
-        public static StandSure.Functional.Result<T?> Run<T>(System.Func<T?>? fn) { }
-        public static System.Threading.Tasks.Task<StandSure.Functional.Result<StandSure.Functional.Unit>> RunAsync(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task?>? fn, System.Threading.CancellationToken cancellationToken = default) { }
-        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> RunAsync<T>(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<T>?>? fn, System.Threading.CancellationToken cancellationToken = default) { }
+        public static StandSure.Functional.Result<T?> Run<T>(System.Func<T?> fn) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<StandSure.Functional.Unit>> RunAsync(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task?> fn, System.Threading.CancellationToken cancellationToken = default) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> RunAsync<T>(System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<T>?> fn, System.Threading.CancellationToken cancellationToken = default) { }
     }
     public readonly struct Unit : System.IComparable<StandSure.Functional.Unit>, System.IEquatable<StandSure.Functional.Unit>
     {
