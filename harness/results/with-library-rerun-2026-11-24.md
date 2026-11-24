@@ -107,8 +107,8 @@ extracted as `single`. Baseline and run 1 below are re-scored with the #37 extra
 | **all** | | | 207/245 (84%) | 200/245 (82%) | 200/245 (82%) | |
 
 **The `using` fix worked:** failures on a missing BCL type or LINQ method went 12 (baseline) / 20 (run 1) / **8**
-(run 2); `using System;` in 215/245 (baseline 216/245). Anthropic and Gemini are at or above baseline everywhere
-except gemini/10 (#8).
+(run 2); `using System;` in 215/245 (baseline 216/245). Anthropic and Gemini do not regress anywhere except
+gemini/10 (#8); anthropic/10 is one compile below baseline (14/15 vs 15/15), inside the 10-point threshold.
 
 **Ollama is noisy at n=10:** ollama/03 went 50% → 100% and ollama/10 30% → 0% between two runs on near-identical
 prompts. What is left in its failures (run 2, tasks 01/04/07/10):
@@ -117,3 +117,10 @@ prompts. What is left in its failures (run 2, tasks 01/04/07/10):
 - Missing `Microsoft.AspNetCore.Http` using: `IResult` / `Results` (CS0246/CS0103). Task 07.
 - Guessed members: `error.Match(...)` (CS1061 x7), `Unit.Default` (CS0117 x5).
 - Type inference on `Bind`/`Match` (CS0411 x5), the same friction as #8 / #13.
+
+**What happens to the issues** (DESIGN §6 rule applied to the latest run, run 2):
+- #10 (ollama/03): closed by this PR. It regressed in run 1 (5/10) and is 10/10 in run 2, so given the noise above it
+  rests on one run; the next with-library run re-opens it if it drops again.
+- #12 (ollama/07): stays open. It sat on the threshold in run 1 and is a clear regression in run 2 (0/10).
+- #14 (ollama/11): stays open, on the threshold (6/10 vs 7/10).
+- #8, #9, #11, #13: stay open, still regress.
