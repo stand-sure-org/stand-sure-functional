@@ -31,11 +31,11 @@ public static class Try
     /// <typeparam name="T">The result type.</typeparam>
     /// <param name="fn">The function to run. A <see langword="null"/> value returns a <c>result.null_delegate</c> failure.</param>
     /// <returns>The function's value as a success, or the captured exception as a failure.</returns>
-    public static Result<T?> Run<T>(Func<T?>? fn)
+    public static Result<T?> Run<T>(Func<T?> fn)
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
-        if (fn is null)
+        if (ResultErrors.IsMissing(fn))
         {
             return Result.Failure<T?>(ResultErrors.NullDelegate(nameof(fn)));
         }
@@ -58,11 +58,11 @@ public static class Try
     /// <summary>Runs an action and captures a thrown exception as a failure.</summary>
     /// <param name="action">The action to run. A <see langword="null"/> value returns a <c>result.null_delegate</c> failure.</param>
     /// <returns>A success holding <see cref="Unit.Value"/>, or the captured exception as a failure.</returns>
-    public static Result<Unit> Run(Action? action)
+    public static Result<Unit> Run(Action action)
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
-        if (action is null)
+        if (ResultErrors.IsMissing(action))
         {
             return Result.Failure<Unit>(ResultErrors.NullDelegate(nameof(action)));
         }
@@ -115,12 +115,12 @@ public static class Try
         "RS0027:API with optional parameter(s) should have the most parameters amongst its public overloads",
         Justification = "Specified API.")]
     public static async Task<Result<T>> RunAsync<T>(
-        Func<CancellationToken, Task<T>?>? fn,
+        Func<CancellationToken, Task<T>?> fn,
         CancellationToken cancellationToken = default)
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
-        if (fn is null)
+        if (ResultErrors.IsMissing(fn))
         {
             return Result.Failure<T>(ResultErrors.NullDelegate(nameof(fn)));
         }
@@ -160,12 +160,12 @@ public static class Try
         "RS0027:API with optional parameter(s) should have the most parameters amongst its public overloads",
         Justification = "Specified API.")]
     public static async Task<Result<Unit>> RunAsync(
-        Func<CancellationToken, Task?>? fn,
+        Func<CancellationToken, Task?> fn,
         CancellationToken cancellationToken = default)
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
-        if (fn is null)
+        if (ResultErrors.IsMissing(fn))
         {
             return Result.Failure<Unit>(ResultErrors.NullDelegate(nameof(fn)));
         }

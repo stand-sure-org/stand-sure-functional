@@ -46,7 +46,7 @@ public static class ResultEnumerableExtensions
     /// for <c>Combine</c>.</returns>
     public static Result<IReadOnlyList<TOut>> Traverse<T, TOut>(
         this IEnumerable<T>? source,
-        Func<T, Result<TOut>>? map)
+        Func<T, Result<TOut>> map)
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
@@ -55,7 +55,7 @@ public static class ResultEnumerableExtensions
             return new Result<IReadOnlyList<TOut>>(ResultErrors.NullSource(nameof(source)));
         }
 
-        if (map is null)
+        if (ResultErrors.IsMissing(map))
         {
             return new Result<IReadOnlyList<TOut>>(ResultErrors.NullDelegate(nameof(map)));
         }

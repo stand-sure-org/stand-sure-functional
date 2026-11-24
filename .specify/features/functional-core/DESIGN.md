@@ -1,6 +1,6 @@
 # Design: Functional Core + Model-Usage Harness
 
-**Version:** 1.4 (Error equality and ToString)
+**Version:** 1.5 (Non-nullable delegate parameters)
 **Date:** 2026-11-24
 **Changes:** v1.1 settled harness execution, baseline authority, wire format, telemetry
 firing points, run mode. v1.2: no budget cap (5 runs per cell), Gemini via
@@ -9,6 +9,7 @@ v1.3: the `StandSure.Functional` ActivitySource now starts a span in every metho
 runs caller code (§Telemetry, "Spans"); offline sample apps to observe the traces.
 v1.4: `Error` gets value equality over its contents and a `ToString` that honours the
 `EmitErrorDetails` switch (§`Error`, "Equality and ToString"), from the 2026-11-24 review.
+v1.5: delegate parameters are non-nullable; the never-throw guards stay (§"Null delegates").
 See `DECISION.md` for the why and the scope table.
 
 Items marked **[builder's call]** were proposed by Claude during design and not
@@ -190,6 +191,25 @@ family; the owner approves. Members not listed are out unless the report justifi
 **Parallel start:** `Unit`, `Error`, the union plumbing, `Try` internals, JSON and
 telemetry do not depend on naming and can be built (TDD) while the baseline runs.
 
+### Null delegates (v1.5, 2026-11-24 review)
+
+- Every delegate parameter is non-nullable (`Func<T, TOut> map`, not `Func<T, TOut>? map`), so a
+  caller with nullable enabled gets CS8625 or CS8604 at the call site, and an error under
+  warnings-as-errors. The nullable annotations had switched that help off.
+- The runtime guard stays for callers with nullable off: a null delegate becomes a
+  `result.null_delegate` `Unexpected` failure whose message names the parameter and the method
+  ("The delegate 'map' passed to Map was null."; the sync-delegate `*Async` overloads name
+  themselves, see §Spans "One span per call"). `Option` combinators give None and `Match` gives
+  `default`, as before; building the error records the usual `functional.failure` event, on the
+  method's span.
+- Guards are written `ResultErrors.IsMissing(x)`, not `x is null`. Nullable flow analysis (and
+  Rider's "Expression is always false") treats `x is null` on a non-nullable parameter as dead
+  code; the helper keeps the guard visible and says why it exists. Tried and rejected: JetBrains
+  `[CanBeNull]` (Rider prefers the NRT annotation and still warns) and an `.editorconfig` rule that
+  turns the inspection off (it would also hide genuinely redundant checks in `src/`).
+- Values that may legitimately be null (`IEnumerable<T>? source`, the task a delegate returns,
+  `Task<TOut>?`) keep their `?`.
+
 ### `Error` (sealed record, reference type)
 
 - `ErrorKind Kind`: `Validation, NotFound, Conflict, Unauthorized, Forbidden,
@@ -340,6 +360,12 @@ using var activity = FunctionalDiagnostics.Source.StartActivity();
   also make every span above it in the call tree read as failed.
 - **Error recording is unchanged.** `FunctionalDiagnostics` and the `functional.failure*`
   events and counter are not modified.
+- **One span per call (owner, 2026-11-24; trace review option 3).** The sync-delegate
+  `MapAsync`, `BindAsync`, `MatchAsync` and both `EnsureAsync` overloads run the
+  combinator's logic through an internal core (`MapCore`, `BindCore`, `MatchCore`,
+  `EnsureCore`, `EnsureLazyCore`) that starts no span, so they no longer nest `Map`
+  inside `MapAsync`. The core takes the public method's name, so a null delegate's
+  message names the method the caller wrote.
 
 **Invariant.** With nothing subscribed to `StandSure.Functional`, behaviour is the same
 as v1.2, and all allocation guarantees hold.

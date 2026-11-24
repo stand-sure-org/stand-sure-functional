@@ -66,3 +66,11 @@ Any app that calls `Map`/`Match` outside a traced request would fill its backend
 
 Recommendation: 1 and 3 regardless. For 2, whether the passthrough spans and the measured waiting are worth the
 exception to the first-line rule is the owner's call.
+
+## Decisions
+
+- **Option 3 adopted (owner, 2026-11-24, PR #26).** The sync-delegate `*Async` overloads run an internal, unspanned
+  core of the sync combinator, so each call gives one span. It came up through a review finding: the nested sync
+  combinator also put its own name in the `result.null_delegate` message.
+- Options 1 and 2 are still open.
+

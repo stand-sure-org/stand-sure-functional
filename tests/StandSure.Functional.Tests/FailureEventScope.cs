@@ -34,6 +34,15 @@ internal sealed class FailureEventScope : IDisposable
         this._activity.Events.Count(e => e.Name == "functional.failure"
                                          && e.Tags.Any(t => t.Key == "error.code" && Equals(t.Value, code)));
 
+    /// <summary>The <c>error.message</c> tags of the failures with <paramref name="code"/> (present only while the
+    /// <c>EmitErrorDetails</c> switch is on).</summary>
+    public string?[] Messages(string code) =>
+    [
+        .. this._activity.Events
+            .Where(e => e.Name == "functional.failure" && e.Tags.Any(t => t.Key == "error.code" && Equals(t.Value, code)))
+            .Select(e => e.Tags.FirstOrDefault(t => t.Key == "error.message").Value as string),
+    ];
+
     public void Dispose()
     {
         this._activity.Dispose();
