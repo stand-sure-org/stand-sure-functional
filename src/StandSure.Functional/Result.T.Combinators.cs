@@ -43,6 +43,8 @@ public readonly partial struct Result<T>
     /// <returns>The result of the function that ran.</returns>
     public TOut Match<TOut>(Func<Error, TOut>? onFailure, Func<T, TOut>? onSuccess)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (this.tag == TagOk)
         {
             return onSuccess is null ? NullBranch<TOut>(nameof(onSuccess)) : onSuccess(this.resultValue);
@@ -65,6 +67,8 @@ public readonly partial struct Result<T>
     /// <returns>A success holding the mapped value, or the original failure.</returns>
     public Result<TOut> Map<TOut>(Func<T, TOut>? map)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (this.tag != TagOk)
         {
             return new Result<TOut>(this.FailureError);
@@ -80,6 +84,8 @@ public readonly partial struct Result<T>
     /// <returns>The result of <paramref name="bind"/>, or the original failure without calling it.</returns>
     public Result<TOut> Bind<TOut>(Func<T, Result<TOut>>? bind)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (this.tag != TagOk)
         {
             return new Result<TOut>(this.FailureError);
@@ -95,6 +101,8 @@ public readonly partial struct Result<T>
     /// <returns>The original success, or a failure with the mapped error.</returns>
     public Result<T> MapError(Func<Error, Error>? map)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (this.tag == TagOk)
         {
             return this;
@@ -113,6 +121,8 @@ public readonly partial struct Result<T>
     /// predicate holds; prefer the factory overload <see cref="Ensure(Func{T, bool}, Func{T, Error})"/>.</remarks>
     public Result<T> Ensure(Func<T, bool>? predicate, Error error)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (this.tag != TagOk)
         {
             return this;
@@ -139,6 +149,8 @@ public readonly partial struct Result<T>
     [OverloadResolutionPriority(-1)]
     public Result<T> Ensure(Func<T, bool>? predicate, Func<T, Error>? error)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (this.tag != TagOk)
         {
             return this;
@@ -171,6 +183,8 @@ public readonly partial struct Result<T>
     [OverloadResolutionPriority(-1)]
     public Result<T> Ensure(Func<T, bool>? predicate, [CallerArgumentExpression(nameof(predicate))] string? expression = null)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (this.tag != TagOk)
         {
             return this;
@@ -193,6 +207,8 @@ public readonly partial struct Result<T>
     /// <returns>This result.</returns>
     public Result<T> Tap(Action<T>? action)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (this.tag != TagOk)
         {
             return this;

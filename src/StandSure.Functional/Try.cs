@@ -118,6 +118,8 @@ public static class Try
         Func<CancellationToken, Task<T>?>? fn,
         CancellationToken cancellationToken = default)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (fn is null)
         {
             return Result.Failure<T>(ResultErrors.NullDelegate(nameof(fn)));
@@ -161,6 +163,8 @@ public static class Try
         Func<CancellationToken, Task?>? fn,
         CancellationToken cancellationToken = default)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (fn is null)
         {
             return Result.Failure<Unit>(ResultErrors.NullDelegate(nameof(fn)));

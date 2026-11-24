@@ -48,6 +48,8 @@ public static class ResultEnumerableExtensions
         this IEnumerable<T>? source,
         Func<T, Result<TOut>>? map)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (source is null)
         {
             return new Result<IReadOnlyList<TOut>>(ResultErrors.NullSource(nameof(source)));

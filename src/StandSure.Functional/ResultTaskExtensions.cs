@@ -57,6 +57,8 @@ public static class ResultTaskExtensions
     /// <returns>The mapped result, or the original failure.</returns>
     public static async Task<Result<TOut>> MapAsync<T, TOut>(this Task<Result<T>> source, Func<T, Task<TOut>?>? map)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         var result = await Resolve(source).ConfigureAwait(false);
 
         if (result.IsFailure)
@@ -81,6 +83,8 @@ public static class ResultTaskExtensions
     /// <returns>The result of <paramref name="bind"/>, or the original failure without calling it.</returns>
     public static async Task<Result<TOut>> BindAsync<T, TOut>(this Task<Result<T>> source, Func<T, Result<TOut>> bind)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         var result = await Resolve(source).ConfigureAwait(false);
         return result.Bind(bind);
     }
@@ -93,6 +97,8 @@ public static class ResultTaskExtensions
     /// <returns>The result of <paramref name="bind"/>, or the original failure without calling it.</returns>
     public static async Task<Result<TOut>> BindAsync<T, TOut>(this Task<Result<T>> source, Func<T, Task<Result<TOut>>?>? bind)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         var result = await Resolve(source).ConfigureAwait(false);
 
         if (result.IsFailure)
@@ -127,6 +133,8 @@ public static class ResultTaskExtensions
         Func<Error, TOut> onFailure,
         Func<T, TOut> onSuccess)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         var result = await Resolve(source).ConfigureAwait(false);
         return result.Match(onFailure, onSuccess);
     }
@@ -144,6 +152,8 @@ public static class ResultTaskExtensions
         Func<Error, Task<TOut>>? onFailure,
         Func<T, Task<TOut>?>? onSuccess)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         var result = await Resolve(source).ConfigureAwait(false);
         Task<TOut>? task;
 
@@ -187,6 +197,8 @@ public static class ResultTaskExtensions
     /// predicate holds; prefer the factory overload <see cref="EnsureAsync{T}(Task{Result{T}}, Func{T, bool}, Func{T, Error})"/>.</remarks>
     public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> source, Func<T, bool> predicate, Error error)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         var result = await Resolve(source).ConfigureAwait(false);
         return result.Ensure(predicate, error);
     }
@@ -201,6 +213,8 @@ public static class ResultTaskExtensions
     /// predicate holds; prefer the factory overload <see cref="EnsureAsync{T}(Task{Result{T}}, Func{T, Task{bool}}, Func{T, Error})"/>.</remarks>
     public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> source, Func<T, Task<bool>?>? predicate, Error error)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         var result = await Resolve(source).ConfigureAwait(false);
 
         if (result.IsFailure)
@@ -235,6 +249,8 @@ public static class ResultTaskExtensions
     [OverloadResolutionPriority(-1)]
     public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> source, Func<T, bool> predicate, Func<T, Error> error)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         var result = await Resolve(source).ConfigureAwait(false);
         return result.Ensure(predicate, error);
     }
@@ -250,6 +266,8 @@ public static class ResultTaskExtensions
     [OverloadResolutionPriority(-1)]
     public static async Task<Result<T>> EnsureAsync<T>(this Task<Result<T>> source, Func<T, Task<bool>?>? predicate, Func<T, Error>? error)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         var result = await Resolve(source).ConfigureAwait(false);
 
         if (result.IsFailure)

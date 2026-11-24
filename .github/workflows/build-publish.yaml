@@ -9,8 +9,7 @@ on:
 
 jobs:
   build:
-    # Pinned to the stand-sure-org branch that adds .NET 11 support; switch to @main once that branch merges.
-    uses: stand-sure-org/Oui-DELIVER/.github/workflows/build-publish.yml@feat/dotnet11-standalone
+    uses: stand-sure-org/Oui-DELIVER/.github/workflows/build-publish.yml@main
     secrets:
       # Pushes the package to this org's GitHub Packages feed on main and tags only.
       githubToken: ${{ secrets.GITHUB_TOKEN }}
