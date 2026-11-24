@@ -1,0 +1,21 @@
+name: auto-pr
+on:
+  push:
+    branches-ignore:
+      - main
+    tags-ignore:
+      - "*"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  pull_request:
+    if: github.ref != 'refs/heads/main'
+    uses: stand-sure-org/Oui-DELIVER/.github/workflows/auto-pr.yml@feat/dotnet11-standalone
+    secrets:
+      # A PR opened with GITHUB_TOKEN does not trigger pull_request workflows,
+      # so the GitHub App key (bot identity) is the intended path.
+      token: ${{ secrets.SEMVER_TOKEN_NO_EXPIRATION || secrets.GITHUB_TOKEN }}
+      auto_pr_private_key: ${{ secrets.AUTO_PR_APP_PRIVATE_KEY }}
