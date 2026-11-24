@@ -1,12 +1,14 @@
 # Design: Functional Core + Model-Usage Harness
 
-**Version:** 1.3 (Activity spans)
-**Date:** 2026-11-20
+**Version:** 1.4 (Error equality and ToString)
+**Date:** 2026-11-24
 **Changes:** v1.1 settled harness execution, baseline authority, wire format, telemetry
 firing points, run mode. v1.2: no budget cap (5 runs per cell), Gemini via
 `GEMINI_API_KEY`, local models pulled fresh, baseline authority confirmed by owner.
 v1.3: the `StandSure.Functional` ActivitySource now starts a span in every method that
 runs caller code (§Telemetry, "Spans"); offline sample apps to observe the traces.
+v1.4: `Error` gets value equality over its contents and a `ToString` that honours the
+`EmitErrorDetails` switch (§`Error`, "Equality and ToString"), from the 2026-11-24 review.
 See `DECISION.md` for the why and the scope table.
 
 Items marked **[builder's call]** were proposed by Claude during design and not
@@ -205,6 +207,24 @@ telemetry do not depend on naming and can be built (TDD) while the baseline runs
 - `Wrap(string code, string message)` returns a new Error with `this` as `Inner`.
 - `Is(string code)` walks the `Inner` chain (Go `errors.Is`).
 - `Error.Uninitialized`: what a `default` Result holds.
+- Equality and ToString (v1.4, 2026-11-24 review). The compiler-generated record members
+  compared `Metadata`, `Errors` and `Exception` by reference (FrozenDictionary and arrays
+  don't override `Equals`), so two errors with the same metadata were unequal while two
+  without any were equal only because they share the static empties. And `ToString()`
+  printed `Message` and the `Exception` whatever the switch said.
+  - `Equals` compares `Kind`, `Code` and `Message` (ordinal); `Metadata` as a set of
+    key/value pairs (order ignored); `Inner` recursively; `Errors` in order, element by
+    element; `Exception` by reference (two different exception objects are two different
+    failures). `GetHashCode` uses `Kind`, `Code`, `Message`, the counts of `Metadata` and
+    `Errors`, and `Inner`'s hash, so it agrees with `Equals` without hashing contents.
+  - `Message` counts towards equality **[owner agreed]**: "same code, different text" being
+    equal would surprise more than it helps.
+  - `ToString()` (via `PrintMembers`) prints `Kind`, `Code`, the `Metadata` **keys**, `Inner`
+    and the number of `Errors`. `Message` and metadata values are printed only when the
+    `EmitErrorDetails` switch is on, the same rule as telemetry, because `{error}` in a log
+    line leaves the process just as an exported span does. The `Exception` is never printed;
+    its type is, when present. The properties themselves are unchanged: `error.Message` is
+    always there for code that wants it.
 - JSON **[builder's call, settled after builder check]**:
   - `Error` is serialized via a source-generated `JsonSerializerContext` in core.
     Field names line up with ProblemDetails so the ASP.NET package maps 1:1:

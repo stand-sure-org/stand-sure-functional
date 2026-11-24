@@ -33,6 +33,8 @@ namespace StandSure.Functional
         [System.Text.Json.Serialization.JsonPropertyName("metadata")]
         public System.Collections.Generic.IReadOnlyDictionary<string, string> Metadata { get; }
         public static StandSure.Functional.Error Uninitialized { get; }
+        public bool Equals(StandSure.Functional.Error? other) { }
+        public override int GetHashCode() { }
         public bool Is(string code) { }
         public StandSure.Functional.Error Wrap(string code, string message) { }
         public static StandSure.Functional.Error Conflict(string code, string message, System.Collections.Generic.IReadOnlyDictionary<string, string>? metadata = null) { }
