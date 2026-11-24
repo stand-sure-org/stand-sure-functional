@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace StandSure.Functional;
@@ -213,9 +214,15 @@ public readonly partial struct Result<T>
     /// do not pass it. When <see langword="null"/>, the message is generic.</param>
     /// <returns>This result if it is a failure or the predicate holds; otherwise a <see cref="ErrorKind.Validation"/>
     /// failure with code <c>result.ensure_failed</c> and <paramref name="expression"/> as its message.</returns>
+    /// <remarks>
+    /// Hidden from IntelliSense: the message is source code (<c>"u =&gt; u.Age &gt;= 13"</c>), and an HTTP mapping can
+    /// show it to users. Prefer <see cref="Ensure(Func{T, bool}, Func{T, Error})"/> with an error that has a stable
+    /// code and a human message.
+    /// </remarks>
     // RS0027: the (predicate, Error) overload is a distinct type-based overload, not a later optional-parameter addition.
 #pragma warning disable RS0027
     [OverloadResolutionPriority(-1)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public Result<T> Ensure(Func<T, bool> predicate, [CallerArgumentExpression(nameof(predicate))] string? expression = null)
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
