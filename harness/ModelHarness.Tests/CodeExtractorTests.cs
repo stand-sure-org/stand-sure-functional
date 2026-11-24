@@ -134,6 +134,18 @@ public sealed class CodeExtractorTests
     }
 
     [Fact]
+    public void Revision_KeepsPreprocessorDirectivesAroundTheRemovedType()
+    {
+        var text = "```csharp\n#region Models\npublic class Order { }\n#endregion\npublic class Solution { }\n```\n"
+                   + "```csharp\npublic record Order(int Id);\n```";
+
+        var result = CodeExtractor.Extract(text);
+
+        result.Status.Should().Be(ExtractStatus.Revised);
+        result.Code.Should().Contain("#region Models").And.Contain("#endregion").And.Contain("class Solution");
+    }
+
+    [Fact]
     public void SameNameDifferentArity_IsNotARevision()
     {
         var text = "```csharp\npublic class Box { }\n```\n```csharp\npublic class Box<T> { }\n```";

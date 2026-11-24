@@ -76,7 +76,7 @@ public static class CodeExtractor
                 }
 
                 revised = true;
-                var remaining = root.RemoveNodes(superseded, SyntaxRemoveOptions.KeepNoTrivia)!;
+                var remaining = root.RemoveNodes(superseded, SyntaxRemoveOptions.KeepDirectives)!;
 
                 if (remaining.DescendantNodes().OfType<MemberDeclarationSyntax>().Any(m => m is not BaseNamespaceDeclarationSyntax))
                 {
