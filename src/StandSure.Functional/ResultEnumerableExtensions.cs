@@ -18,9 +18,11 @@ public static class ResultEnumerableExtensions
     extension<T>(IEnumerable<Result<T>>? source)
     {
         /// <summary>Turns a sequence of results into one result holding every value, or every failure.</summary>
-        /// <returns>A success with the values in order (empty for an empty sequence), or a validation failure with code
+        /// <returns>A success with the values in order (empty for an empty sequence), or a failure with code
         /// <c>result.combine_failed</c>, message "<c>n</c> of <c>m</c> failed" and <b>all</b> failures in
-        /// <see cref="Error.Errors"/>.</returns>
+        /// <see cref="Error.Errors"/>. The failure's <see cref="Error.Kind"/> is the children's kind when they all agree; for a mix it is
+        /// <see cref="ErrorKind.Unexpected"/> if any child is, else <see cref="ErrorKind.Unavailable"/> if any child is,
+        /// else <see cref="ErrorKind.Validation"/>.</returns>
         public Result<IReadOnlyList<T>> Combine()
         {
             if (source is null)
@@ -40,7 +42,8 @@ public static class ResultEnumerableExtensions
     /// <param name="map">The mapper. A <see langword="null"/> value gives a <c>result.null_delegate</c> failure.
     /// It runs for every element: this helper does not stop at the first failure, so side effects of the mapper
     /// happen for all elements.</param>
-    /// <returns>A success with every mapped value in order, or a validation failure holding all failures.</returns>
+    /// <returns>A success with every mapped value in order, or a failure holding all failures, with its kind chosen as
+    /// for <c>Combine</c>.</returns>
     public static Result<IReadOnlyList<TOut>> Traverse<T, TOut>(
         this IEnumerable<T>? source,
         Func<T, Result<TOut>>? map)
@@ -118,9 +121,37 @@ public static class ResultEnumerableExtensions
             return new Result<IReadOnlyList<T>>(values);
         }
 
-        return new Result<IReadOnlyList<T>>(Error.Validation(
+        return new Result<IReadOnlyList<T>>(Error.Group(
+            GroupKind(errors),
             ResultErrors.CombineFailedCode,
             $"{errors.Count} of {total} failed",
-            errors));
+            [.. errors]));
+    }
+
+    // Children that agree keep their kind. A mix reports the most severe server-side kind present, so a batch with an
+    // outage is not mapped to a 400 by the caller's kind switch; a mix of caller-side kinds stays Validation.
+    private static ErrorKind GroupKind(List<Error> errors)
+    {
+        var first = errors[0].Kind;
+        var uniform = true;
+        var hasUnavailable = false;
+
+        foreach (var error in errors)
+        {
+            if (error.Kind == ErrorKind.Unexpected)
+            {
+                return ErrorKind.Unexpected;
+            }
+
+            hasUnavailable |= error.Kind == ErrorKind.Unavailable;
+            uniform &= error.Kind == first;
+        }
+
+        if (uniform)
+        {
+            return first;
+        }
+
+        return hasUnavailable ? ErrorKind.Unavailable : ErrorKind.Validation;
     }
 }
