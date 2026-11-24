@@ -9,6 +9,12 @@ public enum ExtractStatus
     /// <summary>Several C# fences were joined in order.</summary>
     Concatenated,
 
+    /// <summary>
+    /// A later fence redeclared a (non-partial) type from an earlier one, so the earlier declaration was dropped as the
+    /// model's superseded draft; the remaining code was joined in order.
+    /// </summary>
+    Revised,
+
     /// <summary>No usable C# was found.</summary>
     ExtractFailed,
 }

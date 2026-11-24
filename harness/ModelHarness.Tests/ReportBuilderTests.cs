@@ -197,6 +197,19 @@ public sealed class ReportBuilderTests
     }
 
     [Fact]
+    public void DataQuality_CountsRevisedSeparatelyFromConcatenated()
+    {
+        var log = RunLog.Parse(
+        [
+            JsonSerializer.Serialize(Rec(extract: "revised"), Json),
+            JsonSerializer.Serialize(Rec(extract: "revised"), Json),
+            JsonSerializer.Serialize(Rec(extract: "concatenated"), Json),
+        ]);
+
+        Section(Build(log), "## Data quality").Should().Contain("| anthropic | 3 | 0 | 0 | 0 | 0 | 1 | 2 | 0 | 0 |\n");
+    }
+
+    [Fact]
     public void DataQuality_IsFirst_CountsAndMalformedLines()
     {
         var log = RunLog.Parse(
@@ -216,7 +229,7 @@ public sealed class ReportBuilderTests
 
         report.IndexOf("## Data quality", StringComparison.Ordinal).Should().BeLessThan(report.IndexOf("## 1.", StringComparison.Ordinal));
         var dq = Section(report, "## Data quality");
-        dq.Should().Contain("| anthropic | 4 | 1 | 1 (max_tokens: 1) | 0 | 0 | 1 | 0 | 1 |");
+        dq.Should().Contain("| anthropic | 4 | 1 | 1 (max_tokens: 1) | 0 | 0 | 1 | 0 | 0 | 1 |\n");
         dq.Should().Contain("Malformed lines skipped: 3");
     }
 
@@ -342,7 +355,7 @@ public sealed class ReportBuilderTests
 
         var report = Build(log);
 
-        Section(report, "## Data quality").Should().Contain("Runner errors").And.Contain("| anthropic | 2 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |");
+        Section(report, "## Data quality").Should().Contain("Runner errors").And.Contain("| anthropic | 2 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |\n");
         Section(report, "## Data quality").Should().Contain("EXCLUDED").And.Contain("runner error");
         Section(report, "## 1. Compile rate").Should().Contain("| anthropic | 1 | 1 | 100.0% |");
     }
@@ -352,7 +365,7 @@ public sealed class ReportBuilderTests
     {
         var log = Log(Rec(probe: ProbeOutcome.Crashed), Rec(probe: ProbeOutcome.Crashed, truncated: true, stop: "max_tokens"));
 
-        Section(Build(log), "## Data quality").Should().Contain("| anthropic | 2 | 0 | 1 (max_tokens: 1) | 0 | 0 | 0 | 0 | 1 |");
+        Section(Build(log), "## Data quality").Should().Contain("| anthropic | 2 | 0 | 1 (max_tokens: 1) | 0 | 0 | 0 | 0 | 0 | 1 |\n");
     }
 
     [Fact]
