@@ -1,0 +1,29 @@
+name: build-publish
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "*" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Pinned to the stand-sure-org branch that adds .NET 11 support; switch to @main once that branch merges.
+    uses: stand-sure-org/Oui-DELIVER/.github/workflows/build-publish.yml@feat/dotnet11-standalone
+    secrets:
+      # Pushes the package to this org's GitHub Packages feed on main and tags only.
+      githubToken: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      attestations: write
+      packages: write
+      pull-requests: write
+      id-token: write
+      contents: write
+      actions: read
+      checks: write
+    with:
+      # The library packs itself on every build into artifacts/packages (see Directory.Build.props).
+      nugetPackagesPath: ./artifacts/packages
+      # global.json selects Microsoft.Testing.Platform; xUnit v3 writes TRX for the test report.
+      testArguments: --report-xunit-trx
