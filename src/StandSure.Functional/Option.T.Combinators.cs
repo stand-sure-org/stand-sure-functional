@@ -29,6 +29,8 @@ public readonly partial struct Option<T>
     /// <returns>The result of the function that ran.</returns>
     public TOut Match<TOut>(Func<TOut>? onNone, Func<T, TOut>? onSome)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (this.isSome)
         {
             return onSome is null ? NullBranch<TOut>(nameof(onSome)) : onSome(this.optionValue);
@@ -51,6 +53,8 @@ public readonly partial struct Option<T>
     /// <returns>Some holding the mapped value, or none.</returns>
     public Option<TOut> Map<TOut>(Func<T, TOut>? map)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (!this.isSome)
         {
             return default;
@@ -72,6 +76,8 @@ public readonly partial struct Option<T>
     /// <returns>The result of <paramref name="bind"/>, or none without calling it.</returns>
     public Option<TOut> Bind<TOut>(Func<T, Option<TOut>>? bind)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (!this.isSome)
         {
             return default;
@@ -92,6 +98,8 @@ public readonly partial struct Option<T>
     /// <returns>This option if it is some and the predicate holds; otherwise none.</returns>
     public Option<T> Filter(Func<T, bool>? predicate)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (!this.isSome)
         {
             return default;
@@ -130,6 +138,8 @@ public readonly partial struct Option<T>
     [OverloadResolutionPriority(-1)]
     public Result<T> ToResult(Func<Error>? ifNone)
     {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
         if (this.isSome)
         {
             return new Result<T>(this.optionValue);

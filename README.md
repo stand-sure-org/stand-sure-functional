@@ -22,6 +22,10 @@ This library makes them values you return, chain and match, so the compiler show
   `EnsureAsync(..., v => error)` and `ToResult(() => error)`: an `Error` passed directly is built, and recorded, even
   when the check passes.
   Messages and metadata are emitted only when the `AppContext` switch `StandSure.Functional.EmitErrorDetails` is on.
+- Every method that runs your delegate (`Map`, `Bind`, `Match`, `Ensure`, `Tap`, `Traverse`, `Try.Run`, the `*Async`
+  forms, and the `Option` equivalents) starts a span on the `StandSure.Functional` source, named after the method. The
+  spans carry no status and no tags. Subscribe with `AddSource("StandSure.Functional")`; with no subscriber they cost
+  one listener check. Failure events raised inside your delegate attach to that span.
 - The API names come from measuring what language models write unprompted (see `harness/results/baseline-report.md`).
 
 ## Install

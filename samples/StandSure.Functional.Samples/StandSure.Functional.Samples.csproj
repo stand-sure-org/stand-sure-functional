@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Sample app: three failure scenarios exported over OTLP to a local collector (default http://localhost:4317,
+    override with OTEL_EXPORTER_OTLP_ENDPOINT). Not a test; nothing here runs during dotnet test.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>StandSure.Functional.Samples</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="OpenTelemetry" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\StandSure.Functional\StandSure.Functional.csproj" />
+  </ItemGroup>
+</Project>

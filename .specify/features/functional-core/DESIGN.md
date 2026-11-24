@@ -1,10 +1,12 @@
 # Design: Functional Core + Model-Usage Harness
 
-**Version:** 1.2 (Owner answers to builder check)
-**Date:** 2026-11-19
+**Version:** 1.3 (Activity spans)
+**Date:** 2026-11-20
 **Changes:** v1.1 settled harness execution, baseline authority, wire format, telemetry
 firing points, run mode. v1.2: no budget cap (5 runs per cell), Gemini via
 `GEMINI_API_KEY`, local models pulled fresh, baseline authority confirmed by owner.
+v1.3: the `StandSure.Functional` ActivitySource now starts a span in every method that
+runs caller code (§Telemetry, "Spans"); offline sample apps to observe the traces.
 See `DECISION.md` for the why and the scope table.
 
 Items marked **[builder's call]** were proposed by Claude during design and not
@@ -286,7 +288,60 @@ Exclude anything LINQ already provides.
   core telemetry contract small and stable.
 - **Messages and metadata are not emitted by default** (PII); opt-in switch
   **[builder's call]** on mechanism (an `AppContext` switch keeps core dependency-free).
-- No telemetry on success paths. Cost when no listener ≈ one null check / `Enabled` check.
+- With no listener on `StandSure.Functional`, success paths emit nothing: the cost is
+  one listener check. With a listener, success paths emit spans (below).
+
+#### Spans (v1.3)
+
+Owner confirmed 2026-11-20: the sync combinators are in scope.
+
+Before v1.3 the `ActivitySource` existed but never started an activity, so subscribing
+to it with `AddSource("StandSure.Functional")` gave nothing.
+
+**Rule.** Every public method that runs code the library did not write (a caller's
+delegate) starts a span on its first line, using the default name (the method name):
+
+```csharp
+using var activity = FunctionalDiagnostics.Source.StartActivity();
+```
+
+- **One source**, `StandSure.Functional`. There are no per-area sources and no
+  enable-all switch: subscribing is the opt-in.
+- **Span boundaries.** The span starts on the first line and includes awaiting an
+  upstream `Task<Result<T>>`. Finer spans come only from extracting a method that has
+  its own span.
+- **No status and no tags.** Our spans never set `Error` status, and never mark
+  exceptions. Our code did not fail. A failed result is handled upstream by whoever
+  called us, and a failing delegate owns its own instrumentation. Marking our span would
+  also make every span above it in the call tree read as failed.
+- **Error recording is unchanged.** `FunctionalDiagnostics` and the `functional.failure*`
+  events and counter are not modified.
+
+**Invariant.** With nothing subscribed to `StandSure.Functional`, behaviour is the same
+as v1.2, and all allocation guarantees hold.
+
+**Known consequence (to observe, not yet settled).** While our span is open it is
+`Activity.Current`. A `functional.failure` event raised inside the caller's delegate
+(including `Try` converting an exception) therefore attaches to our span rather than to
+the caller's span. The sample apps exist to show whether this reads well in a real trace.
+
+**Members in scope.**
+
+| Area | Members |
+|---|---|
+| `Try` | `Run` (both), `RunAsync` (both) |
+| Async (`ResultTaskExtensions`) | `BindAsync` ×2, `MapAsync` ×2, `MatchAsync` ×2, `EnsureAsync` ×4 |
+| Sync `Result<T>` | `Match`, `Map`, `Bind`, `MapError`, `Ensure` ×3, `Tap` |
+| Sync `Option<T>` | `Match`, `Map`, `Bind`, `Filter`, `ToResult` (lazy) |
+| Collections | `Traverse` |
+
+**Excluded: iterators.** `Choose`, `Scan` and `Pairwise` use `yield`. In an iterator the
+first-line `using` runs at the first `MoveNext`, stays open until the enumerator is
+disposed, and stays `Activity.Current` while the caller's `foreach` body runs. That
+would change the caller's own tracing. Iterators get no span; if one is wanted later, it
+goes on an extracted method around the single delegate call.
+
+Methods that only return a task they were given, without awaiting, get no span.
 
 ### Performance and consumer hints
 
@@ -318,6 +373,23 @@ docs/llm-api-summary.md               one page, the with-library prompt
 - Allocation tests via `GC.GetAllocatedBytesForCurrentThread` for the hot paths
   (benchmarks confirm).
 - Telemetry tests with an in-test `ActivityListener` / `MeterListener`.
+- Span tests (v1.3), in the existing `TelemetryCollection` (`DisableParallelization =
+  true`), which runs alone, so a listener's spans never allocate inside a concurrently
+  running allocation test:
+  - For each member in scope: a span named after the method, a child of the test's
+    activity, with no status and no tags.
+  - The iterators produce no span.
+  - The allocation tests still report 0 B with no listener.
+  - Existing tests that assert failure events on the test's own activity (for example
+    `Try` converting an exception) will now see those events on our span. Each one is
+    updated to look on the span and to say so, rather than being silenced.
+- Sample apps (`samples/`, v1.3): small console apps that fail in realistic ways
+  (third-party call throws, validation chain fails, async chain with an upstream
+  failure). They export over OTLP to the local `otelcol-contrib` collector
+  (`localhost:4317`, or `OTEL_EXPORTER_OTLP_ENDPOINT`), never to a remote service, and
+  are not run by `dotnet test`. Output through `ILogger` (the `Console` ban applies).
+  Their output is how the "known consequence" above gets judged; see
+  `reviews/spans-traces-2026-11-20.md`.
 - JSON round-trip tests for `Error` and `Result<T>`.
 - `Try` tests: exceptions become `Unexpected`; `OperationCanceledException` propagates.
 
