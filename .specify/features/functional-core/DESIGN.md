@@ -261,8 +261,12 @@ README credits language-ext (Paul Louth, MIT) as inspiration.
 
 High value for workflows; included in v1 unless the report says otherwise:
 `Combine` (many `Result<T>` → `Result<IReadOnlyList<T>>`, accumulating *all* errors
-into a `Validation` parent), `Traverse`, `Partition` (successes, failures),
+into one parent), `Traverse`, `Partition` (successes, failures),
 `Choose` (Options → values).
+
+The parent's kind (owner decision, 2026-11-24 review): the children's kind when they all agree; for a mix,
+`Unexpected` if any child is, else `Unavailable` if any child is, else `Validation`. A batch of outages must not
+reach a caller's kind switch as a 400.
 
 ### functools / itertools / toolz candidates
 

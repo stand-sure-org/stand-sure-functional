@@ -11,7 +11,7 @@ Expected failures are values: `Result<T>` holds an `Error` or a `T`; `Option<T>`
 - `Option<T>`: `Option.Some(x)`, `Option<T>.None`, or a `T` directly. `IsSome`, `IsNone`, `Match`, `Map`, `Bind`, `Filter`, `GetValueOrDefault(fallback)`, `ToResult(ifNone)` (`ifNone`: `() => Error.NotFound(...)`).
 - `Try.Run(() => ...)` and `Try.RunAsync(ct => ..., ct)` turn exceptions into failures of kind `Unexpected`.
 - On `Task<Result<T>>` only (from a `Result<T>`, use `Task.FromResult(result)`): `MapAsync`, `BindAsync`, `EnsureAsync`, `MatchAsync`.
-- Sequences: `results.Combine()`, `items.Traverse(f)`, `results.Partition()`, `options.Choose()`, `items.Pairwise()`, `items.Scan(seed, f)`.
+- Sequences: `results.Combine()`, `items.Traverse(f)`, `results.Partition()`, `options.Choose()`, `items.Pairwise()`, `items.Scan(seed, f)`. A `Combine`/`Traverse` failure holds every child in `Errors`; its kind is the children's when they agree, else `Unexpected`, then `Unavailable`, then `Validation`.
 
 **Failure comes first:** `Match(onFailure, onSuccess)` and `Match(onNone, onSome)`. Always pass them as named arguments.
 

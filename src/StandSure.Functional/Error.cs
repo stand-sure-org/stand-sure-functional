@@ -116,6 +116,11 @@ public sealed record Error
     public static Error Validation(string code, string message, IEnumerable<Error>? errors) =>
         Create(ErrorKind.Validation, code, message, null, null, errors?.ToArray());
 
+    // The parent built by Combine and Traverse: same telemetry as the public grouping factory, with the kind chosen by
+    // the caller from the children.
+    internal static Error Group(ErrorKind kind, string code, string message, IReadOnlyList<Error> errors) =>
+        Create(kind, code, message, null, null, errors);
+
     /// <summary>Creates a <see cref="ErrorKind.NotFound"/> error.</summary>
     /// <param name="code">The error code.</param>
     /// <param name="message">The message.</param>

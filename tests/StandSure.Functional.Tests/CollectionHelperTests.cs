@@ -32,7 +32,7 @@ public sealed class CollectionHelperTests
         var r = new[] { Ok(1), Bad(E1), Ok(3), Bad(E2) }.Combine();
 
         r.TryGetValue(out Error? error).Should().BeTrue();
-        error!.Kind.Should().Be(ErrorKind.Validation);
+        error!.Kind.Should().Be(ErrorKind.NotFound, "both children are NotFound");
         error.Code.Should().Be("result.combine_failed");
         error.Message.Should().Be("2 of 4 failed");
         error.Errors.Should().Equal(E1, E2);
