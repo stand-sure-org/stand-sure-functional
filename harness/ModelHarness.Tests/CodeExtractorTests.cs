@@ -114,8 +114,34 @@ public sealed class CodeExtractorTests
 
         var result = CodeExtractor.Extract(text);
 
+        result.Status.Should().Be(ExtractStatus.Revised);
         result.Code!.Split("class Helper").Should().HaveCount(2);
         result.Code.Should().NotContain("A()");
+    }
+
+    [Fact]
+    public void Revision_OfOneType_KeepsTheRestOfTheEarlierFence()
+    {
+        var text = "```csharp\nusing System;\npublic class Solution { public Order Make() => new(1); }\npublic class Order { public Order(int id) { } }\n```\n"
+                   + "And `Order` should be a record:\n"
+                   + "```csharp\npublic record Order(int Id);\n```";
+
+        var result = CodeExtractor.Extract(text);
+
+        result.Status.Should().Be(ExtractStatus.Revised);
+        result.Code.Should().Contain("class Solution").And.Contain("record Order").And.Contain("using System;");
+        result.Code.Should().NotContain("class Order");
+    }
+
+    [Fact]
+    public void SameNameDifferentArity_IsNotARevision()
+    {
+        var text = "```csharp\npublic class Box { }\n```\n```csharp\npublic class Box<T> { }\n```";
+
+        var result = CodeExtractor.Extract(text);
+
+        result.Status.Should().Be(ExtractStatus.Concatenated);
+        result.Code.Should().Contain("class Box {").And.Contain("class Box<T>");
     }
 
     [Fact]

@@ -10,8 +10,8 @@ public enum ExtractStatus
     Concatenated,
 
     /// <summary>
-    /// A later fence redeclared a (non-partial) type from an earlier one, so the earlier fence was dropped as the model's
-    /// superseded draft; the remaining fences were joined in order.
+    /// A later fence redeclared a (non-partial) type from an earlier one, so the earlier declaration was dropped as the
+    /// model's superseded draft; the remaining code was joined in order.
     /// </summary>
     Revised,
 

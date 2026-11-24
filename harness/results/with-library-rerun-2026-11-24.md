@@ -62,7 +62,7 @@ Regression rule as in DESIGN §6: more than 10 points worse than baseline, n >= 
 
 ## Re-scored with the revised-block extractor (#36)
 
-The extractor now drops a fence that a later fence supersedes (same non-partial type redeclared), status `revised`.
+The extractor now removes a non-partial type from earlier fences when a later fence redeclares it (a fence left empty is dropped), status `revised`.
 Re-extracting and recompiling every `concatenated` record of the three runs changes 9 records: 8 failures now
 compile, none that compiled breaks. Rows of the table above that change:
 
