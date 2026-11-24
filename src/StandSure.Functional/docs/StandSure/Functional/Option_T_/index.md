@@ -6,7 +6,7 @@
 An optional value: either some [T](index.md#StandSure.Functional.Option_T_.T 'StandSure\.Functional\.Option\<T\>\.T') or [None](../None/index.md 'StandSure\.Functional\.None')\.
 
 ```csharp
-public readonly struct Option<T> : System.Runtime.CompilerServices.IUnion
+public readonly struct Option<T> : System.Runtime.CompilerServices.IUnion, System.IEquatable<StandSure.Functional.Option<T>>
 ```
 #### Type parameters
 
@@ -16,7 +16,7 @@ public readonly struct Option<T> : System.Runtime.CompilerServices.IUnion
 
 The value type\.
 
-Implements [System\.Runtime\.CompilerServices\.IUnion](https://learn.microsoft.com/en-us/dotnet/api/system.runtime.compilerservices.iunion 'System\.Runtime\.CompilerServices\.IUnion')
+Implements [System\.Runtime\.CompilerServices\.IUnion](https://learn.microsoft.com/en-us/dotnet/api/system.runtime.compilerservices.iunion 'System\.Runtime\.CompilerServices\.IUnion'), [System\.IEquatable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.iequatable-1 'System\.IEquatable\`1')[StandSure\.Functional\.Option&lt;](index.md 'StandSure\.Functional\.Option\<T\>')[T](index.md#StandSure.Functional.Option_T_.T 'StandSure\.Functional\.Option\<T\>\.T')[&gt;](index.md 'StandSure\.Functional\.Option\<T\>')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.iequatable-1 'System\.IEquatable\`1')
 
 ### Remarks
 
@@ -44,7 +44,10 @@ active branch does not use may be [null](https://docs.microsoft.com/en-us/dotnet
 | Methods | |
 | :--- | :--- |
 | [Bind&lt;TOut&gt;\(Func&lt;T,Option&lt;TOut&gt;&gt;\)](Bind_TOut_(Func_T,Option_TOut__).md 'StandSure\.Functional\.Option\<T\>\.Bind\<TOut\>\(System\.Func\<T,StandSure\.Functional\.Option\<TOut\>\>\)') | Chains an operation that itself returns an [Option&lt;T&gt;](index.md 'StandSure\.Functional\.Option\<T\>'); none short\-circuits\. |
+| [Equals\(object\)](Equals.md#StandSure.Functional.Option_T_.Equals(object) 'StandSure\.Functional\.Option\<T\>\.Equals\(object\)') | Compares this option with an object\. |
+| [Equals\(Option&lt;T&gt;\)](Equals.md#StandSure.Functional.Option_T_.Equals(StandSure.Functional.Option_T_) 'StandSure\.Functional\.Option\<T\>\.Equals\(StandSure\.Functional\.Option\<T\>\)') | Compares this option with another by their contents\. |
 | [Filter\(Func&lt;T,bool&gt;\)](Filter(Func_T,bool_).md 'StandSure\.Functional\.Option\<T\>\.Filter\(System\.Func\<T,bool\>\)') | Keeps some only when the predicate holds\. |
+| [GetHashCode\(\)](GetHashCode().md 'StandSure\.Functional\.Option\<T\>\.GetHashCode\(\)') | Gets a hash code that agrees with [Equals\(Option&lt;T&gt;\)](Equals.md#StandSure.Functional.Option_T_.Equals(StandSure.Functional.Option_T_) 'StandSure\.Functional\.Option\<T\>\.Equals\(StandSure\.Functional\.Option\<T\>\)')\. |
 | [GetValueOrDefault\(T\)](GetValueOrDefault(T).md 'StandSure\.Functional\.Option\<T\>\.GetValueOrDefault\(T\)') | Gets the value, or a fallback for none \(including `default`\)\. |
 | [Map&lt;TOut&gt;\(Func&lt;T,TOut&gt;\)](Map_TOut_(Func_T,TOut_).md 'StandSure\.Functional\.Option\<T\>\.Map\<TOut\>\(System\.Func\<T,TOut\>\)') | Transforms the value; none passes through unchanged\. |
 | [Match&lt;TOut&gt;\(Func&lt;TOut&gt;, Func&lt;T,TOut&gt;\)](Match_TOut_(Func_TOut_,Func_T,TOut_).md 'StandSure\.Functional\.Option\<T\>\.Match\<TOut\>\(System\.Func\<TOut\>, System\.Func\<T,TOut\>\)') | Runs one of two functions depending on the case\. The none function comes first\. |
@@ -52,3 +55,8 @@ active branch does not use may be [null](https://docs.microsoft.com/en-us/dotnet
 | [ToResult\(Func&lt;Error&gt;\)](ToResult.md#StandSure.Functional.Option_T_.ToResult(System.Func_StandSure.Functional.Error_) 'StandSure\.Functional\.Option\<T\>\.ToResult\(System\.Func\<StandSure\.Functional\.Error\>\)') | Converts to a [Result&lt;T&gt;](../Result_T_/index.md 'StandSure\.Functional\.Result\<T\>'), building the error only for none\. |
 | [TryGetValue\(None\)](TryGetValue.md#StandSure.Functional.Option_T_.TryGetValue(StandSure.Functional.None) 'StandSure\.Functional\.Option\<T\>\.TryGetValue\(StandSure\.Functional\.None\)') | Gets the none case if this option is none\. |
 | [TryGetValue\(T\)](TryGetValue.md#StandSure.Functional.Option_T_.TryGetValue(T) 'StandSure\.Functional\.Option\<T\>\.TryGetValue\(T\)') | Gets the value if this option is some\. |
+
+| Operators | |
+| :--- | :--- |
+| [operator ==\(Option&lt;T&gt;, Option&lt;T&gt;\)](operator(Option_T_,Option_T_).md 'StandSure\.Functional\.Option\<T\>\.op\_Equality\(StandSure\.Functional\.Option\<T\>, StandSure\.Functional\.Option\<T\>\)') | Compares two options by their contents\. |
+| [operator \!=\(Option&lt;T&gt;, Option&lt;T&gt;\)](operator!(Option_T_,Option_T_).md 'StandSure\.Functional\.Option\<T\>\.op\_Inequality\(StandSure\.Functional\.Option\<T\>, StandSure\.Functional\.Option\<T\>\)') | Compares two options by their contents\. |

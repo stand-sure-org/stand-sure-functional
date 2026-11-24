@@ -143,3 +143,13 @@ StandSure.Functional.Option<T>.ToResult(System.Func<StandSure.Functional.Error!>
 static StandSure.Functional.EnumerablePairwiseExtensions.Pairwise<T>(this System.Collections.Generic.IEnumerable<T>? source) -> System.Collections.Generic.IEnumerable<(T Previous, T Current)>!
 static StandSure.Functional.EnumerableScanExtensions.Scan<T, TAcc>(this System.Collections.Generic.IEnumerable<T>? source, TAcc seed, System.Func<TAcc, T, TAcc>! accumulator) -> System.Collections.Generic.IEnumerable<TAcc>!
 static StandSure.Functional.Error.FromException(System.Exception? exception) -> StandSure.Functional.Error!
+override StandSure.Functional.Option<T>.Equals(object? obj) -> bool
+override StandSure.Functional.Option<T>.GetHashCode() -> int
+override StandSure.Functional.Result<T>.Equals(object? obj) -> bool
+override StandSure.Functional.Result<T>.GetHashCode() -> int
+StandSure.Functional.Option<T>.Equals(StandSure.Functional.Option<T> other) -> bool
+StandSure.Functional.Result<T>.Equals(StandSure.Functional.Result<T> other) -> bool
+static StandSure.Functional.Option<T>.operator !=(StandSure.Functional.Option<T> left, StandSure.Functional.Option<T> right) -> bool
+static StandSure.Functional.Option<T>.operator ==(StandSure.Functional.Option<T> left, StandSure.Functional.Option<T> right) -> bool
+static StandSure.Functional.Result<T>.operator !=(StandSure.Functional.Result<T> left, StandSure.Functional.Result<T> right) -> bool
+static StandSure.Functional.Result<T>.operator ==(StandSure.Functional.Result<T> left, StandSure.Functional.Result<T> right) -> bool

@@ -44,6 +44,7 @@ namespace StandSure.Functional
         public static StandSure.Functional.Error Unauthorized(string code, string message, System.Collections.Generic.IReadOnlyDictionary<string, string>? metadata = null) { }
         public static StandSure.Functional.Error Unavailable(string code, string message, System.Collections.Generic.IReadOnlyDictionary<string, string>? metadata = null) { }
         public static StandSure.Functional.Error Unexpected(string code, string message, System.Collections.Generic.IReadOnlyDictionary<string, string>? metadata = null) { }
+        [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
         public static StandSure.Functional.Error Validation(string code, string message, System.Collections.Generic.IEnumerable<StandSure.Functional.Error>? errors) { }
         public static StandSure.Functional.Error Validation(string code, string message, System.Collections.Generic.IReadOnlyDictionary<string, string>? metadata = null) { }
     }
@@ -76,7 +77,7 @@ namespace StandSure.Functional
     [System.Diagnostics.StackTraceHidden]
     [System.Runtime.CompilerServices.Union]
     [System.Text.Json.Serialization.JsonConverter(typeof(StandSure.Functional.Json.OptionJsonConverterFactory))]
-    public readonly struct Option<T> : System.Runtime.CompilerServices.IUnion
+    public readonly struct Option<T> : System.IEquatable<StandSure.Functional.Option<T>>, System.Runtime.CompilerServices.IUnion
     {
         public Option(StandSure.Functional.None none) { }
         public Option(T? value) { }
@@ -86,7 +87,10 @@ namespace StandSure.Functional
         public object? Value { get; }
         public static StandSure.Functional.Option<T> None { get; }
         public StandSure.Functional.Option<TOut> Bind<TOut>(System.Func<T, StandSure.Functional.Option<TOut>> bind) { }
+        public bool Equals(StandSure.Functional.Option<T> other) { }
+        public override bool Equals(object? obj) { }
         public StandSure.Functional.Option<T> Filter(System.Func<T, bool> predicate) { }
+        public override int GetHashCode() { }
         public T GetValueOrDefault(T fallback) { }
         public StandSure.Functional.Option<TOut> Map<TOut>(System.Func<T, TOut> map) { }
         public TOut Match<TOut>(System.Func<TOut> onNone, System.Func<T, TOut> onSome) { }
@@ -95,6 +99,8 @@ namespace StandSure.Functional
         public StandSure.Functional.Result<T> ToResult(System.Func<StandSure.Functional.Error> ifNone) { }
         public bool TryGetValue([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out StandSure.Functional.None? none) { }
         public bool TryGetValue([System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out T value) { }
+        public static bool operator !=(StandSure.Functional.Option<T> left, StandSure.Functional.Option<T> right) { }
+        public static bool operator ==(StandSure.Functional.Option<T> left, StandSure.Functional.Option<T> right) { }
     }
     public static class Result
     {
@@ -137,7 +143,7 @@ namespace StandSure.Functional
     [System.Diagnostics.StackTraceHidden]
     [System.Runtime.CompilerServices.Union]
     [System.Text.Json.Serialization.JsonConverter(typeof(StandSure.Functional.Json.ResultJsonConverterFactory))]
-    public readonly struct Result<T> : System.Runtime.CompilerServices.IUnion
+    public readonly struct Result<T> : System.IEquatable<StandSure.Functional.Result<T>>, System.Runtime.CompilerServices.IUnion
     {
         public Result(StandSure.Functional.Error? error) { }
         public Result(T value) { }
@@ -152,6 +158,9 @@ namespace StandSure.Functional
         public StandSure.Functional.Result<T> Ensure(System.Func<T, bool> predicate, System.Func<T, StandSure.Functional.Error> error) { }
         [System.Runtime.CompilerServices.OverloadResolutionPriority(-1)]
         public StandSure.Functional.Result<T> Ensure(System.Func<T, bool> predicate, [System.Runtime.CompilerServices.CallerArgumentExpression("predicate")] string? expression = null) { }
+        public bool Equals(StandSure.Functional.Result<T> other) { }
+        public override bool Equals(object? obj) { }
+        public override int GetHashCode() { }
         public T GetValueOrDefault(T fallback) { }
         public StandSure.Functional.Result<TOut> Map<TOut>(System.Func<T, TOut> map) { }
         public StandSure.Functional.Result<T> MapError(System.Func<StandSure.Functional.Error, StandSure.Functional.Error> map) { }
@@ -159,6 +168,8 @@ namespace StandSure.Functional
         public StandSure.Functional.Result<T> Tap(System.Action<T> action) { }
         public bool TryGetValue([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out StandSure.Functional.Error? error) { }
         public bool TryGetValue([System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out T value) { }
+        public static bool operator !=(StandSure.Functional.Result<T> left, StandSure.Functional.Result<T> right) { }
+        public static bool operator ==(StandSure.Functional.Result<T> left, StandSure.Functional.Result<T> right) { }
     }
     public static class Try
     {

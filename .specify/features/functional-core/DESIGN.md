@@ -258,6 +258,8 @@ telemetry do not depend on naming and can be built (TDD) while the baseline runs
 
 ### `Result<T>` (`[Union] readonly struct`, cases `Error` | `T`)
 
+- Equality (2026-11-24 review): `IEquatable<Result<T>>`, `==`/`!=`. Successes compare values with
+  `EqualityComparer<T>.Default`, failures compare `Error`s; `default` equals a failure holding `Error.Uninitialized`.
 - Construction: implicit from `T` and from `Error`; `Result.Success(value)`,
   `Result.Failure<T>(error)`, `Result.Success()` → `Result<Unit>`. No non-generic `Result`
   struct; `Result<Unit>` is the "void" form **[builder's call]**.
@@ -278,6 +280,8 @@ telemetry do not depend on naming and can be built (TDD) while the baseline runs
 ### `Option<T>` (`[Union] readonly struct`, cases `None` | `T`)
 
 - `None` is a singleton marker type so `switch { None => …, T x => … }` works.
+- Equality (2026-11-24 review): `IEquatable<Option<T>>`, `==`/`!=`. Every None equals every None;
+  Somes compare values with `EqualityComparer<T>.Default`.
 - Implicit from `T` (null → None); `Option.Some(x)`, `Option<T>.None`.
 - `default` is None.
 - `Match(onNone, onSome)`, `Map`, `Bind`, `Filter`, `GetValueOrDefault`,
