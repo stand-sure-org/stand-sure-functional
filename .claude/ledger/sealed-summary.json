@@ -22,6 +22,17 @@
       "sealed_at": "2026-11-20T18:32:42.161681+00:00",
       "sealed_by_identity": "chris@standsure.io",
       "sealed_by_commit": "622941d132a59fb8ea3765916e3b974e7fc261a4"
+    },
+    "session-1795199563-feat-core-foundations": {
+      "branch": "feat/core-foundations",
+      "worktree": "/Users/christopheranderson/repos/stand-sure-functional",
+      "started_at": "2026-11-20T18:32:43.717046+00:00",
+      "agent": "unknown",
+      "chain_hash": "sha256:a5b3170e27ed069892ff7eb7b6d436d15acde27c64d9b731639314a16b720bbc",
+      "sealed": true,
+      "sealed_at": "2026-11-24T15:01:27.898648+00:00",
+      "sealed_by_identity": "chris@standsure.io",
+      "sealed_by_commit": "2553a6d73239129f732e1f18500658a8ccb7a191"
     }
   }
 }
