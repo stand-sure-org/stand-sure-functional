@@ -68,6 +68,11 @@ public sealed record Error
     public ErrorKind Kind { get; }
 
     /// <summary>Gets the stable machine-readable code.</summary>
+    /// <remarks>
+    /// Keep codes constant, such as <c>user.not_found</c>. The code is the <c>error.code</c> tag on the
+    /// <c>functional.failures</c> counter, so a code built from an id (<c>$"user.{id}.not_found"</c>) makes a new metric
+    /// series per id. Put ids and values in <see cref="Metadata"/> instead.
+    /// </remarks>
     [JsonPropertyName("code")]
     public string Code { get; }
 

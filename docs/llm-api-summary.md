@@ -5,7 +5,7 @@ Expected failures are values: `Result<T>` holds an `Error` or a `T`; `Option<T>`
 
 - `Result<T>`: `IsSuccess`, `IsFailure`, `Match`, `Map`, `Bind`, `MapError`, `Ensure(predicate, v => error)`, `Tap`, `GetValueOrDefault(fallback)`, `Deconstruct`, `TryGetValue`.
   Create with `Result.Success(value)` or `Result.Failure<T>(error)`, or just return a `T` or an `Error` (also from an `async` method returning `Task<Result<T>>`). `Result.Success()` gives `Result<Unit>`, the "void" result.
-- `Error`: `Kind` (`ErrorKind.Validation`, `NotFound`, `Conflict`, `Unauthorized`, `Forbidden`, `Unavailable`, `Unexpected`), `Code` (dotted: `book.title.required`), `Message`, `Metadata`, `Inner`, `Errors`, `Exception` (set by `Try`/`FromException`).
+- `Error`: `Kind` (`ErrorKind.Validation`, `NotFound`, `Conflict`, `Unauthorized`, `Forbidden`, `Unavailable`, `Unexpected`), `Code` (dotted and constant: `book.title.required`; ids and values go in `Metadata`, never in the code), `Message`, `Metadata`, `Inner`, `Errors`, `Exception` (set by `Try`/`FromException`).
   One factory per kind: `Error.Validation(code, message)`, `Error.NotFound(code, message)`, ...; `Error.Validation(code, message, errors)` groups several; `Error.FromException(ex)`. `error.Wrap(code, message)` adds context (same `Kind`, old error becomes `Inner`); `error.Is(code)` searches the `Inner` chain.
   Building an `Error` records a failure: give `Ensure`, `EnsureAsync` and `ToResult` a factory (`v => Error.X(...)`), which runs only on failure.
 - `Option<T>`: `Option.Some(x)`, `Option<T>.None`, or a `T` directly. `IsSome`, `IsNone`, `Match`, `Map`, `Bind`, `Filter`, `GetValueOrDefault(fallback)`, `ToResult(ifNone)` (`ifNone`: `() => Error.NotFound(...)`).
