@@ -14,3 +14,4 @@ artifacts/
 .idea/
 mcporter.json
 fnox.toml
+.DS_Store
