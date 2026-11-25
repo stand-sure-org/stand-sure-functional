@@ -1,0 +1,10 @@
+# Paths that run code on contributors' machines or in CI, or that the owner manages directly.
+# The main ruleset requires code-owner review, so a change here needs the owner's approval.
+/.github/                 @stand-sure
+/.githooks/               @stand-sure
+/.pre-commit-config.yaml  @stand-sure
+/.serena/project.yml      @stand-sure
+/.claude/                 @stand-sure
+/.agents/                 @stand-sure
+/.entire/                 @stand-sure
+/fnox.toml                @stand-sure
