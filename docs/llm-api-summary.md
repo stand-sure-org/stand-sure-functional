@@ -117,6 +117,7 @@ IEnumerable<int> totals = steps.Scan(0, (sum, x) => sum + x); // [1, 2, 3] -> 1,
 - `result.Map(async x => ...)` gives `Result<Task<U>>`: use `MapAsync` on a `Task<Result<T>>`. If the lambda returns a `Result`, use `BindAsync` (`MapAsync` would nest `Result<Result<U>>`).
 - `switch` needs type patterns, `Error e => ..., T x => ...`, and is exhaustive without `_`. A `Result<Error>` always matches `Error e` in a `switch`: use `IsSuccess` or `Deconstruct`.
 - `default(Result<T>)` is a failure holding `Error.Uninitialized`. `default(Option<T>)` is None.
+- `Error` is not an exception: `e is IOException x` and `e switch { IOException x => ... }` do not compile, and `e is IOException` is always false. The exception `Try` caught is `e.Exception`: `e.Exception is IOException x ? ... : e`.
 - `Try.Run` / `Try.RunAsync` never catch `OperationCanceledException`: cancellation still throws.
 - `Try.Run(async () => ...)` does not compile (it would succeed before the work ran): use `Try.RunAsync(ct => ..., ct)`.
 - `.Value` is the untyped union payload (`object?`): never use it. Read values with `Match`, `Deconstruct`, `TryGetValue` or `GetValueOrDefault`.
