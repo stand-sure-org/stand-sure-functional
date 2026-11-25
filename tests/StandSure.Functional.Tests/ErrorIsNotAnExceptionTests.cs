@@ -2,6 +2,8 @@ using System.Linq;
 
 using AwesomeAssertions;
 
+using Microsoft.CodeAnalysis;
+
 using Xunit;
 
 namespace StandSure.Functional.Tests;
@@ -37,7 +39,7 @@ public sealed class ErrorIsNotAnExceptionTests
     {
         var diagnostics = CompileProbe.Create($"{Prefix} e is IOException;\n}}").GetDiagnostics(TestContext.Current.CancellationToken);
 
-        diagnostics.Where(d => d.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error).Should().BeEmpty();
+        diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).Should().BeEmpty();
         diagnostics.Select(d => d.Id).Should().Contain("CS0184");
     }
 
