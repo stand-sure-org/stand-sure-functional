@@ -73,6 +73,11 @@ namespace StandSure.Functional
     {
         public static System.Collections.Generic.IEnumerable<T> Choose<T>(this System.Collections.Generic.IEnumerable<StandSure.Functional.Option<T>>? source) { }
     }
+    [System.Diagnostics.StackTraceHidden]
+    public static class OptionUnitExtensions
+    {
+        public static StandSure.Functional.Unit Match<T>(this StandSure.Functional.Option<T> option, System.Action onNone, System.Action<T> onSome) { }
+    }
     [System.Diagnostics.DebuggerDisplay("{DebugView,nq}")]
     [System.Diagnostics.StackTraceHidden]
     [System.Runtime.CompilerServices.Union]
@@ -139,6 +144,12 @@ namespace StandSure.Functional
         public static System.Threading.Tasks.Task<TOut> MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<StandSure.Functional.Error, System.Threading.Tasks.Task<TOut>> onFailure, System.Func<T, System.Threading.Tasks.Task<TOut>?> onSuccess) { }
         public static System.Threading.Tasks.Task<TOut> MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<StandSure.Functional.Error, TOut> onFailure, System.Func<T, TOut> onSuccess) { }
     }
+    [System.Diagnostics.StackTraceHidden]
+    public static class ResultUnitExtensions
+    {
+        public static StandSure.Functional.Result<TOut> Bind<TOut>(this StandSure.Functional.Result<StandSure.Functional.Unit> result, System.Func<StandSure.Functional.Result<TOut>> bind) { }
+        public static StandSure.Functional.Unit Match<T>(this StandSure.Functional.Result<T> result, System.Action<StandSure.Functional.Error> onFailure, System.Action<T> onSuccess) { }
+    }
     [System.Diagnostics.DebuggerDisplay("{DebugView,nq}")]
     [System.Diagnostics.StackTraceHidden]
     [System.Runtime.CompilerServices.Union]
@@ -166,6 +177,7 @@ namespace StandSure.Functional
         public StandSure.Functional.Result<T> MapError(System.Func<StandSure.Functional.Error, StandSure.Functional.Error> map) { }
         public TOut Match<TOut>(System.Func<StandSure.Functional.Error, TOut> onFailure, System.Func<T, TOut> onSuccess) { }
         public StandSure.Functional.Result<T> Tap(System.Action<T> action) { }
+        public StandSure.Functional.Result<T> TapError(System.Action<StandSure.Functional.Error> action) { }
         public bool TryGetValue([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out StandSure.Functional.Error? error) { }
         public bool TryGetValue([System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out T value) { }
         public static bool operator !=(StandSure.Functional.Result<T> left, StandSure.Functional.Result<T> right) { }

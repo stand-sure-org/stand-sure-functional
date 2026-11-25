@@ -20,9 +20,13 @@ public class CombinatorBenchmarks
     private static readonly Func<int, bool> Never = static _ => false;
     private static readonly Func<Error, int> OnFailure = static _ => -1;
     private static readonly Func<int, int> OnSuccess = static x => x + 1;
+    private static readonly Action<Error> IgnoreError = static _ => { };
+    private static readonly Action<int> IgnoreValue = static _ => { };
+    private static readonly Func<Result<int>> NextStep = static () => Result.Success(1);
 
     private ActivityListener? _listener;
     private Result<int> _ok;
+    private Result<Unit> _unit = Result.Success();
     private Result<int> _failed;
 
     [Params(false, true)]
@@ -61,6 +65,13 @@ public class CombinatorBenchmarks
 
     [Benchmark]
     public int MatchOk() => this._ok.Match(OnFailure, OnSuccess);
+
+    // Action form: forwards to Match through two bound adapter delegates.
+    [Benchmark]
+    public Unit MatchActionsOk() => this._ok.Match(IgnoreError, IgnoreValue);
+
+    [Benchmark]
+    public Result<int> BindUnitOk() => this._unit.Bind(NextStep);
 
     [Benchmark]
     public Result<int> EnsureOk() => this._ok.Ensure(Positive, Failure);
