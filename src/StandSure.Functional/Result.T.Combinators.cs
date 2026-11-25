@@ -15,8 +15,9 @@ namespace StandSure.Functional;
 /// </para>
 /// <para>
 /// A delegate that throws is not caught here; only <see cref="Try"/> catches. A <see langword="null"/> delegate
-/// never throws either. <c>Map</c>, <c>Bind</c>, <c>MapError</c>, <c>Ensure</c>, <c>Tap</c> and <c>TapError</c> return a failure with
-/// code <c>result.null_delegate</c> when they would have had to call it. <c>Match</c> returns
+/// never throws either. <c>Map</c>, <c>Bind</c>, <c>Ensure</c> and <c>Tap</c> return a failure with
+/// code <c>result.null_delegate</c> when they would have had to call it. <c>MapError</c> and <c>TapError</c> keep the
+/// original failure and record a <c>result.null_delegate</c> failure in telemetry. <c>Match</c> returns
 /// <c>default(TOut)</c> when the delegate for the active branch is <see langword="null"/>, and records a
 /// <c>result.null_delegate</c> failure in telemetry. A delegate the active
 /// branch does not use may be <see langword="null"/> without effect.
@@ -119,8 +120,9 @@ public readonly partial struct Result<T>
     /// <summary>Transforms the error of a failure; a success passes through unchanged.</summary>
     /// <param name="map">The transformation. It receives <see cref="Error.Uninitialized"/> for <c>default</c>.
     /// A <see langword="null"/> return becomes <see cref="Error.Uninitialized"/>. A <see langword="null"/> delegate
-    /// turns a failure into a <c>result.null_delegate</c> failure.</param>
-    /// <returns>The original success, or a failure with the mapped error.</returns>
+    /// keeps the original failure and records a <c>result.null_delegate</c> failure in telemetry.</param>
+    /// <returns>The original success, or a failure with the mapped error (the original error when
+    /// <paramref name="map"/> is <see langword="null"/>).</returns>
     public Result<T> MapError(Func<Error, Error> map)
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
@@ -130,7 +132,15 @@ public readonly partial struct Result<T>
             return this;
         }
 
-        return ResultErrors.IsMissing(map) ? new Result<T>(ResultErrors.NullDelegate(nameof(map))) : new Result<T>(map(this.FailureError));
+        if (ResultErrors.IsMissing(map))
+        {
+            // Keep the caller's error: a missing transformation must not change the failure's kind downstream (#41).
+            // Building the null-delegate error records it in telemetry.
+            _ = ResultErrors.NullDelegate(nameof(map));
+            return this;
+        }
+
+        return new Result<T>(map(this.FailureError));
     }
 
     /// <summary>Turns a success into the given failure when the predicate is false.</summary>
@@ -267,7 +277,8 @@ public readonly partial struct Result<T>
 
     /// <summary>Runs a side effect on the error of a failure and returns this result unchanged.</summary>
     /// <param name="action">The side effect. It receives <see cref="Error.Uninitialized"/> for <c>default</c>.
-    /// A <see langword="null"/> value turns a failure into a <c>result.null_delegate</c> failure.</param>
+    /// A <see langword="null"/> value keeps the failure unchanged and records a <c>result.null_delegate</c> failure
+    /// in telemetry.</param>
     /// <returns>This result.</returns>
     public Result<T> TapError(Action<Error> action)
     {
@@ -280,7 +291,9 @@ public readonly partial struct Result<T>
 
         if (ResultErrors.IsMissing(action))
         {
-            return new Result<T>(ResultErrors.NullDelegate(nameof(action)));
+            // Observational: keep the caller's error and record the missing delegate in telemetry only (#41).
+            _ = ResultErrors.NullDelegate(nameof(action));
+            return this;
         }
 
         action(this.FailureError);
