@@ -20,6 +20,7 @@ tests/StandSure.Functional.ApprovalTests/  public API snapshot
 benchmarks/StandSure.Functional.Benchmarks/
 harness/ModelHarness/  harness/tasks/ (NN-slug: task.md, Fixture.cs, Probe.cs)  harness/prompts/  harness/results/
 docs/llm-api-summary.md                    one page, the with-library prompt
+src/StandSure.Functional/skills/           SKILL.frontmatter.md; packed with the summary as skills/stand-sure-functional/SKILL.md
 .specify/features/functional-core/
 ```
 
