@@ -8,15 +8,11 @@
 /.agents/                 @stand-sure
 /.entire/                 @stand-sure
 /fnox.toml                @stand-sure
-/nuget.config             @stand-sure
-/global.json              @stand-sure
-/Directory.Build.props    @stand-sure
-/Directory.Packages.props @stand-sure
-/src/Directory.Build.props @stand-sure
 
-# Imported into every build: a new package source or an <Exec> here would run everywhere.
-# Directory.Packages.props is left out on purpose: Dependabot bumps it, and CI tests every bump.
-/nuget.config             @stand-sure
-/global.json              @stand-sure
-/Directory.Build.props    @stand-sure
+# Imported into every build: a new package source, a <Target> or an <Exec> here would run everywhere.
+# Directory.Packages.props included on purpose (owner, 2026-11-25): the weekly grouped Dependabot NuGet PR needs approval.
+/nuget.config              @stand-sure
+/global.json               @stand-sure
+/Directory.Build.props     @stand-sure
+/Directory.Packages.props  @stand-sure
 /src/Directory.Build.props @stand-sure
