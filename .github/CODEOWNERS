@@ -1,0 +1,22 @@
+# Paths that run code on contributors' machines or in CI, or that the owner manages directly.
+# The main ruleset requires code-owner review, so a change here needs the owner's approval.
+/.github/                 @stand-sure
+/.githooks/               @stand-sure
+/.pre-commit-config.yaml  @stand-sure
+/.serena/project.yml      @stand-sure
+/.claude/                 @stand-sure
+/.agents/                 @stand-sure
+/.entire/                 @stand-sure
+/fnox.toml                @stand-sure
+/nuget.config             @stand-sure
+/global.json              @stand-sure
+/Directory.Build.props    @stand-sure
+/Directory.Packages.props @stand-sure
+/src/Directory.Build.props @stand-sure
+
+# Imported into every build: a new package source or an <Exec> here would run everywhere.
+# Directory.Packages.props is left out on purpose: Dependabot bumps it, and CI tests every bump.
+/nuget.config             @stand-sure
+/global.json              @stand-sure
+/Directory.Build.props    @stand-sure
+/src/Directory.Build.props @stand-sure
