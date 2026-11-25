@@ -6,6 +6,15 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
+  <!-- The PDB lives inside the DLL with every source file embedded, so debuggers, IDEs and coding agents see the real
+       code without a symbol server (the GitHub feed serves no .snupkg). SourceLink comes from the SDK. CI builds
+       normalise source paths so the embedded paths do not leak the runner's directory. -->
+  <PropertyGroup>
+    <DebugType>embedded</DebugType>
+    <EmbedAllSources>true</EmbedAllSources>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
   </ItemGroup>

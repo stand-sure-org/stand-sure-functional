@@ -153,6 +153,16 @@ public sealed class ConsumerProject : IDisposable
         return package.Name[prefix.Length..^".nupkg".Length];
     }
 
+
+    /// <summary>The newest packed <c>.nupkg</c> of the library in the local feed, the file consumers restore.</summary>
+    internal static FileInfo LatestPackage()
+    {
+        var feed = Metadata("PackageFeed");
+        var packageId = Metadata("PackageId");
+
+        return new FileInfo(Path.Combine(feed, $"{packageId}.{LatestVersion(feed, packageId)}.nupkg"));
+    }
+
     private static string DotnetPath()
     {
         var host = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH");
