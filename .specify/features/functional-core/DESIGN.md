@@ -365,7 +365,8 @@ overloads forwarding through `AsFunc()` to the `Func<_, Unit>` form), written fr
   depends on the JIT inlining at each call site, so 0 B is observed, not guaranteed, and
   no allocation test pins it.
 - `TapError(Action<Error>)` is an ordinary `Result<T>` method mirroring `Tap`, with its own
-  span. A `null` action turns a failure into a `result.null_delegate` failure, as `MapError` does.
+  span. A `null` action keeps the original failure and records `result.null_delegate` in telemetry only
+  (§"Null delegates", v1.8, #41).
 
 ### `Try`
 

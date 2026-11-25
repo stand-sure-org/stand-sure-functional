@@ -264,6 +264,22 @@ public sealed class ResultCombinatorTests
     }
 
     [Fact]
+    public void MapError_NullDelegate_OnDefault_KeepsUninitialized()
+    {
+        default(Result<int>).MapError(null!).TryGetValue(out Error? e).Should().BeTrue();
+
+        e.Should().Be(Error.Uninitialized);
+    }
+
+    [Fact]
+    public void TapError_NullDelegate_OnDefault_KeepsUninitialized()
+    {
+        default(Result<int>).TapError(null!).TryGetValue(out Error? e).Should().BeTrue();
+
+        e.Should().Be(Error.Uninitialized);
+    }
+
+    [Fact]
     public void MapError_NullDelegate_OnSuccess_StaysSuccess()
     {
         Result.Success(1).MapError(null!).IsSuccess.Should().BeTrue();
