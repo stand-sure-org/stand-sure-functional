@@ -14,6 +14,9 @@ permissions:
 
 jobs:
   review:
+    # PRs open as drafts (Oui-DELIVER auto-pr); the review waits for ready_for_review, after the description is filled in.
+    # For an ad hoc review of a draft, comment @claude (claude.yml).
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Check for API key
@@ -58,6 +61,8 @@ jobs:
             Do not build or test. The build-publish and merge-checks workflows build in Release with
             warnings as errors and run the tests on this PR. Read their state with `gh pr checks` and
             report it in the summary; if they are still running, say so rather than waiting.
+
+            Do not comment on the PR description; the author writes it after the PR opens.
 
             Use inline comments for specific issues and one top-level comment for the summary.
           claude_args: |

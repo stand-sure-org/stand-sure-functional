@@ -45,4 +45,5 @@ Build config: `Directory.Build.props` (all projects), `src/Directory.Build.props
 - Package versions: latest stable at implementation time. Stop and flag any package last updated more than 2 years ago.
 - Secrets via `fnox` (repo has `fnox.toml`). Never commit keys.
 - Commits use `--no-gpg-sign` and go on a feature branch, never `main`. In this repo the commit hook commits as `stand-sure-ai[bot]` and pushes.
+- PRs open as drafts (Oui-DELIVER `auto-pr`). Fill in the description, then `gh pr ready`: the Claude review runs on `ready_for_review` and skips drafts. Comment `@claude` for an ad hoc review of a draft.
 - Never stage `.agents/`, `.claude/`, `.entire/`, `fnox.toml` unless the owner asks (owner-managed config). Stage explicit paths only.
