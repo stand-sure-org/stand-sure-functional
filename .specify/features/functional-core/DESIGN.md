@@ -328,9 +328,12 @@ overloads forwarding through `AsFunc()` to the `Func<_, Unit>` form), written fr
   static method closed over its first argument), not capturing lambdas. A `null` delegate
   stays `null`, so the target's null-delegate rules apply and name the caller's parameter.
   Measured (BenchmarkDotNet, .NET 11, no listener): `Match` with actions 0 B, against 48 B
-  for a capturing-lambda adapter; the JIT stack-allocates the non-escaping delegates once
-  `Match` is inlined. That depends on inlining at the call site, so 0 B is observed, not
-  guaranteed, and no allocation test pins it.
+  for a capturing-lambda adapter (one-off comparison run, not kept). `DOTNET_JitDisasm`
+  on the Tier1 benchmark shows why: `Match` (try/finally included) is inlined into the
+  caller and the two adapter delegates live in the stack frame; `[AggressiveInlining]`
+  plays no part. A capturing lambda still heap-allocates its closure object. This
+  depends on the JIT inlining at each call site, so 0 B is observed, not guaranteed, and
+  no allocation test pins it.
 - `TapError(Action<Error>)` is an ordinary `Result<T>` method mirroring `Tap`, with its own
   span. A `null` action turns a failure into a `result.null_delegate` failure, as `MapError` does.
 
