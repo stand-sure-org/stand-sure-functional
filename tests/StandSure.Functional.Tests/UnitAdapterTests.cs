@@ -125,6 +125,23 @@ public sealed class UnitAdapterTests
     }
 
     [Fact]
+    public void OptionMatch_Actions_OnDefault_RunsOnNone()
+    {
+        var ranNone = false;
+
+        _ = default(Option<int>).Match(onNone: () => ranNone = true, onSome: _ => { });
+
+        ranNone.Should().BeTrue();
+    }
+
+    [Fact]
+    public void OptionMatch_Actions_NullActiveBranch_ReturnsUnitWithoutThrowing()
+    {
+        Option.Some(1).Match(onNone: () => { }, onSome: (System.Action<int>)null!).Should().Be(Unit.Value);
+        Option.None<int>().Match(onNone: (System.Action)null!, onSome: _ => { }).Should().Be(Unit.Value);
+    }
+
+    [Fact]
     public void BindUnit_OnSuccess_RunsTheNextStep()
     {
         var result = Result.Success().Bind(() => Result.Success(42));

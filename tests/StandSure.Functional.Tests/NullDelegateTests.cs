@@ -23,6 +23,7 @@ public sealed class NullDelegateTests
     [InlineData("Result.Failure<int>(Error.Validation(\"c\", \"m\")).TapError(null)")]
     [InlineData("Result.Success().Bind((System.Func<Result<int>>?)null)")]
     [InlineData("Result.Success(1).Match((System.Action<Error>?)null, _ => { })")]
+    [InlineData("Option.Some(1).Match((System.Action?)null, _ => { })")]
     [InlineData("Result.Success(1).Ensure(null, Error.Validation(\"c\", \"m\"))")]
     [InlineData("Option.Some(1).Filter(null)")]
     [InlineData("Option.Some(1).ToResult((System.Func<Error>?)null)")]
