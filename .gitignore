@@ -15,3 +15,7 @@ artifacts/
 mcporter.json
 fnox.toml
 .DS_Store
+
+# Serena (MCP code tools): share the project config, keep caches, logs and local overrides local.
+.serena/*
+!.serena/project.yml
