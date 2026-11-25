@@ -153,7 +153,6 @@ public sealed class ConsumerProject : IDisposable
         return package.Name[prefix.Length..^".nupkg".Length];
     }
 
-
     /// <summary>The newest packed <c>.nupkg</c> of the library in the local feed, the file consumers restore.</summary>
     internal static FileInfo LatestPackage()
     {
@@ -162,7 +161,6 @@ public sealed class ConsumerProject : IDisposable
 
         return new FileInfo(Path.Combine(feed, $"{packageId}.{LatestVersion(feed, packageId)}.nupkg"));
     }
-
 
     /// <summary>The repository root, for comparing packed files with their sources.</summary>
     internal static string RepoRoot() => Metadata("RepoRoot");

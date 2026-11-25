@@ -80,7 +80,7 @@ public sealed class PackageContentTests
             .And.OnlyContain(d => d.Name.StartsWith("/_/", StringComparison.Ordinal));
     }
 
-// Agent skill discovery (dotnet-inspect and others) looks for skills/**/SKILL.md inside a package.
+    // Agent skill discovery (dotnet-inspect and others) looks for skills/**/SKILL.md inside a package.
     [Fact]
     public void Package_ShipsTheApiSummaryAsAnAgentSkill()
     {

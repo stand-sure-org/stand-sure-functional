@@ -46,9 +46,14 @@
     Agent skill: skills/stand-sure-functional/SKILL.md inside the package, the path agent tooling (dotnet-inspect and
     others) discovers. Generated at pack time from skills/SKILL.frontmatter.md plus docs/llm-api-summary.md, so the
     summary stays the single source (the harness uses it verbatim as the with-library prompt, without frontmatter).
+    Hooked in through NuGet's supported TargetsForTfmSpecificContentInPackage (single TFM, so it runs once).
     Escape keeps the summary's semicolons from being split into separate lines by WriteLinesToFile.
   -->
-  <Target Name="GenerateAgentSkill" BeforeTargets="_GetPackageFiles">
+  <PropertyGroup>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);GenerateAgentSkill</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+
+  <Target Name="GenerateAgentSkill">
     <PropertyGroup>
       <AgentSkillFile>$(IntermediateOutputPath)skills/stand-sure-functional/SKILL.md</AgentSkillFile>
       <AgentSkillText>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/skills/SKILL.frontmatter.md').TrimEnd())
@@ -59,7 +64,7 @@ $([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/../../docs/llm-api-s
     <WriteLinesToFile File="$(AgentSkillFile)" Lines="$([MSBuild]::Escape('$(AgentSkillText)'))" Overwrite="true" WriteOnlyWhenDifferent="true" />
 
     <ItemGroup>
-      <None Include="$(AgentSkillFile)" Pack="true" PackagePath="skills/stand-sure-functional/" />
+      <TfmSpecificPackageFile Include="$(AgentSkillFile)" PackagePath="skills/stand-sure-functional/" />
     </ItemGroup>
   </Target>
 
