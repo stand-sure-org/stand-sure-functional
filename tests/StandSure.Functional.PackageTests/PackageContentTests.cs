@@ -21,6 +21,7 @@ namespace StandSure.Functional.PackageTests;
 public sealed class PackageContentTests
 {
     private const string LibraryEntry = "lib/net11.0/StandSure.Functional.dll";
+    private const string SkillEntry = "skills/stand-sure-functional/SKILL.md";
 
     // Portable PDB custom debug information kind for an embedded source document.
     private static readonly Guid EmbeddedSourceKind = new("0E8A571B-6926-466E-B4AD-8AB04611F5FE");
@@ -77,6 +78,28 @@ public sealed class PackageContentTests
 
         documents.Should().NotBeEmpty()
             .And.OnlyContain(d => d.Name.StartsWith("/_/", StringComparison.Ordinal));
+    }
+
+// Agent skill discovery (dotnet-inspect and others) looks for skills/**/SKILL.md inside a package.
+    [Fact]
+    public void Package_ShipsTheApiSummaryAsAnAgentSkill()
+    {
+        using var package = ZipFile.OpenRead(ConsumerProject.LatestPackage().FullName);
+        var entry = package.GetEntry(SkillEntry);
+        entry.Should().NotBeNull($"the package should contain {SkillEntry}");
+
+        string skill;
+        using (var reader = new StreamReader(entry!.Open()))
+        {
+            skill = reader.ReadToEnd().ReplaceLineEndings("\n");
+        }
+
+        var summary = File.ReadAllText(Path.Combine(ConsumerProject.RepoRoot(), "docs", "llm-api-summary.md")).ReplaceLineEndings("\n");
+
+        skill.Should().StartWith("---\nname: stand-sure-functional\ndescription: ");
+        var end = skill.IndexOf("\n---\n", 4, StringComparison.Ordinal);
+        end.Should().BePositive("the YAML frontmatter must be closed by a --- line");
+        skill[(end + "\n---\n".Length)..].Trim('\n').Should().Be(summary.Trim('\n'), "the skill body is the API summary, unchanged");
     }
 
     private static PEReader OpenPackagedLibrary()

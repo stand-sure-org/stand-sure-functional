@@ -163,6 +163,10 @@ public sealed class ConsumerProject : IDisposable
         return new FileInfo(Path.Combine(feed, $"{packageId}.{LatestVersion(feed, packageId)}.nupkg"));
     }
 
+
+    /// <summary>The repository root, for comparing packed files with their sources.</summary>
+    internal static string RepoRoot() => Metadata("RepoRoot");
+
     private static string DotnetPath()
     {
         var host = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH");
