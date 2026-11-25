@@ -17,7 +17,8 @@ namespace StandSure.Functional.Tests;
 /// </summary>
 public sealed class UnitDefaultAliasTests
 {
-    // devstral-small-2's line from the 2026-11-25 harness run (all 10 records used it).
+    // devstral-small-2's line from the 2026-11-25 harness run (all 10 records used it;
+    // harness/results/task10-rerun-2026-11-25.md).
     private const string GuessedCode = """
                                        using StandSure.Functional;
                                        public static class Probe
@@ -49,9 +50,16 @@ public sealed class UnitDefaultAliasTests
     [Fact]
     public void Default_IsHiddenFromIntelliSense()
     {
-        var field = typeof(Unit).GetField("Default", BindingFlags.Public | BindingFlags.Static)!;
+        // The API snapshot omits [EditorBrowsable], so this test is the only guard on it.
+        var field = typeof(Unit).GetField("Default", BindingFlags.Public | BindingFlags.Static);
+        field.Should().NotBeNull();
 
-        field.GetCustomAttribute<EditorBrowsableAttribute>()!.State.Should().Be(EditorBrowsableState.Never);
-        field.GetCustomAttribute<ObsoleteAttribute>()!.IsError.Should().BeFalse();
+        var browsable = field!.GetCustomAttribute<EditorBrowsableAttribute>();
+        browsable.Should().NotBeNull();
+        browsable!.State.Should().Be(EditorBrowsableState.Never);
+
+        var obsolete = field.GetCustomAttribute<ObsoleteAttribute>();
+        obsolete.Should().NotBeNull();
+        obsolete!.IsError.Should().BeFalse();
     }
 }

@@ -303,7 +303,7 @@ telemetry do not depend on naming and can be built (TDD) while the baseline runs
 README credits language-ext (Paul Louth, MIT) as inspiration.
 
 `Unit.Default` is a permanent, deprecated alias of `Unit.Value` (owner, 2026-11-25). In the
-harness, every devstral answer guessed `Default`, which is also the name TryHelpers and language-ext use.
+harness, every devstral answer guessed `Default` (10 of 10, `harness/results/task10-rerun-2026-11-25.md`), which is also the name TryHelpers and language-ext use.
 It is `[Obsolete(DiagnosticId = "SSF0001")]` at warning level and `[EditorBrowsable(Never)]`. Guessed code
 compiles, and the warning names `Unit.Value`; without the alias, CS0117 gives no hint. It is never removed,
 since removing it would bring back the hintless error. `docs/llm-api-summary.md` names only `Unit.Value`.
