@@ -3,7 +3,7 @@
 Implicit usings may be off: write `using StandSure.Functional;` and a `using` for every other namespace you use (`System`, `System.Collections.Generic`, `System.Linq`, `System.Threading`, `System.Threading.Tasks`). The NuGet package also adds `StandSure.Functional` as a global using, so the explicit one is harmless. No library method throws for an expected failure (malformed JSON still throws `JsonException`).
 Expected failures are values: `Result<T>` holds an `Error` or a `T`; `Option<T>` holds `None` or a `T`.
 
-- `Result<T>`: `IsSuccess`, `IsFailure`, `Match`, `Map`, `Bind`, `MapError`, `Ensure(predicate, v => error)`, `Tap`, `GetValueOrDefault(fallback)`, `Deconstruct`, `TryGetValue`.
+- `Result<T>`: `IsSuccess`, `IsFailure`, `Match`, `Map`, `Bind`, `MapError`, `Ensure(predicate, v => error)`, `Tap`, `TapError`, `GetValueOrDefault(fallback)`, `Deconstruct`, `TryGetValue`.
   Create with `Result.Success(value)` or `Result.Failure<T>(error)`, or just return a `T` or an `Error` (also from an `async` method returning `Task<Result<T>>`). `Result.Success()` gives `Result<Unit>`, the "void" result.
 - `Error`: `Kind` (`ErrorKind.Validation`, `NotFound`, `Conflict`, `Unauthorized`, `Forbidden`, `Unavailable`, `Unexpected`), `Code` (dotted and constant: `book.title.required`; ids and values go in `Metadata`, never in the code), `Message`, `Metadata`, `Inner`, `Errors`, `Exception` (set by `Try`/`FromException`).
   One factory per kind: `Error.Validation(code, message)`, `Error.NotFound(code, message)`, ...; `Error.Validation(code, message, errors)` groups several; `Error.FromException(ex)`. `error.Wrap(code, message)` adds context (same `Kind`, old error becomes `Inner`); `error.Is(code)` searches the `Inner` chain.
@@ -113,6 +113,7 @@ IEnumerable<int> totals = steps.Scan(0, (sum, x) => sum + x); // [1, 2, 3] -> 1,
 - Inside a lambda (`Bind`, `BindAsync`, `Match`), `c ? value : Error.X(...)` has no type: use `Result.Success(v)` / `Result.Failure<T>(e)`, or give the lambda a return type: `Bind(Result<U> (x) => ...)` or `Match<Result<U>>(...)`.
 - A null reference converts to `Option<T>` as None, but a nullable value type (`int?`) does not convert: `n is { } v ? v : Option<int>.None`.
 - `MatchAsync`: both lambdas sync, or both async. Mixing them does not compile.
+- For side effects, `Match` also takes two `void` lambdas (`onFailure: e => failed.Add(e), onSuccess: v => saved.Add(v)`) and returns `Unit`. After a `Result<Unit>` step, `.Bind(() => next())` needs no parameter.
 - `result.Map(async x => ...)` gives `Result<Task<U>>`: use `MapAsync` on a `Task<Result<T>>`. If the lambda returns a `Result`, use `BindAsync` (`MapAsync` would nest `Result<Result<U>>`).
 - `switch` needs type patterns, `Error e => ..., T x => ...`, and is exhaustive without `_`. A `Result<Error>` always matches `Error e` in a `switch`: use `IsSuccess` or `Deconstruct`.
 - `default(Result<T>)` is a failure holding `Error.Uninitialized`. `default(Option<T>)` is None.

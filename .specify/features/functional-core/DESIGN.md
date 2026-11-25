@@ -1,7 +1,7 @@
 # Design: Functional Core + Model-Usage Harness
 
-**Version:** 1.5 (Non-nullable delegate parameters)
-**Date:** 2026-11-24
+**Version:** 1.6 (Side-effect forms adapt void to Unit)
+**Date:** 2026-11-25
 **Changes:** v1.1 settled harness execution, baseline authority, wire format, telemetry
 firing points, run mode. v1.2: no budget cap (5 runs per cell), Gemini via
 `GEMINI_API_KEY`, local models pulled fresh, baseline authority confirmed by owner.
@@ -10,6 +10,8 @@ runs caller code (§Telemetry, "Spans"); offline sample apps to observe the trac
 v1.4: `Error` gets value equality over its contents and a `ToString` that honours the
 `EmitErrorDetails` switch (§`Error`, "Equality and ToString"), from the 2026-11-24 review.
 v1.5: delegate parameters are non-nullable; the never-throw guards stay (§"Null delegates").
+v1.6: side-effect forms (`Match` with actions, parameterless `Bind` on `Result<Unit>`,
+`TapError`) and the pass-through span rule (§`Unit`, "Side-effect forms"; issue #8).
 See `DECISION.md` for the why and the scope table.
 
 Items marked **[builder's call]** were proposed by Claude during design and not
@@ -299,6 +301,42 @@ telemetry do not depend on naming and can be built (TDD) while the baseline runs
 `readonly struct`, `Unit.Value`, equality/comparison, `ToString() => "()"`.
 README credits language-ext (Paul Louth, MIT) as inspiration.
 
+#### Side-effect forms (v1.6, issue #8)
+
+`void` has no place in a chain of results, so the core combinators take `Func` only.
+Compatibility with `Action` and parameterless steps lives in extension classes
+(`ResultUnitExtensions`, `OptionUnitExtensions`) that adapt to `Unit` and forward to the
+ordinary combinator. This follows the owner's earlier TryHelpers pattern (`Action`
+overloads forwarding through `AsFunc()` to the `Func<_, Unit>` form), written from scratch.
+
+| Member | Forwards to |
+|---|---|
+| `Result<T>.Match(Action<Error> onFailure, Action<T> onSuccess) -> Unit` | `Match<Unit>` |
+| `Option<T>.Match(Action onNone, Action<T> onSome) -> Unit` | `Match<Unit>` |
+| `Result<Unit>.Bind(Func<Result<TOut>> bind)` | `Bind(Func<Unit, Result<TOut>>)` |
+
+- **Why:** in the with-library harness runs, all `CS0411` failures with `Match`/`Bind` were side-effect
+  code: `Match` as a statement with `List.Add` lambdas (11, Gemini), and `Bind(() => ...)`
+  after a `Result<Unit>` step (14, devstral). Declaring the result type would not help:
+  C# method type inference ignores the assignment target.
+- **Returns `Unit`, not `void`,** so the call works as a statement and still composes as
+  an expression.
+- **Overload resolution.** The instance `Match<TOut>` is tried first; extensions are
+  considered only when it is not applicable, which is exactly the void-lambda case. A
+  lambda that returns a value (for example `HashSet.Add`) keeps binding to `Match<TOut>`.
+- **Adapters** (`UnitAdapters`, internal) are delegates bound to the caller's delegate (a
+  static method closed over its first argument), not capturing lambdas. A `null` delegate
+  stays `null`, so the target's null-delegate rules apply and name the caller's parameter.
+  Measured (BenchmarkDotNet, .NET 11, no listener): `Match` with actions 0 B, against 48 B
+  for a capturing-lambda adapter (one-off comparison run, not kept). `DOTNET_JitDisasm`
+  on the Tier1 benchmark shows why: `Match` (try/finally included) is inlined into the
+  caller and the two adapter delegates live in the stack frame; `[AggressiveInlining]`
+  plays no part. A capturing lambda still heap-allocates its closure object. This
+  depends on the JIT inlining at each call site, so 0 B is observed, not guaranteed, and
+  no allocation test pins it.
+- `TapError(Action<Error>)` is an ordinary `Result<T>` method mirroring `Tap`, with its own
+  span. A `null` action turns a failure into a `result.null_delegate` failure, as `MapError` does.
+
 ### `Try`
 
 - `Try.Run<T>(Func<T>)` → `Result<T>`; `Try.Run(Action)` → `Result<Unit>`.
@@ -380,6 +418,10 @@ using var activity = FunctionalDiagnostics.Source.StartActivity();
   `EnsureCore`, `EnsureLazyCore`) that starts no span, so they no longer nest `Map`
   inside `MapAsync`. The core takes the public method's name, so a null delegate's
   message names the method the caller wrote.
+- **Pass-through extensions start no span (owner, 2026-11-25).** An extension that only
+  adapts arguments and forwards to the public method of the same name (the side-effect
+  forms in §`Unit`) starts no span; the target's span covers the call and has the same
+  name, because `StartActivity()` names the span with `[CallerMemberName]`.
 
 **Invariant.** With nothing subscribed to `StandSure.Functional`, behaviour is the same
 as v1.2, and all allocation guarantees hold.
@@ -395,7 +437,7 @@ the caller's span. The sample apps exist to show whether this reads well in a re
 |---|---|
 | `Try` | `Run` (both), `RunAsync` (both) |
 | Async (`ResultTaskExtensions`) | `BindAsync` ×2, `MapAsync` ×2, `MatchAsync` ×2, `EnsureAsync` ×4 |
-| Sync `Result<T>` | `Match`, `Map`, `Bind`, `MapError`, `Ensure` ×3, `Tap` |
+| Sync `Result<T>` | `Match`, `Map`, `Bind`, `MapError`, `Ensure` ×3, `Tap`, `TapError` |
 | Sync `Option<T>` | `Match`, `Map`, `Bind`, `Filter`, `ToResult` (lazy) |
 | Collections | `Traverse` |
 

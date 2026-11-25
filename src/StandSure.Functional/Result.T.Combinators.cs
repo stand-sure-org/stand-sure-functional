@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 namespace StandSure.Functional;
 
 /// <content>
-/// Combinators: <c>Match</c>, <c>Map</c>, <c>Bind</c>, <c>MapError</c>, <c>Ensure</c>, <c>Tap</c> and
+/// Combinators: <c>Match</c>, <c>Map</c>, <c>Bind</c>, <c>MapError</c>, <c>Ensure</c>, <c>Tap</c>, <c>TapError</c> and
 /// <c>GetValueOrDefault</c>.
 /// </content>
 /// <remarks>
@@ -15,7 +15,7 @@ namespace StandSure.Functional;
 /// </para>
 /// <para>
 /// A delegate that throws is not caught here; only <see cref="Try"/> catches. A <see langword="null"/> delegate
-/// never throws either. <c>Map</c>, <c>Bind</c>, <c>MapError</c>, <c>Ensure</c> and <c>Tap</c> return a failure with
+/// never throws either. <c>Map</c>, <c>Bind</c>, <c>MapError</c>, <c>Ensure</c>, <c>Tap</c> and <c>TapError</c> return a failure with
 /// code <c>result.null_delegate</c> when they would have had to call it. <c>Match</c> returns
 /// <c>default(TOut)</c> when the delegate for the active branch is <see langword="null"/>, and records a
 /// <c>result.null_delegate</c> failure in telemetry. A delegate the active
@@ -262,6 +262,28 @@ public readonly partial struct Result<T>
         }
 
         action(this.resultValue);
+        return this;
+    }
+
+    /// <summary>Runs a side effect on the error of a failure and returns this result unchanged.</summary>
+    /// <param name="action">The side effect. It receives <see cref="Error.Uninitialized"/> for <c>default</c>.
+    /// A <see langword="null"/> value turns a failure into a <c>result.null_delegate</c> failure.</param>
+    /// <returns>This result.</returns>
+    public Result<T> TapError(Action<Error> action)
+    {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
+        if (this.tag == TagOk)
+        {
+            return this;
+        }
+
+        if (ResultErrors.IsMissing(action))
+        {
+            return new Result<T>(ResultErrors.NullDelegate(nameof(action)));
+        }
+
+        action(this.FailureError);
         return this;
     }
 

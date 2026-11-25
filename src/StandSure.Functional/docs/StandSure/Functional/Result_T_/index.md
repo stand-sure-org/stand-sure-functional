@@ -25,7 +25,7 @@ Every combinator treats `default(Result<T>)` as a failure whose error is
 [Uninitialized](../Error/Uninitialized.md 'StandSure\.Functional\.Error\.Uninitialized'). A combinator on a failure never calls its delegate.
 
 A delegate that throws is not caught here; only [Try](../Try/index.md 'StandSure\.Functional\.Try') catches. A [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') delegate
-never throws either. `Map`, `Bind`, `MapError`, `Ensure` and `Tap` return a failure with
+never throws either. `Map`, `Bind`, `MapError`, `Ensure`, `Tap` and `TapError` return a failure with
 code `result.null_delegate` when they would have had to call it. `Match` returns
 `default(TOut)` when the delegate for the active branch is [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null'), and records a
 `result.null_delegate` failure in telemetry. A delegate the active
@@ -58,6 +58,7 @@ branch does not use may be [null](https://docs.microsoft.com/en-us/dotnet/csharp
 | [MapError\(Func&lt;Error,Error&gt;\)](MapError(Func_Error,Error_).md 'StandSure\.Functional\.Result\<T\>\.MapError\(System\.Func\<StandSure\.Functional\.Error,StandSure\.Functional\.Error\>\)') | Transforms the error of a failure; a success passes through unchanged\. |
 | [Match&lt;TOut&gt;\(Func&lt;Error,TOut&gt;, Func&lt;T,TOut&gt;\)](Match_TOut_(Func_Error,TOut_,Func_T,TOut_).md 'StandSure\.Functional\.Result\<T\>\.Match\<TOut\>\(System\.Func\<StandSure\.Functional\.Error,TOut\>, System\.Func\<T,TOut\>\)') | Runs one of two functions depending on the case\. The failure function comes first\. |
 | [Tap\(Action&lt;T&gt;\)](Tap(Action_T_).md 'StandSure\.Functional\.Result\<T\>\.Tap\(System\.Action\<T\>\)') | Runs a side effect on the success value and returns this result unchanged\. |
+| [TapError\(Action&lt;Error&gt;\)](TapError(Action_Error_).md 'StandSure\.Functional\.Result\<T\>\.TapError\(System\.Action\<StandSure\.Functional\.Error\>\)') | Runs a side effect on the error of a failure and returns this result unchanged\. |
 | [TryGetValue\(Error\)](TryGetValue.md#StandSure.Functional.Result_T_.TryGetValue(StandSure.Functional.Error) 'StandSure\.Functional\.Result\<T\>\.TryGetValue\(StandSure\.Functional\.Error\)') | Gets the error if this result is a failure\. |
 | [TryGetValue\(T\)](TryGetValue.md#StandSure.Functional.Result_T_.TryGetValue(T) 'StandSure\.Functional\.Result\<T\>\.TryGetValue\(T\)') | Gets the success value if this result is a success\. |
 

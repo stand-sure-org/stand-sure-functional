@@ -39,7 +39,7 @@ Build config: `Directory.Build.props` (all projects), `src/Directory.Build.props
 - Failure/absence comes first in every two-branch signature: `Match(onFailure, onSuccess)`, `Match(onNone, onSome)`.
 - No throwing `.Value` or `.Error` accessors on `Result<T>`.
 - Telemetry source and meter name: `StandSure.Functional`. Event names `functional.failure`, `functional.failure.wrapped` and `functional.failure.grouped`; counter `functional.failures`; tags `error.kind` and `error.code`. Messages and metadata are emitted only when the `AppContext` switch `StandSure.Functional.EmitErrorDetails` is on.
-- Spans: every public method that runs caller code starts `using var activity = FunctionalDiagnostics.Source.StartActivity();` on its first line (default name). No status, no tags. Iterators and methods that run no caller code get none. Sync-delegate `*Async` overloads call the combinator's internal `*Core` (no nested span). See DESIGN §Telemetry "Spans (v1.3)".
+- Spans: every public method that runs caller code starts `using var activity = FunctionalDiagnostics.Source.StartActivity();` on its first line (default name). No status, no tags. Iterators and methods that run no caller code get none. Sync-delegate `*Async` overloads call the combinator's internal `*Core` (no nested span). Extensions that only adapt `void` to `Unit` and forward to the same-named public method (`ResultUnitExtensions`, `OptionUnitExtensions`) start no span. See DESIGN §Telemetry "Spans (v1.3)".
 - Tests: xUnit v3 + AwesomeAssertions (never FluentAssertions). TDD: red, green, refactor.
 - Package versions: latest stable at implementation time. Stop and flag any package last updated more than 2 years ago.
 - Secrets via `fnox` (repo has `fnox.toml`). Never commit keys.

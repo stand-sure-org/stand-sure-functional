@@ -32,7 +32,11 @@ public sealed class SpanTests
         ["Result.Ensure(Func<T, Error>)"] = ("Ensure", Sync(() => Result.Success(1).Ensure(_ => true, _ => Err))),
         ["Result.Ensure(expression)"] = ("Ensure", Sync(() => Result.Success(1).Ensure(_ => true))),
         ["Result.Tap"] = ("Tap", Sync(() => Result.Success(1).Tap(_ => { }))),
+        ["Result.TapError"] = ("TapError", Sync(() => Result.Failure<int>(Err).TapError(_ => { }))),
+        ["Result.Match(Action)"] = ("Match", Sync(() => Result.Success(1).Match(_ => { }, _ => { }))),
+        ["Result<Unit>.Bind(Func<Result<T>>)"] = ("Bind", Sync(() => Result.Success().Bind(() => Result.Success(1)))),
         ["Option.Match"] = ("Match", Sync(() => Option.Some(1).Match(() => 0, v => v))),
+        ["Option.Match(Action)"] = ("Match", Sync(() => Option.Some(1).Match(() => { }, _ => { }))),
         ["Option.Map"] = ("Map", Sync(() => Option.Some(1).Map(v => v + 1))),
         ["Option.Bind"] = ("Bind", Sync(() => Option.Some(1).Bind(Option.Some))),
         ["Option.Filter"] = ("Filter", Sync(() => Option.Some(1).Filter(_ => true))),
@@ -96,6 +100,21 @@ public sealed class SpanTests
         await NoSpanCases[key]();
 
         capture.Spans.Should().BeEmpty();
+    }
+
+    // Extensions that only adapt void to Unit and forward to the public method of the same name start no span of
+    // their own: the target's span covers the call (DESIGN v1.3 "Spans", pass-through rule).
+    [Theory]
+    [InlineData("Result.Match(Action)")]
+    [InlineData("Option.Match(Action)")]
+    [InlineData("Result<Unit>.Bind(Func<Result<T>>)")]
+    public async Task PassThroughExtension_StartsNoNestedSpan(string key)
+    {
+        using var capture = new SpanCapture();
+
+        await Cases[key].Call();
+
+        capture.Spans.Should().ContainSingle();
     }
 
     [Fact]
