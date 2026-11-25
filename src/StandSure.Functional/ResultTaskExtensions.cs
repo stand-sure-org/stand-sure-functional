@@ -297,8 +297,7 @@ public static class ResultTaskExtensions
         return Result.Failure<T>(ResultErrors.IsMissing(error) ? ResultErrors.NullDelegate(nameof(error)) : error(result.ValueUnchecked));
     }
 
-    // A null source task is a failure rather than a NullReferenceException.
-/// <summary>Transforms the error of an awaited failure; a success passes through unchanged.</summary>
+    /// <summary>Transforms the error of an awaited failure; a success passes through unchanged.</summary>
     /// <typeparam name="T">The value type.</typeparam>
     /// <param name="source">The task producing the result.</param>
     /// <param name="map">The transformation. It receives <see cref="Error.Uninitialized"/> for <c>default</c>.
@@ -452,6 +451,7 @@ public static class ResultTaskExtensions
         return result;
     }
 
+    // A null source task is a failure rather than a NullReferenceException.
     private static Task<Result<T>> Resolve<T>(Task<Result<T>>? source) =>
         source ?? Task.FromResult(Result.Failure<T>(ResultErrors.NullTask(SourceName)));
 }

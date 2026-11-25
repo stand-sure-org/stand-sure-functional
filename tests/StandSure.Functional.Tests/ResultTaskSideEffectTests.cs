@@ -242,6 +242,33 @@ public sealed class ResultTaskSideEffectTests
         await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("tap");
     }
 
+
+    // The rollback path itself: a throwing TapErrorAsync lambda faults the returned task too.
+    [Fact]
+    public async Task ExceptionInATapErrorAsyncLambda_FaultsTheReturnedTask()
+    {
+        var act = () => Failed().TapErrorAsync(_ => Task.FromException(new InvalidOperationException("rollback")));
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("rollback");
+    }
+
+    // The task-returning forms read the error themselves (not through the sync cores), so check default here too.
+    [Fact]
+    public async Task TaskForms_OnDefault_PassUninitialized()
+    {
+        Error? seen = null;
+
+        _ = await Task.FromResult(default(Result<int>)).TapErrorAsync(e =>
+        {
+            seen = e;
+            return Task.CompletedTask;
+        });
+        var mapped = await Task.FromResult(default(Result<int>)).MapErrorAsync(e => Task.FromResult(e));
+
+        seen.Should().Be(Error.Uninitialized);
+        ErrorOf(mapped).Should().Be(Error.Uninitialized);
+    }
+
     private static Error ErrorOf<T>(Result<T> result)
     {
         result.TryGetValue(out Error? error).Should().BeTrue("the result should be a failure");
