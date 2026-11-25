@@ -159,3 +159,4 @@ StandSure.Functional.ResultUnitExtensions
 static StandSure.Functional.OptionUnitExtensions.Match<T>(this StandSure.Functional.Option<T> option, System.Action! onNone, System.Action<T>! onSome) -> StandSure.Functional.Unit
 static StandSure.Functional.ResultUnitExtensions.Bind<TOut>(this StandSure.Functional.Result<StandSure.Functional.Unit> result, System.Func<StandSure.Functional.Result<TOut>>! bind) -> StandSure.Functional.Result<TOut>
 static StandSure.Functional.ResultUnitExtensions.Match<T>(this StandSure.Functional.Result<T> result, System.Action<StandSure.Functional.Error!>! onFailure, System.Action<T>! onSuccess) -> StandSure.Functional.Unit
+static readonly StandSure.Functional.Unit.Default -> StandSure.Functional.Unit

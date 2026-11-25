@@ -1,6 +1,6 @@
 # Design: Functional Core + Model-Usage Harness
 
-**Version:** 1.6 (Side-effect forms adapt void to Unit)
+**Version:** 1.7 (Diagnostic IDs; `Unit.Default` alias)
 **Date:** 2026-11-25
 **Changes:** v1.1 settled harness execution, baseline authority, wire format, telemetry
 firing points, run mode. v1.2: no budget cap (5 runs per cell), Gemini via
@@ -12,6 +12,7 @@ v1.4: `Error` gets value equality over its contents and a `ToString` that honour
 v1.5: delegate parameters are non-nullable; the never-throw guards stay (§"Null delegates").
 v1.6: side-effect forms (`Match` with actions, parameterless `Bind` on `Result<Unit>`,
 `TapError`) and the pass-through span rule (§`Unit`, "Side-effect forms"; issue #8).
+v1.7: diagnostic ID ranges, and `Unit.Default` as a deprecated alias (§`Unit`, "Diagnostic IDs").
 See `DECISION.md` for the why and the scope table.
 
 Items marked **[builder's call]** were proposed by Claude during design and not
@@ -300,6 +301,28 @@ telemetry do not depend on naming and can be built (TDD) while the baseline runs
 
 `readonly struct`, `Unit.Value`, equality/comparison, `ToString() => "()"`.
 README credits language-ext (Paul Louth, MIT) as inspiration.
+
+`Unit.Default` is a permanent, deprecated alias of `Unit.Value` (owner, 2026-11-25). In the
+harness, every devstral answer guessed `Default` (10 of 10, `harness/results/task10-rerun-2026-11-25.md`), which is also the name TryHelpers and language-ext use.
+It is `[Obsolete(DiagnosticId = "SSF0001")]` at warning level and `[EditorBrowsable(Never)]`. Guessed code
+compiles, and the warning names `Unit.Value`; without the alias, CS0117 gives no hint. It is never removed,
+since removing it would bring back the hintless error. `docs/llm-api-summary.md` names only `Unit.Value`.
+
+#### Diagnostic IDs (v1.7)
+
+`[Obsolete]`/`[Experimental]` diagnostic IDs and future analyzer rules share one prefix, `SSF`, because
+consumers suppress both through the same `NoWarn` and `.editorconfig` entries. Each ID has a page
+`docs/diagnostics/SSFnnnn.md`, linked through `UrlFormat`. Error-level misuse (`Try.Run(Func<Task>)`) stays on the
+compiler's own CS0619 with no ID, because it should never be suppressed.
+
+| Range | Use |
+|---|---|
+| `SSF0001`–`SSF0999` | Attribute diagnostics in the core package |
+| `SSF1000`+ | Rules from the analyzer package (DECISION sequencing step 3) |
+
+| ID | Member | Severity |
+|---|---|---|
+| `SSF0001` | `Unit.Default`: use `Unit.Value` | Warning |
 
 #### Side-effect forms (v1.6, issue #8)
 
