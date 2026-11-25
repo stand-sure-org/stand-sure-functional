@@ -64,10 +64,12 @@ public sealed class PackageContentTests
     }
 
     // ContinuousIntegrationBuild maps source paths to /_/ so the package does not leak the runner's directory.
+    // CI is read in the test process, but the mapping depends on CI in the build that packed the .nupkg: on GitHub Actions
+    // both are the same job. Locally, CI=true only works if the package was also built with CI=true (not with --no-build).
     [Fact]
     public void PackagedPdb_OnCi_UsesNormalisedSourcePaths()
     {
-        Assert.SkipUnless(Environment.GetEnvironmentVariable("CI") == "true", "Path normalisation applies to CI builds only.");
+        Assert.SkipUnless(Environment.GetEnvironmentVariable("CI") == "true", "Path normalisation applies to packages built with CI=true only.");
 
         using var pe = OpenPackagedLibrary();
         using var provider = OpenEmbeddedPdb(pe);
