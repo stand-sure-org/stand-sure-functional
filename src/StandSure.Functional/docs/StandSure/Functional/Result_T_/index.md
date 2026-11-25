@@ -25,8 +25,9 @@ Every combinator treats `default(Result<T>)` as a failure whose error is
 [Uninitialized](../Error/Uninitialized.md 'StandSure\.Functional\.Error\.Uninitialized'). A combinator on a failure never calls its delegate.
 
 A delegate that throws is not caught here; only [Try](../Try/index.md 'StandSure\.Functional\.Try') catches. A [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') delegate
-never throws either. `Map`, `Bind`, `MapError`, `Ensure`, `Tap` and `TapError` return a failure with
-code `result.null_delegate` when they would have had to call it. `Match` returns
+never throws either. `Map`, `Bind`, `Ensure` and `Tap` return a failure with
+code `result.null_delegate` when they would have had to call it. `MapError` and `TapError` keep the
+original failure and record a `result.null_delegate` failure in telemetry. `Match` returns
 `default(TOut)` when the delegate for the active branch is [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null'), and records a
 `result.null_delegate` failure in telemetry. A delegate the active
 branch does not use may be [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') without effect.

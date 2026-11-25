@@ -1,6 +1,6 @@
 # Design: Functional Core + Model-Usage Harness
 
-**Version:** 1.7 (Diagnostic IDs; `Unit.Default` alias)
+**Version:** 1.8 (Null error observers keep the error)
 **Date:** 2026-11-25
 **Changes:** v1.1 settled harness execution, baseline authority, wire format, telemetry
 firing points, run mode. v1.2: no budget cap (5 runs per cell), Gemini via
@@ -13,6 +13,7 @@ v1.5: delegate parameters are non-nullable; the never-throw guards stay (§"Null
 v1.6: side-effect forms (`Match` with actions, parameterless `Bind` on `Result<Unit>`,
 `TapError`) and the pass-through span rule (§`Unit`, "Side-effect forms"; issue #8).
 v1.7: diagnostic ID ranges, and `Unit.Default` as a deprecated alias (§`Unit`, "Diagnostic IDs").
+v1.8: a null `MapError`/`TapError` delegate keeps the original failure (§"Null delegates"; issue #41).
 See `DECISION.md` for the why and the scope table.
 
 Items marked **[builder's call]** were proposed by Claude during design and not
@@ -205,6 +206,12 @@ telemetry do not depend on naming and can be built (TDD) while the baseline runs
   themselves, see §Spans "One span per call"). `Option` combinators give None and `Match` gives
   `default`, as before; building the error records the usual `functional.failure` event, on the
   method's span.
+- **Delegates that observe or reshape an existing failure keep it (v1.8, owner 2026-11-25, #41).** A
+  null `MapError` or `TapError` delegate on a failure returns the original failure unchanged, and
+  only records the `result.null_delegate` failure in telemetry, as `Match` does for a null active
+  branch. Replacing the error would turn, say, a `NotFound` into an `Unexpected` and change how a
+  downstream HTTP mapper responds, all because a logging tap was missing. On a success, neither
+  calls its delegate, so neither records anything.
 - Guards are written `ResultErrors.IsMissing(x)`, not `x is null`. Nullable flow analysis (and
   Rider's "Expression is always false") treats `x is null` on a non-nullable parameter as dead
   code; the helper keeps the guard visible and says why it exists. Tried and rejected: JetBrains
@@ -358,7 +365,8 @@ overloads forwarding through `AsFunc()` to the `Func<_, Unit>` form), written fr
   depends on the JIT inlining at each call site, so 0 B is observed, not guaranteed, and
   no allocation test pins it.
 - `TapError(Action<Error>)` is an ordinary `Result<T>` method mirroring `Tap`, with its own
-  span. A `null` action turns a failure into a `result.null_delegate` failure, as `MapError` does.
+  span. A `null` action keeps the original failure and records `result.null_delegate` in telemetry only
+  (§"Null delegates", v1.8, #41).
 
 ### `Try`
 

@@ -218,13 +218,14 @@ public sealed class UnitAdapterTests
     }
 
     [Fact]
-    public void TapError_NullAction_OnFailure_IsANullDelegateFailure()
+    public void TapError_NullAction_OnFailure_KeepsTheOriginalError()
     {
-        var result = Result.Failure<int>(Err).TapError(null!);
+        // Issue #41: a missing logging tap must not turn, say, a NotFound into an Unexpected.
+        var failure = Result.Failure<int>(Err);
 
-        result.TryGetValue(out Error? error).Should().BeTrue();
-        error!.Code.Should().Be("result.null_delegate");
-        error.Message.Should().Be("The delegate 'action' passed to TapError was null.");
+        var result = failure.TapError(null!);
+
+        result.Should().Be(failure);
     }
 
     [Fact]

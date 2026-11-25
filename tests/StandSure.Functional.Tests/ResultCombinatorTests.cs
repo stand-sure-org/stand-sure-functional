@@ -254,12 +254,29 @@ public sealed class ResultCombinatorTests
     }
 
     [Fact]
-    public void MapError_NullDelegate_OnFailure_ReturnsNullDelegateFailure()
+    public void MapError_NullDelegate_OnFailure_KeepsTheOriginalError()
     {
+        // Issue #41: a missing error transformation must not change the failure's kind or code downstream.
         var r = Result.Failure<int>(Boom).MapError(null!);
 
         r.TryGetValue(out Error? e).Should().BeTrue();
-        e!.Code.Should().Be("result.null_delegate");
+        e.Should().Be(Boom);
+    }
+
+    [Fact]
+    public void MapError_NullDelegate_OnDefault_KeepsUninitialized()
+    {
+        default(Result<int>).MapError(null!).TryGetValue(out Error? e).Should().BeTrue();
+
+        e.Should().Be(Error.Uninitialized);
+    }
+
+    [Fact]
+    public void TapError_NullDelegate_OnDefault_KeepsUninitialized()
+    {
+        default(Result<int>).TapError(null!).TryGetValue(out Error? e).Should().BeTrue();
+
+        e.Should().Be(Error.Uninitialized);
     }
 
     [Fact]
