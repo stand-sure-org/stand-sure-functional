@@ -196,6 +196,9 @@ namespace StandSure.Functional
     }
     public readonly struct Unit : System.IComparable<StandSure.Functional.Unit>, System.IEquatable<StandSure.Functional.Unit>
     {
+        [System.Obsolete("Use Unit.Value.", DiagnosticId="SSF0001", UrlFormat="https://github.com/stand-sure-org/stand-sure-functional/blob/main/docs/diagnostic" +
+            "s/{0}.md")]
+        public static readonly StandSure.Functional.Unit Default;
         public static readonly StandSure.Functional.Unit Value;
         public int CompareTo(StandSure.Functional.Unit other) { }
         public bool Equals(StandSure.Functional.Unit other) { }

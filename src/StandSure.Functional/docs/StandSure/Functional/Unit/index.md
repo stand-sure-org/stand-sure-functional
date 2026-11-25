@@ -17,6 +17,7 @@ Inspired by the `Unit` type in language\-ext by Paul Louth \(MIT licensed\)\.
 
 | Fields | |
 | :--- | :--- |
+| [Default](Default.md 'StandSure\.Functional\.Unit\.Default') | The same value as [Value](Value.md 'StandSure\.Functional\.Unit\.Value')\. Deprecated alias: use [Value](Value.md 'StandSure\.Functional\.Unit\.Value')\. |
 | [Value](Value.md 'StandSure\.Functional\.Unit\.Value') | The single [Unit](index.md 'StandSure\.Functional\.Unit') value\. |
 
 | Methods | |

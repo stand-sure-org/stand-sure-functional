@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 
 namespace StandSure.Functional;
 
@@ -14,6 +15,16 @@ public readonly struct Unit : IEquatable<Unit>, IComparable<Unit>
     /// <summary>The single <see cref="Unit"/> value.</summary>
     // ReSharper disable once UnassignedReadonlyField
     public static readonly Unit Value;
+
+    /// <summary>The same value as <see cref="Value"/>. Deprecated alias: use <see cref="Value"/>.</summary>
+    /// <remarks>
+    /// <c>Default</c> is the name other libraries use, so code that guesses it compiles, with warning SSF0001
+    /// pointing to <see cref="Value"/>. The alias is permanent and hidden from IntelliSense.
+    /// </remarks>
+    [Obsolete("Use Unit.Value.", DiagnosticId = "SSF0001", UrlFormat = "https://github.com/stand-sure-org/stand-sure-functional/blob/main/docs/diagnostics/{0}.md")]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    // ReSharper disable once UnassignedReadonlyField
+    public static readonly Unit Default;
 
     /// <summary>Always <see langword="true"/>: every <see cref="Unit"/> is equal.</summary>
     /// <param name="other">The other value.</param>
