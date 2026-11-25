@@ -127,6 +127,13 @@ public readonly partial struct Result<T>
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
+        return this.MapErrorCore(map, nameof(this.MapError));
+    }
+
+    // MapError's logic without a span, so the sync-delegate MapErrorAsync overload runs it inside its own span
+    // and a null delegate names the public method the caller wrote.
+    internal Result<T> MapErrorCore(Func<Error, Error> map, string member)
+    {
         if (this.tag == TagOk)
         {
             return this;
@@ -136,7 +143,7 @@ public readonly partial struct Result<T>
         {
             // Keep the caller's error: a missing transformation must not change the failure's kind downstream (#41).
             // Building the null-delegate error records it in telemetry.
-            _ = ResultErrors.NullDelegate(nameof(map));
+            _ = ResultErrors.NullDelegate(nameof(map), member);
             return this;
         }
 
@@ -261,6 +268,12 @@ public readonly partial struct Result<T>
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
+        return this.TapCore(action, nameof(this.Tap));
+    }
+
+    // Tap's logic without a span, for the sync-delegate TapAsync overload (see MapCore).
+    internal Result<T> TapCore(Action<T> action, string member)
+    {
         if (this.tag != TagOk)
         {
             return this;
@@ -268,7 +281,7 @@ public readonly partial struct Result<T>
 
         if (ResultErrors.IsMissing(action))
         {
-            return new Result<T>(ResultErrors.NullDelegate(nameof(action)));
+            return new Result<T>(ResultErrors.NullDelegate(nameof(action), member));
         }
 
         action(this.resultValue);
@@ -284,6 +297,12 @@ public readonly partial struct Result<T>
     {
         using var activity = FunctionalDiagnostics.Source.StartActivity();
 
+        return this.TapErrorCore(action, nameof(this.TapError));
+    }
+
+    // TapError's logic without a span, for the sync-delegate TapErrorAsync overload (see MapCore).
+    internal Result<T> TapErrorCore(Action<Error> action, string member)
+    {
         if (this.tag == TagOk)
         {
             return this;
@@ -292,7 +311,7 @@ public readonly partial struct Result<T>
         if (ResultErrors.IsMissing(action))
         {
             // Observational: keep the caller's error and record the missing delegate in telemetry only (#41).
-            _ = ResultErrors.NullDelegate(nameof(action));
+            _ = ResultErrors.NullDelegate(nameof(action), member);
             return this;
         }
 

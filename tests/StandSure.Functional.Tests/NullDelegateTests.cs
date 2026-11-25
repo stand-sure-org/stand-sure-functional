@@ -42,6 +42,9 @@ public sealed class NullDelegateTests
     [InlineData("Task.FromResult(Result.Success(1)).BindAsync((System.Func<int, Task<Result<int>>?>?)null)")]
     [InlineData("Task.FromResult(Result.Success(1)).EnsureAsync((System.Func<int, Task<bool>?>?)null, Error.Validation(\"c\", \"m\"))")]
     [InlineData("Task.FromResult(Result.Success(1)).EnsureAsync(x => Task.FromResult(x > 0), (System.Func<int, Error>?)null)")]
+    [InlineData("Task.FromResult(Result.Success(1)).TapAsync((System.Action<int>?)null)")]
+    [InlineData("Task.FromResult(Result.Success(1)).TapErrorAsync((System.Func<Error, Task?>?)null)")]
+    [InlineData("Task.FromResult(Result.Success(1)).MapErrorAsync((System.Func<Error, Error>?)null)")]
     [InlineData("Task.FromResult(Result.Success(1)).MatchAsync((System.Func<Error, Task<int>>?)null, v => Task.FromResult(v))")]
     [InlineData("new[] { 1 }.Scan(0, (System.Func<int, int, int>?)null)")]
     public void PassingNull_IsACompilerWarning(string call)

@@ -26,7 +26,9 @@ namespace StandSure.Functional;
 /// it faults the returned task. A <see langword="null"/> source task counts as a failure with code
 /// <c>result.null_task</c>, and so does a <see langword="null"/> task returned by a lambda. A <see langword="null"/>
 /// delegate behaves as it does on <see cref="Result{T}"/>: <c>result.null_delegate</c> failure, or
-/// <c>default(TOut)</c> from <c>MatchAsync</c>, which also records a <c>result.null_delegate</c> failure in telemetry. <c>default(Result&lt;T&gt;)</c> flows as the
+/// <c>default(TOut)</c> from <c>MatchAsync</c>, which also records a <c>result.null_delegate</c> failure in telemetry.
+/// <c>MapErrorAsync</c> and <c>TapErrorAsync</c> keep the original failure when their delegate, or the task it
+/// returns, is <see langword="null"/>, and record the problem in telemetry only (as <c>MapError</c> and <c>TapError</c> do). <c>default(Result&lt;T&gt;)</c> flows as the
 /// <see cref="Error.Uninitialized"/> failure.
 /// </para>
 /// </remarks>
@@ -296,6 +298,160 @@ public static class ResultTaskExtensions
     }
 
     // A null source task is a failure rather than a NullReferenceException.
+/// <summary>Transforms the error of an awaited failure; a success passes through unchanged.</summary>
+    /// <typeparam name="T">The value type.</typeparam>
+    /// <param name="source">The task producing the result.</param>
+    /// <param name="map">The transformation. It receives <see cref="Error.Uninitialized"/> for <c>default</c>.
+    /// A <see langword="null"/> return becomes <see cref="Error.Uninitialized"/>. A <see langword="null"/> delegate
+    /// keeps the original failure and records a <c>result.null_delegate</c> failure in telemetry.</param>
+    /// <returns>The original success, or a failure with the mapped error.</returns>
+    public static async Task<Result<T>> MapErrorAsync<T>(this Task<Result<T>> source, Func<Error, Error> map)
+    {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
+        var result = await Resolve(source).ConfigureAwait(false);
+        return result.MapErrorCore(map, nameof(MapErrorAsync));
+    }
+
+    /// <summary>Transforms the error of an awaited failure with an asynchronous function.</summary>
+    /// <typeparam name="T">The value type.</typeparam>
+    /// <param name="source">The task producing the result.</param>
+    /// <param name="map">The transformation. It receives <see cref="Error.Uninitialized"/> for <c>default</c>.
+    /// A task that yields <see langword="null"/> gives <see cref="Error.Uninitialized"/>. A <see langword="null"/>
+    /// delegate, or a <see langword="null"/> task returned by it, keeps the original failure and records the problem
+    /// (<c>result.null_delegate</c> or <c>result.null_task</c>) in telemetry.</param>
+    /// <returns>The original success, or a failure with the mapped error.</returns>
+    public static async Task<Result<T>> MapErrorAsync<T>(this Task<Result<T>> source, Func<Error, Task<Error>?> map)
+    {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
+        var result = await Resolve(source).ConfigureAwait(false);
+
+        if (result.IsSuccess)
+        {
+            return result;
+        }
+
+        if (ResultErrors.IsMissing(map))
+        {
+            _ = ResultErrors.NullDelegate(nameof(map));
+            return result;
+        }
+
+        var task = map(result.ErrorUnchecked);
+
+        if (task is null)
+        {
+            // Keep the caller's error, as for a missing delegate (#41); building the error records it.
+            _ = ResultErrors.NullTask(nameof(map));
+            return result;
+        }
+
+        return Result.Failure<T>(await task.ConfigureAwait(false));
+    }
+
+    /// <summary>Runs a side effect on the value of an awaited success and returns the result unchanged.</summary>
+    /// <typeparam name="T">The value type.</typeparam>
+    /// <param name="source">The task producing the result.</param>
+    /// <param name="action">The side effect. A <see langword="null"/> value turns a success into a
+    /// <c>result.null_delegate</c> failure.</param>
+    /// <returns>The awaited result.</returns>
+    public static async Task<Result<T>> TapAsync<T>(this Task<Result<T>> source, Action<T> action)
+    {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
+        var result = await Resolve(source).ConfigureAwait(false);
+        return result.TapCore(action, nameof(TapAsync));
+    }
+
+    /// <summary>Runs an asynchronous side effect on the value of an awaited success and returns the result
+    /// unchanged.</summary>
+    /// <typeparam name="T">The value type.</typeparam>
+    /// <param name="source">The task producing the result.</param>
+    /// <param name="action">The side effect. A <see langword="null"/> value turns a success into a
+    /// <c>result.null_delegate</c> failure, and a <see langword="null"/> task returned by it into a
+    /// <c>result.null_task</c> failure.</param>
+    /// <returns>The awaited result.</returns>
+    public static async Task<Result<T>> TapAsync<T>(this Task<Result<T>> source, Func<T, Task?> action)
+    {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
+        var result = await Resolve(source).ConfigureAwait(false);
+
+        if (result.IsFailure)
+        {
+            return result;
+        }
+
+        if (ResultErrors.IsMissing(action))
+        {
+            return Result.Failure<T>(ResultErrors.NullDelegate(nameof(action)));
+        }
+
+        var task = action(result.ValueUnchecked);
+
+        if (task is null)
+        {
+            return Result.Failure<T>(ResultErrors.NullTask(nameof(action)));
+        }
+
+        await task.ConfigureAwait(false);
+        return result;
+    }
+
+    /// <summary>Runs a side effect on the error of an awaited failure and returns the result unchanged.</summary>
+    /// <typeparam name="T">The value type.</typeparam>
+    /// <param name="source">The task producing the result.</param>
+    /// <param name="action">The side effect. It receives <see cref="Error.Uninitialized"/> for <c>default</c>.
+    /// A <see langword="null"/> value keeps the failure unchanged and records a <c>result.null_delegate</c> failure
+    /// in telemetry.</param>
+    /// <returns>The awaited result.</returns>
+    public static async Task<Result<T>> TapErrorAsync<T>(this Task<Result<T>> source, Action<Error> action)
+    {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
+        var result = await Resolve(source).ConfigureAwait(false);
+        return result.TapErrorCore(action, nameof(TapErrorAsync));
+    }
+
+    /// <summary>Runs an asynchronous side effect on the error of an awaited failure (for example a rollback) and
+    /// returns the result unchanged.</summary>
+    /// <typeparam name="T">The value type.</typeparam>
+    /// <param name="source">The task producing the result.</param>
+    /// <param name="action">The side effect. It receives <see cref="Error.Uninitialized"/> for <c>default</c>.
+    /// A <see langword="null"/> value, or a <see langword="null"/> task returned by it, keeps the failure unchanged
+    /// and records the problem (<c>result.null_delegate</c> or <c>result.null_task</c>) in telemetry.</param>
+    /// <returns>The awaited result.</returns>
+    public static async Task<Result<T>> TapErrorAsync<T>(this Task<Result<T>> source, Func<Error, Task?> action)
+    {
+        using var activity = FunctionalDiagnostics.Source.StartActivity();
+
+        var result = await Resolve(source).ConfigureAwait(false);
+
+        if (result.IsSuccess)
+        {
+            return result;
+        }
+
+        if (ResultErrors.IsMissing(action))
+        {
+            _ = ResultErrors.NullDelegate(nameof(action));
+            return result;
+        }
+
+        var task = action(result.ErrorUnchecked);
+
+        if (task is null)
+        {
+            // Observational: keep the caller's error (#41); building the error records it.
+            _ = ResultErrors.NullTask(nameof(action));
+            return result;
+        }
+
+        await task.ConfigureAwait(false);
+        return result;
+    }
+
     private static Task<Result<T>> Resolve<T>(Task<Result<T>>? source) =>
         source ?? Task.FromResult(Result.Failure<T>(ResultErrors.NullTask(SourceName)));
 }
