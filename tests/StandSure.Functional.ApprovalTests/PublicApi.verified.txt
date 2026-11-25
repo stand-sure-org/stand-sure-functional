@@ -141,8 +141,14 @@ namespace StandSure.Functional
         public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> EnsureAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, bool> predicate, System.Func<T, StandSure.Functional.Error> error) { }
         public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> MapAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task<TOut>?> map) { }
         public static System.Threading.Tasks.Task<StandSure.Functional.Result<TOut>> MapAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, TOut> map) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> MapErrorAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<StandSure.Functional.Error, StandSure.Functional.Error> map) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> MapErrorAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<StandSure.Functional.Error, System.Threading.Tasks.Task<StandSure.Functional.Error>?> map) { }
         public static System.Threading.Tasks.Task<TOut> MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<StandSure.Functional.Error, System.Threading.Tasks.Task<TOut>> onFailure, System.Func<T, System.Threading.Tasks.Task<TOut>?> onSuccess) { }
         public static System.Threading.Tasks.Task<TOut> MatchAsync<T, TOut>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<StandSure.Functional.Error, TOut> onFailure, System.Func<T, TOut> onSuccess) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> TapAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Action<T> action) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> TapAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<T, System.Threading.Tasks.Task?> action) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> TapErrorAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Action<StandSure.Functional.Error> action) { }
+        public static System.Threading.Tasks.Task<StandSure.Functional.Result<T>> TapErrorAsync<T>(this System.Threading.Tasks.Task<StandSure.Functional.Result<T>> source, System.Func<StandSure.Functional.Error, System.Threading.Tasks.Task?> action) { }
     }
     [System.Diagnostics.StackTraceHidden]
     public static class ResultUnitExtensions
